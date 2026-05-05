@@ -81,3 +81,23 @@ async def test_document_table_exists():
             ]:
                 assert required in names, f"missing column: {required}"
     await close_pool()
+
+
+@pytest.mark.asyncio
+async def test_statute_tables_exist():
+    pool = await get_pool()
+    async with pool.connection() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                """
+                SELECT table_name
+                FROM information_schema.tables
+                WHERE table_schema = 'public'
+                  AND table_name IN ('statute', 'case_statute')
+                ORDER BY table_name
+                """
+            )
+            rows = await cur.fetchall()
+            names = [r[0] for r in rows]
+            assert names == ["case_statute", "statute"]
+    await close_pool()
