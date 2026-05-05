@@ -145,3 +145,25 @@ async def test_merge_candidate_table_exists():
             row = await cur.fetchone()
             assert row is not None
     await close_pool()
+
+
+@pytest.mark.asyncio
+async def test_embedding_columns_exist():
+    pool = await get_pool()
+    async with pool.connection() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                """
+                SELECT table_name, column_name, udt_name
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                  AND column_name = 'embedding'
+                  AND table_name IN ('document', 'statute')
+                ORDER BY table_name
+                """
+            )
+            rows = await cur.fetchall()
+            names = [(r[0], r[1], r[2]) for r in rows]
+            assert ("document", "embedding", "vector") in names
+            assert ("statute", "embedding", "vector") in names
+    await close_pool()
