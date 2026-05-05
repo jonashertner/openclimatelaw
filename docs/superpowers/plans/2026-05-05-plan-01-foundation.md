@@ -323,7 +323,7 @@ git commit -m "feat: add env-driven Settings via pydantic-settings"
 ```python
 import pytest
 
-from server.db import get_pool
+from server.db import close_pool, get_pool
 
 
 @pytest.mark.asyncio
@@ -334,7 +334,7 @@ async def test_pool_executes_select_one():
             await cur.execute("SELECT 1 AS n")
             row = await cur.fetchone()
             assert row == (1,)
-    await pool.close()
+    await close_pool()
 ```
 
 - [ ] **Step 2: Write `tests/conftest.py` to set DATABASE_URL for the test DB**
@@ -422,7 +422,7 @@ git commit -m "feat: add async psycopg connection pool"
 ```python
 import pytest
 
-from server.db import get_pool
+from server.db import close_pool, get_pool
 
 
 @pytest.mark.asyncio
@@ -451,7 +451,7 @@ async def test_vocabulary_tables_exist():
                 "vocabulary_outcome",
                 "vocabulary_status",
             ]
-    await pool.close()
+    await close_pool()
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
@@ -576,7 +576,7 @@ async def test_case_tables_exist():
                 "case_record",
                 "citation_string",
             ]
-    await pool.close()
+    await close_pool()
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
@@ -701,7 +701,7 @@ async def test_document_table_exists():
                 "text_translation_en", "provenance", "created_at",
             ]:
                 assert required in names, f"missing column: {required}"
-    await pool.close()
+    await close_pool()
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
@@ -792,7 +792,7 @@ async def test_statute_tables_exist():
             rows = await cur.fetchall()
             names = [r[0] for r in rows]
             assert names == ["case_statute", "statute"]
-    await pool.close()
+    await close_pool()
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
@@ -881,7 +881,7 @@ async def test_citation_edge_table_exists():
             )
             row = await cur.fetchone()
             assert row is not None
-    await pool.close()
+    await close_pool()
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
@@ -959,7 +959,7 @@ async def test_merge_candidate_table_exists():
             )
             row = await cur.fetchone()
             assert row is not None
-    await pool.close()
+    await close_pool()
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
@@ -1037,7 +1037,7 @@ async def test_embedding_columns_exist():
             names = [(r[0], r[1], r[2]) for r in rows]
             assert ("document", "embedding", "vector") in names
             assert ("statute", "embedding", "vector") in names
-    await pool.close()
+    await close_pool()
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
