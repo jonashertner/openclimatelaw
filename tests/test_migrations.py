@@ -128,3 +128,20 @@ async def test_citation_edge_table_exists():
             row = await cur.fetchone()
             assert row is not None
     await close_pool()
+
+
+@pytest.mark.asyncio
+async def test_merge_candidate_table_exists():
+    pool = await get_pool()
+    async with pool.connection() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                """
+                SELECT 1
+                FROM information_schema.tables
+                WHERE table_schema = 'public' AND table_name = 'merge_candidate'
+                """
+            )
+            row = await cur.fetchone()
+            assert row is not None
+    await close_pool()
