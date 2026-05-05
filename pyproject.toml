@@ -14,6 +14,7 @@ dependencies = [
     "pydantic-settings>=2.5.0",
     "yoyo-migrations>=9.0.0",
     "structlog>=24.4.0",
+    "uvicorn[standard]>=0.32.0",
 ]
 
 [dependency-groups]
@@ -25,6 +26,13 @@ dev = [
     "httpx>=0.27.0",
     "psycopg2-binary>=2.9.0",
 ]
+
+[build-system]
+requires = ["setuptools>=68.0.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["server*"]
 
 [tool.ruff]
 line-length = 100
