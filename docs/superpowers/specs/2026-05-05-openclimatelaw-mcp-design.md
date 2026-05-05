@@ -115,8 +115,8 @@ case
   court_id            TEXT NOT NULL       -- Sabin's court vocabulary
   filing_date         DATE NULL
   decision_date       DATE NULL
-  status              TEXT NOT NULL       -- Sabin's status enum: filed | pending | decided | settled | dismissed | withdrawn
-  outcome             TEXT NULL           -- Sabin's outcome enum: plaintiff_won | defendant_won | mixed | settled_favorable | settled_unfavorable | n/a
+  status              TEXT NOT NULL       -- Sabin's status enum, sourced verbatim from upstream taxonomy export (see §5.2)
+  outcome             TEXT NULL           -- Sabin's outcome enum, sourced verbatim from upstream taxonomy export (see §5.2)
   summary             TEXT NULL
   summary_lang        TEXT NOT NULL DEFAULT 'en'
   primary_source      TEXT NOT NULL       -- 'sabin' | 'climate_rights' | 'c2li' | 'melbourne' | 'redline'
@@ -240,10 +240,13 @@ When satellite data enriches a Sabin record, the `_alt_perspectives` array on th
 
 ### 6.1 Sabin (primary)
 
-Two access paths:
+Three access paths, ordered by preference:
 
-1. **Public CPR API** (the relaunched `climatecasechart.com` is built on it). Endpoint discovery: read CPR's open-source frontend. Politeness: 1 req/sec, exponential backoff on 429, full snapshot weekly with daily diff polling.
-2. **Direct bulk export from Sabin/CPR** — pursued as part of the collaboration ask. Replaces the API path if granted.
+1. **Bulk data export from Sabin/CPR** — pursued as part of the collaboration ask. Replaces all other paths if granted.
+2. **CPR's organisation-facing API** — announced but not yet GA as of 2026-05. Once available we move here.
+3. **CPR's frontend-serving API** — the JSON endpoints the relaunched `climatecasechart.com` calls from the browser. Discoverable from CPR's open-source frontend repo on GitHub. Used at v0.1 only if (1) and (2) are unavailable, with politeness defaults: 1 req/sec, exponential backoff on 429, full snapshot weekly with daily diff polling, contact email in `User-Agent`.
+
+Whichever path is used, raw upstream responses are mirrored to R2 for replayability when the upstream changes shape.
 
 Pipeline stages:
 
@@ -317,7 +320,7 @@ Originals are always preserved verbatim. Per R2 (anti-hallucination contract), m
 
 Server-side enforced. Documented in the MCP server's manifest so client LLMs can read the contract.
 
-- **R1 — Never construct a citation.** Every case reference produced by any tool must be a verbatim `citation_string_*` field returned by an earlier tool call. If a downstream LLM needs a citation it didn't retrieve, it must call `cite(case_id_or_descriptor, lang, format)` to get one. The `attest_response` tool rejects responses containing case-shaped strings not present in retrieved data.
+- **R1 — Never construct a citation.** Every case reference produced by any tool must be a verbatim `citation_string_*` field returned by an earlier tool call. If a downstream LLM needs a citation it didn't retrieve, it must call `cite(case_id, lang, format)` to get one — and it must already hold a valid case_id, which means it must have searched first. **If a case is not in our database, the LLM must describe the authority in prose without a formal citation.** Constructing a citation from training data is the failure mode this rule exists to prevent. The `attest_response` tool flags any citation-shaped string in a draft that isn't present in retrieved data.
 - **R2 — Never quote what wasn't retrieved.** Direct quotations (in quotation marks) must match a substring of `document.text`, `case.summary`, `statute.text`, or `citation_string`. `check_claim_support(quote, source_id)` validates.
 - **R3 — Never state statute content from memory.** Tool-side enforcement: `search_legislation` and `get_legislation` are the only paths to statute text.
 - **R4 — Never speculate on legislative intent.** UNFCCC negotiating history, Paris Agreement *travaux*, national legislative records exposed via `get_materialien` (v0.3+); until then, intent claims must be retrieved from a case's `summary` (Sabin's editorial framing) or a statute's `summary`.
@@ -339,8 +342,8 @@ Thirteen tools.
 | `get_legislation(statute_id)` | Full statute record + text. |
 | `find_cases_for_statute(statute_id, relationship?)` | Cases linked to a statute via `case_statute`. |
 | `get_statistics(scope, group_by?)` | Aggregations: cases per jurisdiction per year, claim-type distributions, outcome rates. Returns structured tables, not prose. |
-| `cite(case_id_or_descriptor, lang, format)` | Returns the canonical `citation_string` for a case in the requested language and format. |
-| `attest_response(draft_text, retrieved_ids[])` | Validates a draft response: every citation in `draft_text` must appear in `citation_string` fields of records in `retrieved_ids`. Returns pass/fail + violations. |
+| `cite(case_id, lang, format)` | Returns the canonical `citation_string` for a case in the requested language and format. Requires a valid `case_id` (not a name or descriptor) — preventing R1 violation by construction. If the caller has only a name, they must `search_cases` first. |
+| `attest_response(draft_text, retrieved_ids[])` | Validates a draft response. Substring-matches `draft_text` against the union of `citation_string_*` values from records in `retrieved_ids`; flags any contiguous run that pattern-matches a known citation format (Bluebook/OSCOLA/Sabin/ICJ/etc., per registered regexes) but is absent from that union. Returns `{passed: bool, violations: [{span, text, reason}], suggested_replacements?}`. |
 | `check_claim_support(quote, source_id)` | Validates that a direct quotation appears verbatim in the named source's text. |
 
 Each tool returns structured JSON with `citation_string_*` fields populated for every case/document/statute reference. No tool returns free prose without a structured payload.
@@ -371,6 +374,7 @@ No browse UI. No search. Anyone wanting to browse goes to `climatecasechart.com`
 - **Logs** — structured stdout, shipped to a hosted log backend.
 - **Health** — `/health` endpoint, monitored by Uptime Kuma or similar.
 - **No auth** at v0.1. Rate limit: 60 req/min per IP, 1000/hr.
+- **Storage budget at v0.1:** Postgres ≈ 5–10 GB (case + document + statute + edge tables); pgvector index ≈ 30–50 GB (15,000 documents × ~500 chunks/doc × 1024-dim float32 + HNSW overhead); R2 PDFs ≈ 30–80 GB; translation cache ≈ 5 GB. Provision 200 GB headroom.
 
 ## 12. Outreach plan
 
@@ -386,7 +390,7 @@ Critical-path discipline: the outreach email is a deliverable in v0.1, not a res
 
 | Phase | Duration | Deliverables | Success criterion |
 |---|---|---|---|
-| **v0.1 — Sabin core + CCLW + landing + outreach** | 6 weeks | Sabin ingestion, CCLW ingestion, 13 tools, anti-hallucination contract, Astro landing, deployed at production domain, outreach email sent | All ~4,840 Sabin cases queryable; sample LLM session produces a research note that passes `attest_response` |
+| **v0.1 — Sabin core + CCLW + landing + outreach** | 8 weeks | Sabin ingestion (incl. PDF download, OCR fallback, MT, embeddings), CCLW ingestion, 13 tools, anti-hallucination contract, Astro landing, deployed at production domain, outreach email sent | All ~4,840 Sabin cases queryable; sample LLM session produces a research note that passes `attest_response` |
 | **v0.2 — Satellites + dedup** | 6 weeks | All 4 satellite ingestions, dedup pipeline, `get_satellite_perspective` tool | ≥80% of satellite cases either merged with Sabin or net-new with full records |
 | **v0.3 — Citation graph + analytics** | 8 weeks | NLP citation extraction beyond CPR, `compare_jurisdictions`, `analyze_outcome_trends`, `find_landmark_cases`, `get_materialien` (Paris Agreement *travaux*, UNFCCC) | Citation graph density ≥1.5× CPR baseline; analytics tools answer 5 sample research questions correctly |
 | **v1.0 — Post-collaboration consolidation** | After Sabin/CPR conversations conclude | Whatever the collaboration unlocks: direct data feeds, co-branding, schema co-evolution | Sabin/CPR endorse or co-list the project, OR we have a clear independent path with explicit licence terms |
@@ -397,7 +401,7 @@ Critical-path discipline: the outreach email is a deliverable in v0.1, not a res
 |---|---|---|---|
 | CPR API changes break ingestion | Medium | High | Pin to a documented API version; CI integration test against staging endpoint; mirror raw API responses to R2 for replay |
 | Sabin/CPR object to the project | Low–Medium | High | Outreach early; respect their taxonomy; explicit credit; offer to discontinue if they prefer; design for graceful shutdown if asked |
-| Bulk redistribution licence unclear for some sources | Medium | Medium | At v0.1 limit to Sabin (CC-BY 4.0 per Sabin's own terms) and CCLW (CC-BY 4.0 per LSE). Defer satellites until licences are confirmed |
+| Bulk redistribution licence unclear for some sources | High | High | **Verification action before any v0.1 ingestion runs:** read Sabin's published terms of use on `climatecasechart.com` and CCLW's terms on `climate-laws.org`; document the licence governing redistribution of (a) metadata, (b) summaries authored by Sabin, (c) court-document text. If terms forbid mirroring, switch to live-proxy for affected fields, or contact Sabin/CPR for explicit permission as part of the outreach (this is a pre-launch gate, not a post-launch concern). Defer satellites until each licence is similarly confirmed. |
 | Scrape fragility on satellite sources | High | Low | Per-source error budgets; failing satellite degrades gracefully (its data simply absent), doesn't break Sabin spine |
 | Embedding quality insufficient for cross-language retrieval | Medium | Medium | Evaluate bge-m3 against a held-out set of multilingual climate cases before locking in |
 | Abuse (scrape-our-mirror) | Medium | Low | Rate limits + standard MCP polite headers + monitoring |
