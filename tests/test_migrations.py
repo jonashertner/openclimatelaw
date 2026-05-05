@@ -56,3 +56,28 @@ async def test_case_tables_exist():
                 "citation_string",
             ]
     await close_pool()
+
+
+@pytest.mark.asyncio
+async def test_document_table_exists():
+    pool = await get_pool()
+    async with pool.connection() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                """
+                SELECT column_name
+                FROM information_schema.columns
+                WHERE table_schema = 'public' AND table_name = 'document'
+                ORDER BY column_name
+                """
+            )
+            rows = await cur.fetchall()
+            names = {r[0] for r in rows}
+            for required in [
+                "id", "case_id", "category_code", "title",
+                "filed_date", "filed_by", "upstream_url", "storage_url",
+                "text", "text_lang", "text_extraction_method",
+                "text_translation_en", "provenance", "created_at",
+            ]:
+                assert required in names, f"missing column: {required}"
+    await close_pool()
