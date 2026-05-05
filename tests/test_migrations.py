@@ -74,10 +74,20 @@ async def test_document_table_exists():
             rows = await cur.fetchall()
             names = {r[0] for r in rows}
             for required in [
-                "id", "case_id", "category_code", "title",
-                "filed_date", "filed_by", "upstream_url", "storage_url",
-                "text", "text_lang", "text_extraction_method",
-                "text_translation_en", "provenance", "created_at",
+                "id",
+                "case_id",
+                "category_code",
+                "title",
+                "filed_date",
+                "filed_by",
+                "upstream_url",
+                "storage_url",
+                "text",
+                "text_lang",
+                "text_extraction_method",
+                "text_translation_en",
+                "provenance",
+                "created_at",
             ]:
                 assert required in names, f"missing column: {required}"
     await close_pool()
@@ -100,4 +110,21 @@ async def test_statute_tables_exist():
             rows = await cur.fetchall()
             names = [r[0] for r in rows]
             assert names == ["case_statute", "statute"]
+    await close_pool()
+
+
+@pytest.mark.asyncio
+async def test_citation_edge_table_exists():
+    pool = await get_pool()
+    async with pool.connection() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                """
+                SELECT 1
+                FROM information_schema.tables
+                WHERE table_schema = 'public' AND table_name = 'citation_edge'
+                """
+            )
+            row = await cur.fetchone()
+            assert row is not None
     await close_pool()
