@@ -11,6 +11,7 @@ dependencies = [
     "fastmcp>=3.0.2",
     "psycopg[binary,pool]>=3.2.0",
     "pgvector>=0.3.0",
+    "pydantic>=2.9.0",
     "pydantic-settings>=2.5.0",
     "yoyo-migrations>=9.0.0",
     "structlog>=24.4.0",
@@ -44,7 +45,7 @@ select = ["E", "F", "I", "B", "UP", "RUF"]
 [tool.pyright]
 pythonVersion = "3.14"
 typeCheckingMode = "strict"
-include = ["server", "tests"]
+include = ["server", "ingest", "tests"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
