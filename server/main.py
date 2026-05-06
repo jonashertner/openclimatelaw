@@ -33,6 +33,16 @@ def build_mcp() -> FastMCP:
 
 
 def build_app() -> Starlette:
+    from server._logging import configure_logging
+    from server.settings import get_settings
+
+    try:
+        settings = get_settings()
+        configure_logging(level=settings.log_level, json=True)
+    except Exception:
+        # During test collection, settings may not be available yet
+        configure_logging(level="INFO", json=True)
+
     mcp = build_mcp()
     mcp_app = mcp.http_app()
 
