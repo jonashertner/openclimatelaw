@@ -48,7 +48,7 @@ jobs:
         run: uv run pyright
 
       - name: Apply migrations
-        run: uv run yoyo apply --batch --database "$DATABASE_URL" migrations
+        run: uv run yoyo apply --batch --database "postgresql+psycopg://openclimate:dev@localhost:5432/openclimate" migrations
 
       - name: Run tests
         run: uv run pytest -v

@@ -8,24 +8,16 @@ async def test_minimum_vocabularies_seeded():
     pool = await get_pool()
     async with pool.connection() as conn:
         async with conn.cursor() as cur:
-            await cur.execute(
-                "SELECT code FROM vocabulary_jurisdiction WHERE code = 'NL'"
-            )
+            await cur.execute("SELECT code FROM vocabulary_jurisdiction WHERE code = 'NL'")
             assert (await cur.fetchone()) is not None
 
-            await cur.execute(
-                "SELECT id FROM vocabulary_court WHERE id = 'nl-hoge-raad'"
-            )
+            await cur.execute("SELECT id FROM vocabulary_court WHERE id = 'nl-hoge-raad'")
             assert (await cur.fetchone()) is not None
 
-            await cur.execute(
-                "SELECT code FROM vocabulary_status WHERE code = 'decided'"
-            )
+            await cur.execute("SELECT code FROM vocabulary_status WHERE code = 'decided'")
             assert (await cur.fetchone()) is not None
 
-            await cur.execute(
-                "SELECT code FROM vocabulary_outcome WHERE code = 'plaintiff_won'"
-            )
+            await cur.execute("SELECT code FROM vocabulary_outcome WHERE code = 'plaintiff_won'")
             assert (await cur.fetchone()) is not None
 
             await cur.execute(

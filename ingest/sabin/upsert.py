@@ -44,13 +44,9 @@ async def upsert_case(pool: AsyncConnectionPool, parsed: ParsedCase) -> str:
                 case_id: str = str(row[0])
 
                 await cur.execute("DELETE FROM case_party WHERE case_id = %s", (case_id,))
-                await cur.execute(
-                    "DELETE FROM case_claim_type WHERE case_id = %s", (case_id,)
-                )
+                await cur.execute("DELETE FROM case_claim_type WHERE case_id = %s", (case_id,))
                 await cur.execute("DELETE FROM document WHERE case_id = %s", (case_id,))
-                await cur.execute(
-                    "DELETE FROM citation_string WHERE case_id = %s", (case_id,)
-                )
+                await cur.execute("DELETE FROM citation_string WHERE case_id = %s", (case_id,))
 
                 for party in parsed.parties:
                     await cur.execute(

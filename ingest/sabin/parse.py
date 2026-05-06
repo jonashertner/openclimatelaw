@@ -84,9 +84,7 @@ def parse_sabin_record(
 
     citation_strings: list[dict[str, Any]] = []
     for cs in record.citation_strings:
-        citation_strings.append(
-            {"lang": cs.lang, "format": cs.format, "text": cs.text}
-        )
+        citation_strings.append({"lang": cs.lang, "format": cs.format, "text": cs.text})
 
     return ParsedCase(
         case=case,

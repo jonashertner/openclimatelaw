@@ -17,7 +17,7 @@ uv sync
 
 # 3. Apply migrations
 uv run yoyo apply --batch \
-    --database "postgresql://openclimate:dev@localhost:5432/openclimate" \
+    --database "postgresql+psycopg://openclimate:dev@localhost:5432/openclimate" \
     migrations
 
 # 4. Run tests

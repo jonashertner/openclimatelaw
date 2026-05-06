@@ -23,9 +23,20 @@ async def get_case(case_id_or_sabin_id: str) -> dict[str, Any] | None:
             if row is None:
                 return None
             (
-                _id, sabin_id, canonical_title, jurisdiction_code, court_id,
-                filing_date, decision_date, status_code, outcome_code,
-                summary, summary_lang, primary_source, provenance, updated_at,
+                _id,
+                sabin_id,
+                canonical_title,
+                jurisdiction_code,
+                court_id,
+                filing_date,
+                decision_date,
+                status_code,
+                outcome_code,
+                summary,
+                summary_lang,
+                primary_source,
+                provenance,
+                updated_at,
             ) = row
 
             await cur.execute(
@@ -77,8 +88,7 @@ async def get_case(case_id_or_sabin_id: str) -> dict[str, Any] | None:
                 (str(_id),),
             )
             citation_strings = [
-                {"lang": r[0], "format": r[1], "text": r[2]}
-                for r in await cur.fetchall()
+                {"lang": r[0], "format": r[1], "text": r[2]} for r in await cur.fetchall()
             ]
 
     return {

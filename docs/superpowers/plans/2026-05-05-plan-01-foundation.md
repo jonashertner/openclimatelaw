@@ -143,7 +143,7 @@ See `docs/superpowers/specs/2026-05-05-openclimatelaw-mcp-design.md` for the des
 ```bash
 docker compose up -d postgres
 uv sync
-uv run yoyo apply --database "postgresql://openclimate:dev@localhost:5432/openclimate" migrations
+uv run yoyo apply --database "postgresql+psycopg://openclimate:dev@localhost:5432/openclimate" migrations
 uv run python -m server.main
 ```
 ```
@@ -523,7 +523,7 @@ CREATE TABLE vocabulary_document_category (
 Run:
 
 ```bash
-uv run yoyo apply --batch --database "postgresql://openclimate:dev@localhost:5432/openclimate" migrations
+uv run yoyo apply --batch --database "postgresql+psycopg://openclimate:dev@localhost:5432/openclimate" migrations
 ```
 
 Expected: applies migration 0001; output ends with "applied 1 migration".
@@ -649,7 +649,7 @@ CREATE INDEX citation_string_text_idx ON citation_string(text);
 Run:
 
 ```bash
-uv run yoyo apply --batch --database "postgresql://openclimate:dev@localhost:5432/openclimate" migrations
+uv run yoyo apply --batch --database "postgresql+psycopg://openclimate:dev@localhost:5432/openclimate" migrations
 ```
 
 Expected: applies migration 0002.
@@ -749,7 +749,7 @@ CREATE INDEX document_translation_fts_idx ON document
 Run:
 
 ```bash
-uv run yoyo apply --batch --database "postgresql://openclimate:dev@localhost:5432/openclimate" migrations
+uv run yoyo apply --batch --database "postgresql+psycopg://openclimate:dev@localhost:5432/openclimate" migrations
 uv run pytest tests/test_migrations.py -v
 ```
 
@@ -841,7 +841,7 @@ CREATE TABLE case_statute (
 Run:
 
 ```bash
-uv run yoyo apply --batch --database "postgresql://openclimate:dev@localhost:5432/openclimate" migrations
+uv run yoyo apply --batch --database "postgresql+psycopg://openclimate:dev@localhost:5432/openclimate" migrations
 uv run pytest tests/test_migrations.py -v
 ```
 
@@ -919,7 +919,7 @@ CREATE INDEX citation_edge_cited_idx ON citation_edge(cited_case_id);
 Run:
 
 ```bash
-uv run yoyo apply --batch --database "postgresql://openclimate:dev@localhost:5432/openclimate" migrations
+uv run yoyo apply --batch --database "postgresql+psycopg://openclimate:dev@localhost:5432/openclimate" migrations
 uv run pytest tests/test_migrations.py -v
 ```
 
@@ -992,7 +992,7 @@ CREATE INDEX merge_candidate_pair_idx ON merge_candidate(case_id_a, case_id_b);
 Run:
 
 ```bash
-uv run yoyo apply --batch --database "postgresql://openclimate:dev@localhost:5432/openclimate" migrations
+uv run yoyo apply --batch --database "postgresql+psycopg://openclimate:dev@localhost:5432/openclimate" migrations
 uv run pytest tests/test_migrations.py -v
 ```
 
@@ -1066,7 +1066,7 @@ CREATE INDEX statute_embedding_hnsw_idx ON statute
 Run:
 
 ```bash
-uv run yoyo apply --batch --database "postgresql://openclimate:dev@localhost:5432/openclimate" migrations
+uv run yoyo apply --batch --database "postgresql+psycopg://openclimate:dev@localhost:5432/openclimate" migrations
 uv run pytest tests/test_migrations.py -v
 ```
 
@@ -1588,7 +1588,7 @@ Expected: `postgres` healthy, `server` running.
 Run:
 
 ```bash
-uv run yoyo apply --batch --database "postgresql://openclimate:dev@localhost:5432/openclimate" migrations
+uv run yoyo apply --batch --database "postgresql+psycopg://openclimate:dev@localhost:5432/openclimate" migrations
 curl -s http://localhost:8000/health | jq
 ```
 
@@ -1729,7 +1729,7 @@ git commit -m "ci: GitHub Actions — lint, typecheck, migrations, tests"
 ```bash
 docker compose down -v
 docker compose up -d postgres
-uv run yoyo apply --batch --database "postgresql://openclimate:dev@localhost:5432/openclimate" migrations
+uv run yoyo apply --batch --database "postgresql+psycopg://openclimate:dev@localhost:5432/openclimate" migrations
 uv run pytest -v
 docker compose up -d --build server
 sleep 3

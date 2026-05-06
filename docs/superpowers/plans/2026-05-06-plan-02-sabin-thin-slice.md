@@ -245,7 +245,7 @@ Run:
 ```bash
 uv run pytest -v
 docker compose up -d postgres
-uv run yoyo apply --batch --database "postgresql://openclimate:dev@localhost:5432/openclimate" migrations
+uv run yoyo apply --batch --database "postgresql+psycopg://openclimate:dev@localhost:5432/openclimate" migrations
 DATABASE_URL=postgresql://openclimate:dev@localhost:5432/openclimate uv run python -c "from server.main import build_app; build_app(); print('ok')"
 ```
 
@@ -779,7 +779,7 @@ ON CONFLICT (code) DO NOTHING;
 Run:
 
 ```bash
-uv run yoyo apply --batch --database "postgresql://openclimate:dev@localhost:5432/openclimate" migrations
+uv run yoyo apply --batch --database "postgresql+psycopg://openclimate:dev@localhost:5432/openclimate" migrations
 uv run pytest tests/test_seed_vocabularies.py -v
 ```
 
@@ -1684,7 +1684,7 @@ git commit -m "test: e2e — ingest Urgenda fixture, query via FastMCP Client"
 ```bash
 docker compose down -v
 docker compose up -d postgres
-uv run yoyo apply --batch --database "postgresql://openclimate:dev@localhost:5432/openclimate" migrations
+uv run yoyo apply --batch --database "postgresql+psycopg://openclimate:dev@localhost:5432/openclimate" migrations
 uv run pytest -v
 DATABASE_URL=postgresql://openclimate:dev@localhost:5432/openclimate \
   uv run python -m ingest.sabin.ingest_one tests/fixtures/sabin_urgenda.json

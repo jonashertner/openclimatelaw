@@ -18,15 +18,11 @@ async def _cleanup_urgenda() -> AsyncGenerator[None]:  # pyright: ignore[reportU
     """Remove any Urgenda row (and cascaded children) before and after each test."""
     pool = await get_pool()
     async with pool.connection() as conn:
-        await conn.execute(
-            "DELETE FROM case_record WHERE sabin_id = %s", (URGENDA_SABIN_ID,)
-        )
+        await conn.execute("DELETE FROM case_record WHERE sabin_id = %s", (URGENDA_SABIN_ID,))
     yield
     pool = await get_pool()
     async with pool.connection() as conn:
-        await conn.execute(
-            "DELETE FROM case_record WHERE sabin_id = %s", (URGENDA_SABIN_ID,)
-        )
+        await conn.execute("DELETE FROM case_record WHERE sabin_id = %s", (URGENDA_SABIN_ID,))
     await close_pool()
 
 
@@ -49,40 +45,30 @@ async def test_upsert_inserts_new_case(parsed_urgenda: ParsedCase) -> None:
 
     async with pool.connection() as conn:
         async with conn.cursor() as cur:
-            await cur.execute(
-                "SELECT canonical_title FROM case_record WHERE id = %s", (case_id,)
-            )
+            await cur.execute("SELECT canonical_title FROM case_record WHERE id = %s", (case_id,))
             row = await cur.fetchone()
             assert row is not None
             assert "Urgenda" in row[0]
 
-            await cur.execute(
-                "SELECT count(*) FROM case_party WHERE case_id = %s", (case_id,)
-            )
+            await cur.execute("SELECT count(*) FROM case_party WHERE case_id = %s", (case_id,))
             count_row = await cur.fetchone()
             assert count_row is not None
             (n_parties,) = count_row
             assert n_parties == 3
 
-            await cur.execute(
-                "SELECT count(*) FROM case_claim_type WHERE case_id = %s", (case_id,)
-            )
+            await cur.execute("SELECT count(*) FROM case_claim_type WHERE case_id = %s", (case_id,))
             count_row = await cur.fetchone()
             assert count_row is not None
             (n_claims,) = count_row
             assert n_claims == 3
 
-            await cur.execute(
-                "SELECT count(*) FROM document WHERE case_id = %s", (case_id,)
-            )
+            await cur.execute("SELECT count(*) FROM document WHERE case_id = %s", (case_id,))
             count_row = await cur.fetchone()
             assert count_row is not None
             (n_docs,) = count_row
             assert n_docs == 3
 
-            await cur.execute(
-                "SELECT count(*) FROM citation_string WHERE case_id = %s", (case_id,)
-            )
+            await cur.execute("SELECT count(*) FROM citation_string WHERE case_id = %s", (case_id,))
             count_row = await cur.fetchone()
             assert count_row is not None
             (n_cite,) = count_row
@@ -108,9 +94,7 @@ async def test_upsert_is_idempotent(parsed_urgenda: ParsedCase) -> None:
             (n,) = count_row
             assert n == 1
 
-            await cur.execute(
-                "SELECT count(*) FROM case_party WHERE case_id = %s", (case_id_1,)
-            )
+            await cur.execute("SELECT count(*) FROM case_party WHERE case_id = %s", (case_id_1,))
             count_row = await cur.fetchone()
             assert count_row is not None
             (n_parties,) = count_row
