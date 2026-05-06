@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: openclimate
+          POSTGRES_PASSWORD: dev
+          POSTGRES_DB: openclimate
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U openclimate -d openclimate"
+          --health-interval 2s
+          --health-timeout 2s
+          --health-retries 20
+    env:
+      DATABASE_URL: postgresql://openclimate:dev@localhost:5432/openclimate
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "0.5.4"
+
+      - name: Set Python version
+        run: uv python install 3.14
+
+      - name: Sync dependencies
+        run: uv sync --frozen
+
+      - name: Lint
+        run: uv run ruff check .
+
+      - name: Format check
+        run: uv run ruff format --check .
+
+      - name: Typecheck
+        run: uv run pyright
+
+      - name: Apply migrations
+        run: uv run yoyo apply --batch --database "$DATABASE_URL" migrations
+
+      - name: Run tests
+        run: uv run pytest -v
