@@ -73,9 +73,7 @@ def build_mcp() -> FastMCP:
     async def check_claim_support_tool(  # pyright: ignore[reportUnusedFunction]
         quote: str, source_id: str, source_kind: str
     ) -> dict[str, object]:
-        return await _check_claim_support(
-            quote=quote, source_id=source_id, source_kind=source_kind
-        )
+        return await _check_claim_support(quote=quote, source_id=source_id, source_kind=source_kind)
 
     @mcp.tool(
         name="attest_response",

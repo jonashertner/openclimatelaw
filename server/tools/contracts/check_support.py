@@ -21,8 +21,7 @@ async def check_claim_support(quote: str, source_id: str, source_kind: str) -> d
     """
     if source_kind not in VALID_SOURCE_KINDS:
         raise ValueError(
-            f"invalid source_kind: {source_kind!r} "
-            f"(must be one of {sorted(VALID_SOURCE_KINDS)})"
+            f"invalid source_kind: {source_kind!r} (must be one of {sorted(VALID_SOURCE_KINDS)})"
         )
 
     pool = await get_pool()

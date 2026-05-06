@@ -58,9 +58,7 @@ async def attest_response(draft_text: str, retrieved_ids: list[str]) -> dict[str
                 "format": span.format_name,
                 "text": span.text,
                 "span": [span.start, span.end],
-                "reason": (
-                    "citation-shaped string not present in retrieved citation_strings"
-                ),
+                "reason": ("citation-shaped string not present in retrieved citation_strings"),
             }
         )
 
