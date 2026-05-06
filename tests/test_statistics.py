@@ -25,13 +25,13 @@ async def test_statistics_group_by_jurisdiction_returns_empty_list_when_no_data(
 @pytest.mark.asyncio
 async def test_statistics_invalid_scope_raises():
     with pytest.raises(ValueError, match="invalid scope"):
-        await get_statistics(scope="bogus", group_by=None)
+        await get_statistics(scope="bogus", group_by=None)  # type: ignore[arg-type]
 
 
 @pytest.mark.asyncio
 async def test_statistics_invalid_group_by_raises():
     with pytest.raises(ValueError, match="invalid group_by"):
-        await get_statistics(scope="all", group_by="bogus")
+        await get_statistics(scope="all", group_by="bogus")  # type: ignore[arg-type]
 
 
 @pytest.mark.asyncio

@@ -10,6 +10,7 @@ from starlette.routing import Mount, Route
 def build_mcp() -> FastMCP:
     mcp = FastMCP(name="openclimatelaw")
 
+    from server.tools.statistics import GroupBy, Scope
     from server.tools.statistics import get_statistics as _get_statistics
 
     @mcp.tool(
@@ -23,8 +24,8 @@ def build_mcp() -> FastMCP:
         ),
     )
     async def get_statistics_tool(  # pyright: ignore[reportUnusedFunction]
-        scope: str = "all",
-        group_by: str | None = None,
+        scope: Scope = "all",
+        group_by: GroupBy | None = None,
     ) -> dict[str, object]:
         return await _get_statistics(scope=scope, group_by=group_by)
 
@@ -43,12 +44,10 @@ def build_app() -> Starlette:
             }
         )
 
-    mcp_app.add_route("/health", health)
-
     return Starlette(
         routes=[
-            Mount("/", app=mcp_app),
             Route("/health", health),
+            Mount("/", app=mcp_app),
         ],
         lifespan=mcp_app.lifespan,
     )

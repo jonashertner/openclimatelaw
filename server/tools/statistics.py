@@ -10,8 +10,8 @@ VALID_GROUP_BY = {"jurisdiction", "claim_type", "year", "status", "outcome"}
 
 
 async def get_statistics(
-    scope: str = "all",
-    group_by: str | None = None,
+    scope: Scope = "all",
+    group_by: GroupBy | None = None,
 ) -> dict[str, Any]:
     """Return structured statistics over the corpus.
 
