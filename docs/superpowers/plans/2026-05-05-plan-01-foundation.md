@@ -1605,7 +1605,7 @@ import asyncio
 from fastmcp import Client
 
 async def main():
-    async with Client("http://localhost:8000/") as client:
+    async with Client("http://localhost:8000/mcp") as client:
         tools = await client.list_tools()
         print("tools:", [t.name for t in tools])
         result = await client.call_tool("get_statistics", {"scope": "all"})
@@ -1741,7 +1741,7 @@ import asyncio
 from fastmcp import Client
 
 async def main():
-    async with Client("http://localhost:8000/") as client:
+    async with Client("http://localhost:8000/mcp") as client:
         tools = await client.list_tools()
         names = [t.name for t in tools]
         assert "get_statistics" in names, names
