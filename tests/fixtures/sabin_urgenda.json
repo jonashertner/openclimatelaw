@@ -1,0 +1,47 @@
+{
+  "sabin_id": "urgenda-foundation-v-state-of-the-netherlands",
+  "canonical_title": "Urgenda Foundation v. State of the Netherlands",
+  "jurisdiction_code": "NL",
+  "court_id": "nl-hoge-raad",
+  "filing_date": "2013-11-20",
+  "decision_date": "2019-12-20",
+  "status_code": "decided",
+  "outcome_code": "plaintiff_won",
+  "summary": "Urgenda and 886 individual co-plaintiffs sued the Dutch state to compel emissions reductions of at least 25% below 1990 levels by 2020. The Hague District Court (2015) ordered the state to reduce emissions by 25% by end-2020. The Court of Appeal (2018) and the Supreme Court (Hoge Raad, 2019) affirmed. The Supreme Court grounded the order in articles 2 and 8 of the European Convention on Human Rights, finding the state had a positive obligation to protect the right to life and the right to family life from the dangers of climate change.",
+  "summary_lang": "en",
+  "parties": [
+    {"name": "Urgenda Foundation", "side": "plaintiff", "party_type": "ngo"},
+    {"name": "886 Individual Co-Plaintiffs", "side": "plaintiff", "party_type": "individual"},
+    {"name": "State of the Netherlands", "side": "defendant", "party_type": "state"}
+  ],
+  "claim_types": [
+    "human_rights",
+    "constitutional",
+    "tort"
+  ],
+  "documents": [
+    {
+      "title": "The Hague District Court Judgment (24 June 2015)",
+      "category": "opinion",
+      "upstream_url": "https://climatecasechart.com/non-us-case/urgenda-foundation-v-kingdom-of-the-netherlands/",
+      "filed_date": "2015-06-24"
+    },
+    {
+      "title": "The Hague Court of Appeal Judgment (9 October 2018)",
+      "category": "opinion",
+      "upstream_url": "https://climatecasechart.com/non-us-case/urgenda-foundation-v-kingdom-of-the-netherlands/",
+      "filed_date": "2018-10-09"
+    },
+    {
+      "title": "Hoge Raad (Supreme Court) Judgment (20 December 2019)",
+      "category": "opinion",
+      "upstream_url": "https://climatecasechart.com/non-us-case/urgenda-foundation-v-kingdom-of-the-netherlands/",
+      "filed_date": "2019-12-20"
+    }
+  ],
+  "citation_strings": [
+    {"lang": "en", "format": "sabin", "text": "Urgenda Foundation v. State of the Netherlands, ECLI:NL:HR:2019:2007 (Hoge Raad, 20 Dec 2019)"},
+    {"lang": "nl", "format": "native", "text": "HR 20 december 2019, ECLI:NL:HR:2019:2007 (Urgenda)"}
+  ],
+  "upstream_url": "https://climatecasechart.com/non-us-case/urgenda-foundation-v-kingdom-of-the-netherlands/"
+}
