@@ -32,7 +32,31 @@ docker compose up -d --build
 curl http://localhost:8000/health
 ```
 
+## Ingest a case
+
+Plan 2 ships a fixture-based single-case ingestion. From a running stack:
+
+```bash
+DATABASE_URL=postgresql://openclimate:dev@localhost:5432/openclimate \
+  uv run python -m ingest.sabin.ingest_one tests/fixtures/sabin_urgenda.json
+```
+
+Then query through the MCP server:
+
+```bash
+DATABASE_URL=postgresql://openclimate:dev@localhost:5432/openclimate \
+uv run python -c '
+import asyncio
+from fastmcp import Client
+async def m():
+    async with Client("http://localhost:8000/mcp") as c:
+        r = await c.call_tool("get_case", {"case_id_or_sabin_id": "urgenda-foundation-v-state-of-the-netherlands"})
+        print(r.structured_content["result"]["canonical_title"])
+asyncio.run(m())
+'
+```
+
 ## Project status
 
-Plan 1 (Foundation) complete: schema + minimal MCP server + `get_statistics` tool.
-Next: Plan 2 — Sabin ingestion thin slice. See `docs/superpowers/plans/`.
+Plans 1 and 2 complete: schema, MCP server, `get_statistics` and `get_case` tools, fixture-based Sabin ingestion (Urgenda v. Netherlands).
+Next: Plan 2.5 — replace fixture with live Climate Policy Radar API client. See `docs/superpowers/plans/`.
