@@ -29,6 +29,21 @@ def build_mcp() -> FastMCP:
     ) -> dict[str, object]:
         return await _get_statistics(scope=scope, group_by=group_by)
 
+    from server.tools.cases import get_case as _get_case
+
+    @mcp.tool(
+        name="get_case",
+        description=(
+            "Return a full case record by canonical UUID or by Sabin ID. "
+            "Includes parties, claim types, documents (with upstream URLs), "
+            "citation strings, and field-level provenance. Returns null when no case matches."
+        ),
+    )
+    async def get_case_tool(  # pyright: ignore[reportUnusedFunction]
+        case_id_or_sabin_id: str,
+    ) -> dict[str, object] | None:
+        return await _get_case(case_id_or_sabin_id)
+
     return mcp
 
 
