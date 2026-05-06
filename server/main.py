@@ -44,6 +44,52 @@ def build_mcp() -> FastMCP:
     ) -> dict[str, object] | None:
         return await _get_case(case_id_or_sabin_id)
 
+    from server.tools.contracts.attest import attest_response as _attest_response
+    from server.tools.contracts.check_support import check_claim_support as _check_claim_support
+    from server.tools.contracts.cite import cite as _cite
+
+    @mcp.tool(
+        name="cite",
+        description=(
+            "Return the canonical citation_string for a case in the requested language "
+            "and format. Requires a valid case_id (UUID or sabin_id). The R1 contract: "
+            "never construct citations from training data; always call this tool to get a "
+            "verbatim citation_string from a previously-retrieved case."
+        ),
+    )
+    async def cite_tool(  # pyright: ignore[reportUnusedFunction]
+        case_id: str, lang: str, format: str
+    ) -> dict[str, object] | None:
+        return await _cite(case_id=case_id, lang=lang, format=format)
+
+    @mcp.tool(
+        name="check_claim_support",
+        description=(
+            "Validate that a quoted string appears verbatim in the named source's text. "
+            "source_kind: 'case_summary' | 'document_text' | 'citation_string'. "
+            "The R2 contract: never quote what wasn't retrieved."
+        ),
+    )
+    async def check_claim_support_tool(  # pyright: ignore[reportUnusedFunction]
+        quote: str, source_id: str, source_kind: str
+    ) -> dict[str, object]:
+        return await _check_claim_support(
+            quote=quote, source_id=source_id, source_kind=source_kind
+        )
+
+    @mcp.tool(
+        name="attest_response",
+        description=(
+            "Scan a draft response for citation-shaped strings and flag any that don't "
+            "appear in the citation_strings of retrieved cases. Returns "
+            "{passed: bool, violations: [...]}. The R1 contract enforced after-the-fact."
+        ),
+    )
+    async def attest_response_tool(  # pyright: ignore[reportUnusedFunction]
+        draft_text: str, retrieved_ids: list[str]
+    ) -> dict[str, object]:
+        return await _attest_response(draft_text=draft_text, retrieved_ids=retrieved_ids)
+
     return mcp
 
 
