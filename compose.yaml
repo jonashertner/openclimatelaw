@@ -15,5 +15,16 @@ services:
       timeout: 2s
       retries: 20
 
+  server:
+    build: .
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://openclimate:dev@postgres:5432/openclimate
+      LOG_LEVEL: INFO
+    ports:
+      - "8000:8000"
+
 volumes:
   openclimate-pg:

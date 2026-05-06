@@ -43,11 +43,14 @@ def build_app() -> Starlette:
             }
         )
 
+    mcp_app.add_route("/health", health)
+
     return Starlette(
         routes=[
-            Route("/health", health),
             Mount("/", app=mcp_app),
-        ]
+            Route("/health", health),
+        ],
+        lifespan=mcp_app.lifespan,
     )
 
 
