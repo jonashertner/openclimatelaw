@@ -8,15 +8,8 @@ import pytest
 from ingest.sabin.models import SabinCaseRecord
 from ingest.sabin.parse import parse_sabin_record
 from ingest.sabin.upsert import upsert_case
-from server.db import close_pool, get_pool
+from server.db import get_pool
 from server.tools.cases import get_case
-
-
-@pytest.fixture(autouse=True)
-async def _teardown_pool() -> AsyncGenerator[None]:  # pyright: ignore[reportUnusedFunction]
-    """Close the connection pool after each test so the next test gets a fresh pool."""
-    yield
-    await close_pool()
 
 
 @pytest.fixture

@@ -8,7 +8,7 @@ import pytest
 from ingest.sabin.models import SabinCaseRecord
 from ingest.sabin.parse import ParsedCase, parse_sabin_record
 from ingest.sabin.upsert import upsert_case
-from server.db import close_pool, get_pool
+from server.db import get_pool
 
 URGENDA_SABIN_ID = "urgenda-foundation-v-state-of-the-netherlands"
 
@@ -23,7 +23,6 @@ async def _cleanup_urgenda() -> AsyncGenerator[None]:  # pyright: ignore[reportU
     pool = await get_pool()
     async with pool.connection() as conn:
         await conn.execute("DELETE FROM case_record WHERE sabin_id = %s", (URGENDA_SABIN_ID,))
-    await close_pool()
 
 
 @pytest.fixture
