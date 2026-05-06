@@ -3,8 +3,8 @@ from dataclasses import dataclass
 
 _PATTERNS: dict[str, re.Pattern[str]] = {
     # ECLI: European Case Law Identifier. Country (2 letters), Court (1-7 alnum),
-    # Year (4 digits), ordinal (1-25 alnum chars).
-    "ecli": re.compile(r"\bECLI:[A-Z]{2}:[A-Z0-9]{1,7}:\d{4}:[A-Z0-9.]{1,25}\b"),
+    # Year (4 digits), ordinal (1-25 alnum chars, case-insensitive).
+    "ecli": re.compile(r"\bECLI:[A-Z]{2}:[A-Z0-9]{1,7}:\d{4}:[A-Za-z0-9.]{1,25}\b"),
     # BVerfGE: German Federal Constitutional Court. "BVerfGE 157, 30" or "BVerfGE 157, 30 (1)".
     "bverfge": re.compile(r"\bBVerfGE\s+\d{1,3},\s*\d{1,4}(?:\s*\(\d+\))?\b"),
     # BGE: Swiss Federal Court. "BGE 145 IV 100".
