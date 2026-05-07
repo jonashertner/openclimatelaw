@@ -26,25 +26,51 @@ from typing import Any
 from server.db import get_pool
 
 
+_QUERY_EMBEDDER = None  # lazily loaded SentenceTransformer
+
+
+def _embed_query(text: str) -> list[float] | None:
+    """Encode the query into a 384-dim vector. Returns None if model unavailable."""
+    global _QUERY_EMBEDDER
+    try:
+        if _QUERY_EMBEDDER is None:
+            from sentence_transformers import SentenceTransformer
+
+            _QUERY_EMBEDDER = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
+        emb = _QUERY_EMBEDDER.encode([text], normalize_embeddings=True)[0]
+        return [float(x) for x in emb]
+    except Exception:
+        return None
+
+
 async def search_cases(
     query: str,
     jurisdiction: str | None = None,
     claim_type: str | None = None,
     status: str | None = None,
     limit: int = 20,
+    semantic: bool = True,
 ) -> dict[str, Any]:
-    """Search cases by free-text against title + summary, with optional filters."""
+    """Hybrid search: FTS + trigram + (optional) vector cosine similarity."""
     if not query or not query.strip():
         raise ValueError("query must be non-empty")
     limit = max(1, min(50, int(limit)))
 
+    # Encode query for vector search; fall back gracefully if model unavailable.
+    qvec_literal: str | None = None
+    if semantic:
+        qvec = _embed_query(query)
+        if qvec is not None:
+            qvec_literal = "[" + ",".join(f"{v:.7f}" for v in qvec) + "]"
+
     pool = await get_pool()
     async with pool.connection() as conn:
         async with conn.cursor() as cur:
-            # Hybrid: FTS over title+summary OR trigram similarity on title.
-            # FTS rank is scaled (x10) so strong topic matches outrank weak
-            # fuzzy matches. Trigram threshold of 0.2 catches reasonable typos
-            # without flooding results with unrelated cases.
+            # Hybrid scoring:
+            #   fts_rank      — Postgres FTS over title || ' ' || summary
+            #   trgm_sim      — pg_trgm similarity on canonical_title (typo-tolerant)
+            #   vector_sim    — (1 - cosine_distance) on case_record.embedding (semantic)
+            #   rank          — GREATEST of the three (with appropriate scaling)
             sql = """
                 WITH q AS (
                     SELECT
@@ -74,6 +100,10 @@ async def search_cases(
                             (SELECT tsq FROM q)
                         ) AS fts_rank,
                         similarity(c.canonical_title, (SELECT qstr FROM q)) AS trgm_sim,
+                        CASE WHEN %(qvec)s::text IS NULL OR c.embedding IS NULL
+                             THEN NULL
+                             ELSE 1 - (c.embedding <=> %(qvec)s::vector)
+                        END AS vector_sim,
                         GREATEST(
                             ts_rank(
                                 to_tsvector(
@@ -82,7 +112,11 @@ async def search_cases(
                                 ),
                                 (SELECT tsq FROM q)
                             ) * 10.0,
-                            similarity(c.canonical_title, (SELECT qstr FROM q))
+                            similarity(c.canonical_title, (SELECT qstr FROM q)),
+                            CASE WHEN %(qvec)s::text IS NULL OR c.embedding IS NULL
+                                 THEN 0
+                                 ELSE 1 - (c.embedding <=> %(qvec)s::vector)
+                            END
                         ) AS rank
                     FROM case_record c, q
                     WHERE
@@ -92,6 +126,10 @@ async def search_cases(
                                 c.canonical_title || ' ' || coalesce(c.summary, '')
                             ) @@ q.tsq
                             OR similarity(c.canonical_title, q.qstr) > 0.2
+                            OR (
+                                %(qvec)s::text IS NOT NULL AND c.embedding IS NOT NULL
+                                AND (1 - (c.embedding <=> %(qvec)s::vector)) > 0.4
+                            )
                         )
                         AND (%(jurisdiction)s::text IS NULL OR c.jurisdiction_code = %(jurisdiction)s::text)
                         AND (%(status)s::text IS NULL OR c.status_code = %(status)s::text)
@@ -110,6 +148,7 @@ async def search_cases(
                 sql,
                 {
                     "query": query,
+                    "qvec": qvec_literal,
                     "jurisdiction": jurisdiction,
                     "claim_type": claim_type,
                     "status": status,
@@ -131,7 +170,8 @@ async def search_cases(
             "citation_string": r[8],
             "fts_rank": float(r[9]) if r[9] is not None else 0.0,
             "trigram_sim": float(r[10]) if r[10] is not None else 0.0,
-            "rank": float(r[11]) if r[11] is not None else 0.0,
+            "vector_sim": float(r[11]) if r[11] is not None else None,
+            "rank": float(r[12]) if r[12] is not None else 0.0,
         }
         for r in rows
     ]
