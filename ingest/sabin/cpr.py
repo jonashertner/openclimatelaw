@@ -1,24 +1,29 @@
 # pyright: basic
-"""Bulk Sabin ingestion via Climate Policy Radar's public API.
+"""DEPRECATED — direct-from-source scraper has replaced this.
 
-Source: https://api.climatepolicyradar.org/families/?corpus.import_id=Academic.corpus.Litigation.n0000
-Licence: CC-BY 4.0 (per https://app.climatepolicyradar.org/terms-of-use)
+This module's `bulk_ingest()` orchestrator is no longer invoked. We've moved
+to `ingest.sabin.scraper` which scrapes www.climatecasechart.com directly
+(parsing the same family record from the page's __NEXT_DATA__ JSON, plus
+downloading PDFs from climatecasechart.com/wp-content/uploads/...).
 
-Pipeline:
-1. Paginate the families endpoint (4,830 cases as of 2026-05).
-2. For each family, auto-upsert any missing vocabulary rows.
-3. UPSERT the case + parties + claim_types + documents + citation_strings.
+Why deprecated:
+- We don't want a third-party API (CPR) as a hard dependency.
+- The Sabin website + WordPress-uploaded PDFs are the durable source-of-truth.
+- Bulk distribution via HF dataset is the canonical artifact, not API polling.
 
-Mapping CPR's shape → our canonical schema:
-- import_id ("Sabin.family.9998.0")    → sabin_id
-- title                                 → canonical_title
-- summary                               → summary
-- geographies[0]                        → jurisdiction_code (ISO alpha-3, normalized)
-- concepts[relation=jurisdiction, top]  → court_id (slugified)
-- concepts[relation=category]           → claim_types (slugified)
-- metadata.status[0]                    → status_code (free-text → enum)
-- documents[]                           → document rows (with upstream_url synthesized)
-- organisation_attribution_url          → citation_string + provenance.source_url
+Helper functions kept here are still used by the new scraper because the
+JSON shape of the embedded __NEXT_DATA__ family record is identical to the
+CPR API response — Sabin's site is rendered by the same backend, but we
+consume the rendered HTML, not the API:
+
+- parse_family_record (reused; was parse_cpr_family)
+- autoupsert_vocabularies (reused)
+- upsert_parsed_case_minimal (reused; extended to optionally write document text)
+- slugify, map_status_freetext_to_code, alpha3_to_alpha2, _parse_date (reused)
+
+The constants below (CPR_API_BASE, DEFAULT_CORPUS_ID, fetch_families_page,
+iter_all_families, bulk_ingest) are kept for archive value but should not
+be invoked in production code paths.
 """
 
 from __future__ import annotations
@@ -155,10 +160,15 @@ def extract_concepts(concepts: list[dict[str, Any]], relation: str) -> list[dict
     return [c for c in concepts if c.get("relation") == relation]
 
 
-def parse_cpr_family(
+def parse_family_record(
     family: dict[str, Any], retrieved_at: datetime, upstream_version: str
 ) -> ParsedCase | None:
-    """Translate one CPR family record into our canonical ParsedCase.
+    """Translate one Sabin/CPR family record into our canonical ParsedCase.
+
+    Used by both ingest.sabin.cpr.bulk_ingest (deprecated) and
+    ingest.sabin.scraper.scrape_one_case (current). The JSON shape is
+    identical; the only difference is whether it came from CPR's API or
+    from __NEXT_DATA__ embedded in a climatecasechart.com case page.
 
     Returns None if the record is malformed (skip rather than crash on bulk run).
     """
@@ -466,9 +476,10 @@ async def upsert_parsed_case_minimal(pool: AsyncConnectionPool, parsed: ParsedCa
                         """
                         INSERT INTO document (
                             case_id, category_code, title, filed_date, filed_by,
-                            upstream_url, provenance, updated_at
+                            upstream_url, text, text_lang, text_extraction_method,
+                            provenance, updated_at
                         )
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, now())
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, now())
                         """,
                         (
                             case_id,
@@ -477,6 +488,9 @@ async def upsert_parsed_case_minimal(pool: AsyncConnectionPool, parsed: ParsedCa
                             doc["filed_date"],
                             doc["filed_by"],
                             doc["upstream_url"],
+                            doc.get("text"),
+                            doc.get("text_lang"),
+                            doc.get("text_extraction_method"),
                             Jsonb(doc["provenance"]),
                         ),
                     )
@@ -521,7 +535,7 @@ async def bulk_ingest(
     async with httpx.AsyncClient() as client:
         async for family in iter_all_families(client, corpus_id=corpus_id):
             fetched += 1
-            pc = parse_cpr_family(family, retrieved_at, upstream_version)
+            pc = parse_family_record(family, retrieved_at, upstream_version)
             if pc is None:
                 skipped += 1
                 continue

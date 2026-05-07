@@ -34,6 +34,8 @@ services:
       SERVER_PORT: "8000"
     expose:
       - "8000"
+    volumes:
+      - openclimate-data:/app/data
     # No published port — Caddy reverse-proxies on the docker network.
 
   # One-shot migration runner. Use:  docker compose --profile migrate run --rm migrate
@@ -47,6 +49,8 @@ services:
         condition: service_healthy
     environment:
       DATABASE_URL: postgresql+psycopg://openclimate:${POSTGRES_PASSWORD}@postgres:5432/openclimate
+    volumes:
+      - openclimate-data:/app/data
     command:
       - uv
       - run
@@ -74,5 +78,6 @@ services:
 
 volumes:
   openclimate-pg:
+  openclimate-data:
   caddy-data:
   caddy-config:
