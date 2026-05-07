@@ -1,62 +1,72 @@
 # Outreach — Sabin Center for Climate Change Law
 
-**To:** Michael Burger (Executive Director) — `mb3331@columbia.edu` (verify on Columbia directory before sending)
-**Cc:** Maria Antonia Tigre (Director, Global Climate Litigation) — `mt2876@columbia.edu` (verify)
+**To:** Michael Burger (Executive Director) — `mb3331@columbia.edu` *(verify on Columbia directory before sending)*
+**Cc:** Maria Antonia Tigre (Director, Global Climate Litigation) — `mt2876@columbia.edu` *(verify)*
 **Bcc:** `manager@climatecasechart.com`
 **From:** `jh@jonashertner.com`
-**Subject:** OpenClimateLaw — a research-grade, citation-safe AI layer over the Climate Litigation Database
+**Subject:** A demonstration MCP layer over the Climate Litigation Database — for the Sabin Center's review
 
 ---
 
 Dear Michael, dear Maria Antonia,
 
-I am writing to introduce **OpenClimateLaw** ([openclimatelaw.org](https://openclimatelaw.org)) — a public, free research layer that makes the Sabin Center's Climate Litigation Database accessible to AI systems with verifiable, source-anchored citations — and to propose a deeper collaboration between our projects.
+I am Jonas Hertner, a lawyer, writing on behalf of [regenerative.law](https://regenerative.law). regenerative.law is the legal pillar of [regenerative.eco](https://regenerative.eco), an impact-investing initiative of a Switzerland-based family office. One of regenerative.eco's principal commitments is the promotion of climate litigation as a tool for accountability and transition — and within that commitment, we treat **accessibility of climate-case information** as a problem worth working on directly: not just funding the litigators, but making the global record of what has been argued and decided as widely and easily reachable as possible, both for human users and for the AI systems they increasingly use to do legal research.
 
-**A brief introduction.** I am Jonas Hertner, principal of [regenerative.law](https://regenerative.law), under whose sponsorship this work is undertaken. I also build and operate [opencaselaw.ch](https://opencaselaw.ch), a public legal-research platform covering 969,000+ Swiss federal and cantonal decisions, 5,510 federal laws, 15,722 cantonal laws, 1,058 scholarly commentaries, and a 9-million-edge citation graph, served as a public MCP endpoint at `mcp.opencaselaw.ch` and used by Swiss practitioners and academics. Both opencaselaw.ch and openclimatelaw.org share a single mission: **to make rigorously sourced primary legal materials usable by AI systems without sacrificing the attribution and verifiability that make them trustworthy in the first place.**
+It is in that context that we are writing to you. We place great value on the **Climate Litigation Database** — both for its substantive completeness and for the editorial care that distinguishes it from anything else in the field. Within the broader landscape of climate-litigation data, no other corpus comes close to it on taxonomy, principal-law cross-referencing, or curation of court documents. It is, in our view, the indispensable foundation.
 
-We anchored OpenClimateLaw on the Climate Litigation Database because, in our view, no other corpus of climate litigation comes close to matching it on editorial care: the taxonomy work, the principal-law cross-references, the curation of court documents. A research layer worth building deserves a foundation worth building on.
+## A suggestion — and a demonstration for your review
 
-## What is live today
+We would like to suggest that the data already published on `climatecasechart.com` could be made **even more widely accessible** by exposing it through what is called a Model Context Protocol (MCP) server: a standardized, well-documented endpoint that AI systems (Claude, ChatGPT, Gemini, Copilot, Cursor, and others) can connect to natively, and that human users can equally consume through any of those clients. MCP is the emerging standard for letting language models read structured external data with proper attribution and source-anchoring.
 
-The MCP endpoint at `https://mcp.openclimatelaw.org/mcp` is live and exposes nine tools to any MCP-capable agent (Claude, ChatGPT, Gemini, Copilot, Cursor, Continue, and any other client speaking the protocol). The corpus today holds **5,046 cases across 67 jurisdictions** — 4,831 from your database, plus 215 from the Climate Rights Database at the University of Zurich for complementary coverage of rights-based claims. Behind those cases sit **41,000+ court documents (24,000+ with full extracted text)**, a citation graph of **14,000+ inter-case edges**, and sentence-transformer embeddings on every case for semantic similarity search.
+To demonstrate concretely what this could look like — and to give you something you can test rather than imagine — **we have taken the liberty of building a working demonstration**, deployed at:
 
-The nine tools fall into four groups:
+> `https://mcp.openclimatelaw.org/mcp`
+> (landing page: [openclimatelaw.org](https://openclimatelaw.org))
 
-- **Discovery.** `search_cases` combines full-text, fuzzy/typo-tolerant trigram, and semantic-embedding signals (so "Indigenous communities rising sea levels" retrieves *Pabai Pabai* and *Daniel Billy*); `get_case` returns the full record by canonical ID or by Sabin ID, including parties, claim types, documents, citation strings, and — newly — the `case_number`, `core_object`, and `principal_laws` projected from your `concept_preferred_label` and metadata payload.
-- **Graph navigation.** `find_citations` and `find_cited_by` expose the inter-case citation graph, with each edge tagged by how it was derived (canonical-title match, formal-cite extraction, or structured Sabin source). `find_related_cases` surfaces semantic analogues across language and phrasing differences (e.g. *Urgenda* → *Klimaatzaak*, the Shell appeal, *Luca Salis*).
-- **Citation safety.** `cite` returns verbatim citation strings from a previously retrieved case (the agent is contractually required not to construct citations from training data). `check_claim_support` verifies that a quoted string appears verbatim in a retrieved summary, document text, or citation string. `attest_response` scans an LLM's draft answer for citation-shaped strings and flags any that do not appear in the retrieved cases. End-to-end, the contract is that **the AI cannot fabricate a citation, fabricate a quote, or smuggle either past attestation**. This is the technical contribution that distinguishes the project from existing climate-law search tools.
-- **Aggregates.** `get_statistics` returns structured counts and groupings (by jurisdiction, claim type, year, status, outcome) for use as a data layer in dashboards or research notebooks.
+The demonstration is explicitly framed as a non-public research preview, not a launched service. We are sharing it with you for review, testing, and feedback — not promoting it externally.
 
-The practical effect is that a practitioner who asks an AI assistant to draft a memo on, say, *Held v. Montana* gets a memo whose every citation is traceable to your verbatim citation string and whose every quoted passage actually exists in the underlying judgment. We believe this is a precondition for AI-assisted legal research to be safe in practice — and we believe it should be a public good rather than a paid service, which is why OpenClimateLaw is free and unauthenticated.
+## What the demonstration does
 
-## How we access your data — fully transparent
+The MCP exposes nine tools to any compatible client. They fall into four groups:
 
-We do not consume any third-party API. Specifically, our scraper fetches each case detail page on `www.climatecasechart.com` directly, parses the structured family record from the page, and downloads court documents from `wp-content/uploads/` on your domain. We identify ourselves with a contact-bearing User-Agent (`OpenClimateLaw-bot/0.1 (+https://openclimatelaw.org; jh@jonashertner.com)`), throttle to roughly one request per second, run no more than four concurrent PDF downloads, and back off exponentially on 429/5xx. Every record we serve carries the source URL on `climatecasechart.com` and an explicit attribution to the Sabin Center; every search result and `get_case` response points users back to the canonical Sabin page for substantive content. We redistribute under the same CC-BY 4.0 license you publish under, with full attribution preserved. The full source code is at `github.com/jonashertner/openclimatelaw` (MIT) — what we are doing is auditable end-to-end.
+- **Discovery.** `search_cases` combines full-text, fuzzy/typo-tolerant, and semantic-embedding search (so a query like "Indigenous communities rising sea levels" retrieves *Pabai Pabai* and *Daniel Billy*); `get_case` returns a full record including parties, claim types, documents, citation strings, and — projected from your `metadata.concept_preferred_label` payload — the case's `case_number`, `core_object` (one-sentence holding), and `principal_laws`.
+- **Graph navigation.** `find_citations` and `find_cited_by` expose the inter-case citation graph (built via canonical-title matching using Aho-Corasick plus formal-cite extraction), with each edge tagged by how it was derived. `find_related_cases` surfaces semantic analogues across language and phrasing differences (e.g. *Urgenda* → *Klimaatzaak*, the Shell appeal, *Luca Salis*).
+- **Citation safety.** `cite` returns the verbatim `citation_string` of a previously retrieved case — the agent is contractually required not to construct citations from training data. `check_claim_support` verifies that a quoted string appears verbatim in a retrieved summary, document, or citation. `attest_response` scans an LLM's draft for citation-shaped strings and flags any that are not present in the retrieved cases. End-to-end, the AI cannot fabricate a citation, fabricate a quote, or smuggle either past attestation. We see this as the precondition for AI-assisted legal research to be safe in practice — and the technical contribution that distinguishes the demonstration from existing climate-law search tools.
+- **Aggregates.** `get_statistics` returns structured counts and groupings (by jurisdiction, claim type, year, status, outcome).
 
-## The proposal — three asks
+The corpus today holds 5,046 cases across 67 jurisdictions — 4,831 from your database plus 215 from the Climate Rights Database at the University of Zurich for complementary rights-based coverage — with 41,000+ court documents (24,000+ with full extracted text) and a citation graph of 14,000+ inter-case edges.
 
-**1. Bulk export.** A periodic dump (CSV / JSONL / parquet — whatever format works for you) would be friendlier to your infrastructure than per-page scraping, capture fields not surfaced in the rendered page, and let us stamp records with deterministic provenance. Your data-download form at `https://form.jotform.com/252292116187356` looks like the formal channel — could you confirm whether that is the right place for an institutional "bulk export, ongoing sync" request, or whether someone on your team is the better contact?
+The practical effect is that a practitioner who asks an AI assistant to draft a memo on, say, *Held v. Montana* receives a memo whose every citation is traceable to your verbatim citation string and whose every quoted passage actually exists in the underlying judgment.
 
-**2. Joint HuggingFace dataset under CC-BY 4.0 (suggestion, conditional on your buy-in).** ClimatePolicyRadar publishes the CCLW corpus as `ClimatePolicyRadar/all-document-text-data` and we follow the same pattern at opencaselaw.ch. If you would be open to it, we would happily do all the engineering work to publish the Sabin corpus as a joint HuggingFace dataset under your existing CC-BY 4.0 terms — Sabin Center as the primary author of the dataset card, OpenClimateLaw as the technical maintainer. We would only do this with your buy-in; if you prefer the canonical distribution to remain solely on `climatecasechart.com`, we honor that without question.
+## How the demonstration accesses your data — fully transparent
 
-**3. Co-listing / partnership.** If you are open to it, we would be honored to credit the Sabin Center prominently on `openclimatelaw.org` (logo, "Powered by Sabin Center for Climate Change Law"), to coordinate further so that the AI-agent-facing surface points users back to `climatecasechart.com` even more visibly than it already does, and to contribute back any taxonomy refinements or data-quality findings we identify during ingestion.
+The demonstration consumes no third-party API. It fetches each case detail page on `www.climatecasechart.com` directly, parses the structured family record from the page, and downloads court documents only from `wp-content/uploads/` on your domain. Identifying contact-bearing User-Agent, ~one request per second, ≤4 concurrent PDF downloads, exponential back-off on 429/5xx. Every record carries explicit Sabin Center attribution and points users back to your canonical page for substantive content. Redistribution follows the same CC-BY 4.0 licence Sabin publishes the data under. The full source code is open under the MIT licence at [github.com/jonashertner/openclimatelaw](https://github.com/jonashertner/openclimatelaw) — what we are doing is auditable end-to-end.
+
+## What we propose
+
+If, after testing, you find the approach valuable, we would be honored to do either of the following — in whatever combination the Sabin Center prefers:
+
+1. **Sponsor this as a free public service** for the global climate-litigation community. regenerative.law would underwrite the operation — infrastructure, data refresh, ongoing maintenance — under your guidance and with full attribution. The endpoint and landing page would be governed by an MoU we draft in consultation with you, including takedown rights, attribution requirements, and any constraints on use you wish to impose.
+
+2. **Explore any other collaboration that makes sense to the Center** — a bulk-export ingestion path that is friendlier to your infrastructure than per-page scraping, a joint HuggingFace dataset under your CC-BY 4.0 (along the same lines as `ClimatePolicyRadar/all-document-text-data`), co-listing arrangements, or any other shape that serves your mission.
+
+We are deliberately flexible on form. We are committed to the underlying goal: making your work as broadly accessible as possible without compromising the editorial integrity that makes it valuable in the first place.
 
 ## Veto rights
 
-If anything in our current ingestion or attribution choices does not sit well with you, we will change it within hours. The MCP can be paused or pointed elsewhere immediately, and the project is open source so what we are doing is fully transparent.
+Because the demonstration currently scrapes and indexes data published on `climatecasechart.com`, you have full control over what we do with it. If anything in the present ingestion or attribution does not sit well with the Sabin Center, we will pause, modify, or take it down within hours. The MCP can be turned off entirely at your request — no debate, no negotiation.
 
 ## Proposed next step
 
-A 30-minute video call would let me demonstrate the MCP live, walk through the architecture, and answer any questions. If a call is harder to schedule, even a brief reply confirming whether the bulk-export request is reasonable to pursue (and to whom on your team I should send it) would be very helpful.
+A 30-minute video call would let me walk through the demonstration live, answer technical and institutional questions, and hear what shape of collaboration — if any — would be useful to the Center. Even a brief reply confirming whether this direction is of interest would be very welcome.
 
-I would be grateful for any guidance on how best to serve the Climate Litigation Database in this work.
+I would be grateful for your guidance on how best to honor the Climate Litigation Database in this work.
 
 With best regards,
 
 **Jonas Hertner**
-Principal, regenerative.law
-Builder, opencaselaw.ch & openclimatelaw.org
+Lawyer · regenerative.law (part of [regenerative.eco](https://regenerative.eco))
 
 `jh@jonashertner.com`
-[openclimatelaw.org](https://openclimatelaw.org) · [opencaselaw.ch](https://opencaselaw.ch) · [regenerative.law](https://regenerative.law)
-[github.com/jonashertner/openclimatelaw](https://github.com/jonashertner/openclimatelaw) (MIT)
+[openclimatelaw.org](https://openclimatelaw.org) (research preview) · [opencaselaw.ch](https://opencaselaw.ch) (a related Swiss-law project I also operate)
+[github.com/jonashertner/openclimatelaw](https://github.com/jonashertner/openclimatelaw) (MIT, open source)
