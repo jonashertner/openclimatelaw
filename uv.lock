@@ -633,6 +633,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "fastmcp" },
+    { name = "httpx" },
     { name = "pgvector" },
     { name = "psycopg", extra = ["binary", "pool"] },
     { name = "pydantic" },
@@ -644,7 +645,6 @@ dependencies = [
 
 [package.dev-dependencies]
 dev = [
-    { name = "httpx" },
     { name = "pyright" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
@@ -654,6 +654,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "fastmcp", specifier = ">=3.0.2" },
+    { name = "httpx", specifier = ">=0.27.0" },
     { name = "pgvector", specifier = ">=0.3.0" },
     { name = "psycopg", extras = ["binary", "pool"], specifier = ">=3.2.0" },
     { name = "pydantic", specifier = ">=2.9.0" },
@@ -665,7 +666,6 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "httpx", specifier = ">=0.27.0" },
     { name = "pyright", specifier = ">=1.1.380" },
     { name = "pytest", specifier = ">=8.3.0" },
     { name = "pytest-asyncio", specifier = ">=0.24.0" },
