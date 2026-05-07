@@ -281,13 +281,21 @@ def parse_family_record(
 
 
 def _parse_date(value: str | None) -> Any:
-    """Parse an ISO datetime/date string to a date or return None."""
+    """Parse an ISO datetime/date string to a date or return None.
+
+    Sanity-clamps implausible years: returns None for filing dates with year
+    < 1900 (we've seen at least one upstream typo: "1016-09-15" on Sabin
+    family.3560.0 — almost certainly meant 2016).
+    """
     if not value:
         return None
     try:
-        return datetime.fromisoformat(value.replace("Z", "+00:00")).date()
-    except ValueError, AttributeError:
+        d = datetime.fromisoformat(value.replace("Z", "+00:00")).date()
+    except (ValueError, AttributeError, TypeError):
         return None
+    if d.year < 1900:
+        return None
+    return d
 
 
 async def fetch_families_page(
