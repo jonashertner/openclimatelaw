@@ -12,7 +12,7 @@
 
 Dear Professor Keller and the CRRP team,
 
-I am Jonas Hertner, a lawyer, writing on behalf of [regenerative.law](https://regenerative.law). regenerative.law is the legal pillar of [regenerative.eco](https://regenerative.eco), an impact-investing initiative of a Switzerland-based family office. One of regenerative.eco's principal commitments is the promotion of climate litigation as a tool for accountability and transition — and within that commitment, we treat **accessibility of climate-case information** as a problem worth working on directly: not just funding the litigators, but making the global record of what has been argued and decided as widely and easily reachable as possible, both for human users and for the AI systems they increasingly use to do legal research.
+I am Jonas Hertner, a lawyer, writing on behalf of [regenerative.law](https://regenerative.law). regenerative.law is the legal pillar of [regenerative.eco](https://regenerative.eco), an impact-investing initiative of a Switzerland-based family office. One of regenerative.eco's principal commitments is the promotion of climate litigation as a tool for accountability and transition. Within that commitment, we treat **accessibility of climate-case information** as a problem worth working on directly: not just funding the litigators, but making the global record of what has been argued and decided as widely and easily reachable as possible — both for human users and for the AI systems they increasingly use to do legal research.
 
 It is in that context that we are writing to you. The **Climate Rights Database** fills a niche that the Sabin Center's general litigation database, comprehensive and excellent though it is, does not pretend to cover with the same depth: the human-rights dimension of climate cases analyzed against specific instruments and rights at stake. That perspective is precisely what makes CRD valuable as a complement, and why we want to integrate it properly rather than superficially.
 
@@ -33,7 +33,7 @@ The MCP exposes nine tools to any compatible client. They fall into four groups:
 
 - **Discovery.** `search_cases` combines full-text, fuzzy/typo-tolerant, and semantic-embedding search across case titles and summaries. `get_case` returns the full record by ID — parties, claim types, documents, citation strings, jurisdiction, and field-level provenance.
 - **Graph navigation.** `find_citations` and `find_cited_by` expose the inter-case citation graph, with each edge tagged by how it was derived. `find_related_cases` surfaces semantic analogues across language and phrasing differences.
-- **Citation safety.** `cite` returns the verbatim `citation_string` of a previously retrieved case — the agent is contractually required not to construct citations from training data. `check_claim_support` verifies that a quoted string appears verbatim in a retrieved summary, document, or citation. `attest_response` scans an LLM's draft for citation-shaped strings and flags any that are not present in the retrieved cases. End-to-end, the AI cannot fabricate a citation, fabricate a quote, or smuggle either past attestation.
+- **Citation safety.** `cite` returns the verbatim `citation_string` of a previously retrieved case — the agent is required by the protocol to call this tool rather than construct a citation from training data. `check_claim_support` verifies that a quoted string appears verbatim in a retrieved summary, document, or citation. `attest_response` scans an LLM's draft for citation-shaped strings and flags any that are not present in the retrieved cases. End-to-end, the AI cannot fabricate a citation, fabricate a quote, or bypass the attestation step.
 - **Aggregates.** `get_statistics` returns structured counts and groupings (by jurisdiction, claim type, year, status, outcome).
 
 The corpus today holds 5,046 cases across 67 jurisdictions — 4,831 from the Sabin Center's Climate Litigation Database (full metadata + summaries + court-document text) and **215 from your Climate Rights Database** — with sentence-transformer embeddings on every case for semantic similarity search.
@@ -47,7 +47,7 @@ This is the part we most want your guidance on. **Our current CRD ingestion is m
 - **We do not copy your case summaries** (the `content.rendered` field) into our store. When a user queries our MCP for a CRD-sourced case, the `summary` field returns a redirect message: *"Source: Climate Rights Database. See https://climaterightsdatabase.com/\<slug\> for the case summary."*
 - Every record carries CRD attribution and points users back to your canonical page for substantive content.
 
-This is the defensible posture absent an explicit redistribution licence on your site, and it is the posture we default to: **your prose belongs to you, and we do not copy it without permission.** We made a deliberate choice not to assume licensing terms in the absence of a clear signal.
+This is the defensible posture absent an explicit redistribution licence on your site, and it is the posture we default to: **your prose belongs to you, and we do not copy it without permission.**
 
 ## What deeper integration would look like with your buy-in
 
@@ -60,13 +60,13 @@ If the CRD content is publishable under CC-BY 4.0 (or another open licence), or 
 
 ## Two questions
 
-**1. What licence governs the CRD content?** If your case summaries are published under CC-BY 4.0 (or CC-BY-NC, CC-BY-SA, etc.), we would happily ingest them with full attribution and proper licence-tag preservation. If you prefer they remain on `climaterightsdatabase.com` and we keep our current redirect-only posture, that is also entirely fine — we would just like to know explicitly so we are not guessing.
+**1. What licence governs the CRD content?** If your case summaries are published under CC-BY 4.0 (or CC-BY-NC, CC-BY-SA, etc.), we would be happy to ingest them with full attribution and the licence properly preserved in our records. If you prefer they remain on `climaterightsdatabase.com` and we keep our current redirect-only posture, that is also entirely fine — we would just like to know explicitly so we are not guessing.
 
 **2. Is a bulk export available, or worth building?** A periodic export (CSV / JSON / SQLite — whatever format works for you) would let us preserve structured fields not exposed by the default REST endpoint (rights at stake, deciding bodies, state concerned), give us deterministic provenance, and be friendlier to your infrastructure than continuous polling. If a bulk export does not currently exist on your end and producing one would require nontrivial work, we would be happy to write the export script and run it under your direction.
 
 ## How we'd like to help
 
-This is an informal outreach, not a structured proposal. If, after testing, you find this approach useful, we would simply like to support your work in whatever way is most helpful. We would be honored to underwrite the operating costs of an MCP service like this one — infrastructure, data refresh, ongoing maintenance — so it can run as a free resource for the climate-rights and broader climate-litigation community, under your guidance and with full attribution. We would equally be glad to contribute engineering capacity to anything else that serves your mission — co-listing, support for specific research initiatives, coordination with the Sabin Center's database, or any other form that is useful to the Project.
+If, after testing, you find this approach useful, we would simply like to support your work in whatever way is most helpful. We would be honored to underwrite the operating costs of an MCP service like this one — infrastructure, data refresh, ongoing maintenance — so it can run as a free resource for the climate-rights and broader climate-litigation community, under your guidance and with full attribution. We would also be glad to contribute engineering capacity to anything else that serves your mission — co-listing, support for specific research initiatives, coordination with the Sabin Center's parallel database, or any other form that is useful to the Project.
 
 We are not attached to any particular shape. The underlying commitment is straightforward: the work the CRRP does in this field deserves the broadest possible reach, and we would like to help you achieve that on whatever terms you find appropriate.
 
