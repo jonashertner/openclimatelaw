@@ -109,13 +109,15 @@ async def build_title_citation_graph(*, clear_first: bool = True) -> dict[str, i
                 if cited_id != citing_id:
                     edges.add((cited_id, matched_title))
 
-        # Scan document text(s)
+        # Scan document text(s). Cast the parameter to uuid so the planner
+        # uses document_case_idx instead of seq-scanning every row — this
+        # was a 1000x speed-up for cases with many documents (some have 244).
         async with pool.connection() as conn:
             async with conn.cursor() as cur:
                 await cur.execute(
                     """
                     SELECT substring(text FROM 1 FOR %s) FROM document
-                    WHERE case_id::text = %s AND text IS NOT NULL AND length(text) > 50
+                    WHERE case_id = %s::uuid AND text IS NOT NULL AND length(text) > 50
                     """,
                     (DOC_TEXT_SCAN_LIMIT, citing_id),
                 )
