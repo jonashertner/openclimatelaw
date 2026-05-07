@@ -62,6 +62,21 @@ WP_PDF_RE = re.compile(
 )
 
 
+def _safe_dir_name(slug: str, max_len: int = 200) -> str:
+    """Return a filesystem-safe directory name for a slug.
+
+    Long slugs (Brazilian cases can be 300+ chars) exceed Linux's 255-byte
+    filename limit. For oversize slugs, keep the first max_len-9 chars
+    (still readable) and append '-' + 8-char SHA256 prefix for uniqueness.
+    """
+    if len(slug.encode("utf-8")) <= max_len:
+        return slug
+    import hashlib
+
+    digest = hashlib.sha256(slug.encode("utf-8")).hexdigest()[:8]
+    return f"{slug[: max_len - 9]}-{digest}"
+
+
 async def fetch_case_html(client: httpx.AsyncClient, slug: str) -> str | None:
     """Fetch one case's detail page; returns HTML or None on miss/error."""
     log = structlog.get_logger("ingest.sabin.scraper")
@@ -223,7 +238,10 @@ async def scrape_one_case(
     # Find Sabin-hosted PDFs and append them as document records with extracted text.
     pdf_urls = extract_pdf_urls(html)
     if pdf_urls:
-        case_pdf_dir = pdf_dir / slug
+        # Some Sabin slugs exceed Linux's 255-byte filename limit (Brazilian
+        # multi-defendant cases can be 300+ chars). Hash long slugs to keep
+        # the per-case PDF directory name short and stable.
+        case_pdf_dir = pdf_dir / _safe_dir_name(slug)
 
         async def fetch_and_extract(url: str) -> dict[str, Any] | None:
             async with pdf_sem:
