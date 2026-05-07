@@ -88,6 +88,37 @@ def build_mcp() -> FastMCP:
     ) -> dict[str, object]:
         return await _attest_response(draft_text=draft_text, retrieved_ids=retrieved_ids)
 
+    from server.tools.citations import find_cited_by as _find_cited_by
+    from server.tools.citations import find_citations as _find_citations
+
+    @mcp.tool(
+        name="find_citations",
+        description=(
+            "Return cases that the given case cites (forward edges). The case "
+            "is identified by canonical UUID or Sabin ID. Citation graph is "
+            "extracted via NLP from case summaries and document text — "
+            "source_of_edge='inferred_nlp'. limit max 200."
+        ),
+    )
+    async def find_citations_tool(  # pyright: ignore[reportUnusedFunction]
+        case_id_or_sabin_id: str, limit: int = 50
+    ) -> dict[str, object]:
+        return await _find_citations(case_id_or_sabin_id=case_id_or_sabin_id, limit=limit)
+
+    @mcp.tool(
+        name="find_cited_by",
+        description=(
+            "Return cases that cite the given case (backward edges). The case "
+            "is identified by canonical UUID or Sabin ID. Use this for influence "
+            "analysis: 'how often is Urgenda cited by other climate cases?'. "
+            "limit max 200."
+        ),
+    )
+    async def find_cited_by_tool(  # pyright: ignore[reportUnusedFunction]
+        case_id_or_sabin_id: str, limit: int = 50
+    ) -> dict[str, object]:
+        return await _find_cited_by(case_id_or_sabin_id=case_id_or_sabin_id, limit=limit)
+
     from server.tools.search import search_cases as _search_cases
 
     @mcp.tool(
