@@ -305,17 +305,18 @@ asyncio.run(run())</code></pre>
 
 <h2>What you can do</h2>
 
-<p class="small">Five tools available right now:</p>
+<p class="small">Six tools available right now:</p>
 
 <ul class="small">
-    <li><code>get_case(case_id_or_sabin_id)</code> — full case record: parties, claim types, documents, citation strings, field-level provenance.</li>
+    <li><code>search_cases(query, jurisdiction?, claim_type?, status?, limit?)</code> — free-text search over titles + summaries with optional filters. Returns ranked matches with <code>sabin_id</code>, title, summary excerpt, and a verbatim <code>citation_string</code> — the right entry point when you don't already have a case_id.</li>
+    <li><code>get_case(case_id_or_sabin_id)</code> — full case record: parties, claim types, documents (with extracted text where available), citation strings, field-level provenance.</li>
     <li><code>get_statistics(scope, group_by?)</code> — aggregates: case/doc/statute counts, group by jurisdiction / claim_type / year / status / outcome.</li>
     <li><code>cite(case_id, lang, format)</code> — verbatim citation_string for a case in a given language and format. <strong>R1: never construct citations from training data.</strong></li>
-    <li><code>check_claim_support(quote, source_id, source_kind)</code> — verify a quotation appears verbatim in <code>case_summary</code> / <code>document_text</code> / <code>citation_string</code>. <strong>R2.</strong></li>
+    <li><code>check_claim_support(quote, source_id, source_kind)</code> — verify a quotation appears verbatim in <code>case_summary</code> / <code>document_text</code> / <code>citation_string</code>. <strong>R2.</strong> Note: <code>document_text</code> requires a <em>document</em> UUID (from <code>get_case().documents[].id</code>), not a case ID.</li>
     <li><code>attest_response(draft_text, retrieved_ids[])</code> — scans a draft for citation-shaped strings (ECLI, BVerfGE, BGE, US reporter) and flags any not present in the citation_strings of the retrieved cases. <strong>R1 enforcement.</strong></li>
 </ul>
 
-<p class="small muted">Coming next: <code>search_cases</code> (full-text + semantic + filters), <code>find_citations</code> / <code>find_cited_by</code>, statute layer (CCLW), and a unified <code>find_related_cases</code>.</p>
+<p class="small muted">Coming next: <code>find_citations</code> / <code>find_cited_by</code>, statute layer (CCLW), and a unified <code>find_related_cases</code>.</p>
 
 <h2>Anti-hallucination contract</h2>
 
@@ -331,9 +332,10 @@ asyncio.run(run())</code></pre>
 <p class="small">Once connected, ask in any compatible client:</p>
 
 <ul class="small">
+    <li>"Search the climate-litigation corpus for 'Amazon deforestation' filed in Brazil and tell me the top 5 cases."</li>
+    <li>"Find Urgenda v. Netherlands, cite it in en/sabin format, and quote one sentence from its summary verbatim — but verify the quote first."</li>
+    <li>"Find youth-plaintiff cases in the US and summarize their claim types."</li>
     <li>"How many climate cases are there per jurisdiction? Show the top 10."</li>
-    <li>"Look up <code>Sabin.family.9998.0</code> and tell me the parties and claims."</li>
-    <li>"Find Urgenda v. Netherlands (sabin id <code>urgenda-foundation-v-state-of-the-netherlands</code>), cite it in en/sabin format, and quote one sentence from its summary verbatim — but verify the quote first."</li>
     <li>"Validate this draft: 'In ECLI:NL:HR:2019:2007 the court reasoned, citing Massachusetts v. EPA, 549 U.S. 497 (2007)...' against retrieved cases [<code>urgenda-foundation-v-state-of-the-netherlands</code>]."</li>
 </ul>
 
