@@ -29,36 +29,12 @@ mcp.openclimatelaw.org {
     }
 }
 
-# Apex + www — until the Astro landing ships, serve a minimal pointer page.
+# Apex + www — integration-instructions landing page served from /srv/apex
 openclimatelaw.org, www.openclimatelaw.org {
     encode zstd gzip
 
-    header Content-Type "text/html; charset=utf-8"
-    respond <<HTML
-        <!doctype html>
-        <html lang="en">
-        <head>
-            <meta charset="utf-8">
-            <title>OpenClimateLaw</title>
-            <meta name="viewport" content="width=device-width, initial-scale=1">
-            <style>
-                body { font-family: ui-sans-serif, system-ui, sans-serif; max-width: 38rem; margin: 4rem auto; padding: 0 1.5rem; line-height: 1.55; color: #111; }
-                code { background: #f4f4f4; padding: 0.1em 0.35em; border-radius: 3px; font-size: 0.95em; }
-                a { color: #0a5; }
-                .muted { color: #666; }
-            </style>
-        </head>
-        <body>
-            <h1>OpenClimateLaw</h1>
-            <p>Public MCP server exposing climate litigation and climate-law data, centred on the
-            <a href="https://climatecasechart.com/">Sabin Center's Climate Litigation Database</a>.</p>
-            <p>The MCP endpoint is at <code>https://mcp.openclimatelaw.org/mcp</code>. Connect with
-            any MCP-compatible client (e.g. Claude Code, custom agents).</p>
-            <p>Source: <a href="https://github.com/jonashertner/openclimatelaw">github.com/jonashertner/openclimatelaw</a></p>
-            <p class="muted">v0.1 — fixture-based ingestion. Live Climate Policy Radar API integration coming soon.</p>
-        </body>
-        </html>
-    HTML 200
+    root * /srv/apex
+    file_server
 
     log {
         output stdout

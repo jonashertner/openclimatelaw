@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>OpenClimateLaw — public MCP for climate litigation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="A public, no-auth MCP server with 5,046+ climate cases, anti-hallucination guarantees, and CC-BY data. Free for AI agents and researchers.">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9A%96%EF%B8%8F%3C/text%3E%3C/svg%3E">
+    <style>
+        :root {
+            --fg: #1a1a1a;
+            --muted: #5a5a5a;
+            --bg: #fbfaf7;
+            --accent: #0a6b4d;
+            --accent-soft: #e8f3ee;
+            --code-bg: #f0ede5;
+            --border: #ddd8cc;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --fg: #e8e3d5;
+                --muted: #a09889;
+                --bg: #1a1916;
+                --accent: #6dc7a1;
+                --accent-soft: #1f2e26;
+                --code-bg: #2a2823;
+                --border: #3a3730;
+            }
+        }
+        * { box-sizing: border-box; }
+        html, body { margin: 0; padding: 0; }
+        body {
+            font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", sans-serif;
+            color: var(--fg);
+            background: var(--bg);
+            line-height: 1.55;
+            font-size: 16px;
+            -webkit-font-smoothing: antialiased;
+        }
+        main { max-width: 44rem; margin: 3rem auto; padding: 0 1.5rem 6rem; }
+        h1 { font-size: 2rem; margin: 0 0 0.4rem; font-weight: 700; letter-spacing: -0.02em; }
+        h1 .icon { font-size: 0.85em; margin-right: 0.25em; }
+        .tagline { color: var(--muted); font-size: 1.05rem; margin: 0 0 2rem; }
+        h2 {
+            font-size: 1.25rem;
+            margin: 2.75rem 0 0.75rem;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            border-top: 1px solid var(--border);
+            padding-top: 2rem;
+        }
+        h3 { font-size: 0.95rem; margin: 1.5rem 0 0.5rem; font-weight: 600; }
+        p { margin: 0.75rem 0; }
+        a { color: var(--accent); text-decoration: underline; text-underline-offset: 0.2em; }
+        a:hover { text-decoration-thickness: 2px; }
+        code, pre {
+            font-family: "SF Mono", Menlo, Monaco, "Cascadia Code", monospace;
+            font-size: 0.88em;
+        }
+        code {
+            background: var(--code-bg);
+            padding: 0.1em 0.4em;
+            border-radius: 3px;
+        }
+        pre {
+            background: var(--code-bg);
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-size: 0.82em;
+            line-height: 1.5;
+            border: 1px solid var(--border);
+            margin: 0.75rem 0;
+        }
+        pre code { background: transparent; padding: 0; }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.75rem;
+            margin: 1rem 0 2rem;
+        }
+        .stat {
+            text-align: center;
+            padding: 1rem 0.5rem;
+            background: var(--accent-soft);
+            border-radius: 8px;
+        }
+        .stat-num {
+            display: block;
+            font-size: 1.55rem;
+            font-weight: 700;
+            color: var(--accent);
+            font-variant-numeric: tabular-nums;
+        }
+        .stat-label {
+            font-size: 0.8em;
+            color: var(--muted);
+            margin-top: 0.2em;
+        }
+        .url {
+            display: inline-block;
+            font-family: "SF Mono", Menlo, monospace;
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            padding: 0.4em 0.7em;
+            border-radius: 4px;
+            user-select: all;
+            font-size: 0.95em;
+            word-break: break-all;
+        }
+        .url-banner {
+            background: var(--accent-soft);
+            border: 1px solid var(--accent);
+            border-radius: 8px;
+            padding: 1rem 1.25rem;
+            margin: 1.25rem 0;
+        }
+        .url-banner .label {
+            font-size: 0.85em;
+            color: var(--muted);
+            margin-bottom: 0.4em;
+            display: block;
+        }
+        ul, ol { padding-left: 1.5rem; margin: 0.75rem 0; }
+        li { margin: 0.3rem 0; }
+        .muted { color: var(--muted); }
+        .small { font-size: 0.9em; }
+        kbd {
+            font-family: "SF Mono", Menlo, monospace;
+            font-size: 0.85em;
+            background: var(--code-bg);
+            padding: 0.1em 0.4em;
+            border-radius: 3px;
+            border: 1px solid var(--border);
+        }
+        footer {
+            margin-top: 3.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+            font-size: 0.88em;
+            color: var(--muted);
+        }
+        footer a { color: var(--muted); }
+        .badge {
+            display: inline-block;
+            font-size: 0.75em;
+            font-weight: 600;
+            padding: 0.15em 0.5em;
+            border-radius: 4px;
+            background: var(--accent-soft);
+            color: var(--accent);
+            margin-left: 0.4em;
+            vertical-align: middle;
+        }
+        details {
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 0.75rem 1rem;
+            margin: 0.75rem 0;
+            background: var(--code-bg);
+        }
+        details[open] { padding-bottom: 1rem; }
+        summary { cursor: pointer; font-weight: 600; font-size: 0.95rem; }
+    </style>
+</head>
+<body>
+<main>
+
+<h1><span class="icon">⚖️</span>OpenClimateLaw</h1>
+
+<p class="tagline">A public, no-auth MCP server for climate litigation. Anti-hallucination guarantees. Free for AI agents and researchers.</p>
+
+<div class="stats">
+    <div class="stat"><span class="stat-num">5,046</span><span class="stat-label">cases</span></div>
+    <div class="stat"><span class="stat-num">17,146</span><span class="stat-label">documents</span></div>
+    <div class="stat"><span class="stat-num">67</span><span class="stat-label">jurisdictions</span></div>
+</div>
+
+<div class="url-banner">
+    <span class="label">MCP endpoint (Streamable HTTP, no authentication required):</span>
+    <span class="url">https://mcp.openclimatelaw.org/mcp</span>
+</div>
+
+<h2>Add to Claude</h2>
+
+<h3>Claude Code (CLI)</h3>
+<pre><code>claude mcp add openclimatelaw https://mcp.openclimatelaw.org/mcp --transport http</code></pre>
+
+<h3>Claude Desktop</h3>
+<p class="small">Add to <code>~/Library/Application Support/Claude/claude_desktop_config.json</code> (macOS) or <code>%APPDATA%\Claude\claude_desktop_config.json</code> (Windows). Uses <a href="https://github.com/geelen/mcp-remote">mcp-remote</a> as a stdio→HTTP bridge.</p>
+<pre><code>{
+  "mcpServers": {
+    "openclimatelaw": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "https://mcp.openclimatelaw.org/mcp"]
+    }
+  }
+}</code></pre>
+
+<h3>claude.ai (Pro / Team / Enterprise)</h3>
+<p class="small"><kbd>Settings</kbd> → <kbd>Connectors</kbd> / <kbd>Custom integrations</kbd> → paste <code>https://mcp.openclimatelaw.org/mcp</code>.</p>
+
+<h3>Anthropic API (Messages, MCP Connector)<span class="badge">beta</span></h3>
+<pre><code>import anthropic
+
+client = anthropic.Anthropic()
+resp = client.beta.messages.create(
+    model="claude-opus-4-7",
+    max_tokens=1024,
+    mcp_servers=[{
+        "type": "url",
+        "url": "https://mcp.openclimatelaw.org/mcp",
+        "name": "openclimatelaw",
+    }],
+    messages=[{"role": "user", "content": "How many climate cases involve Brazil?"}],
+    extra_headers={"anthropic-beta": "mcp-client-2025-04-04"},
+)</code></pre>
+
+<h2>Add to ChatGPT &amp; OpenAI</h2>
+
+<h3>ChatGPT (Plus / Pro / Team / Enterprise)</h3>
+<p class="small"><kbd>Settings</kbd> → <kbd>Connectors</kbd> → <kbd>Add custom connector</kbd> → paste <code>https://mcp.openclimatelaw.org/mcp</code>. (Custom connectors are unavailable on the Free plan.)</p>
+
+<h3>OpenAI Agents SDK (Python)</h3>
+<pre><code>from agents import Agent, Runner
+from agents.mcp import MCPServerStreamableHttp
+
+async with MCPServerStreamableHttp(
+    name="openclimatelaw",
+    params={"url": "https://mcp.openclimatelaw.org/mcp"},
+) as server:
+    agent = Agent(name="research", mcp_servers=[server])
+    result = await Runner.run(agent, "Find Urgenda v. Netherlands and cite it.")
+    print(result.final_output)</code></pre>
+
+<h3>OpenAI Responses API (mcp tool)</h3>
+<pre><code>from openai import OpenAI
+client = OpenAI()
+resp = client.responses.create(
+    model="gpt-5",
+    tools=[{
+        "type": "mcp",
+        "server_label": "openclimatelaw",
+        "server_url": "https://mcp.openclimatelaw.org/mcp",
+    }],
+    input="Look up the Urgenda case and quote one sentence verbatim, validated.",
+)</code></pre>
+
+<h2>Add to GitHub Copilot</h2>
+
+<h3>VS Code (workspace)</h3>
+<p class="small">Add to <code>.vscode/mcp.json</code>:</p>
+<pre><code>{
+  "servers": {
+    "openclimatelaw": {
+      "type": "http",
+      "url": "https://mcp.openclimatelaw.org/mcp"
+    }
+  }
+}</code></pre>
+
+<h3>Copilot CLI</h3>
+<pre><code>gh copilot mcp add openclimatelaw --type http --url https://mcp.openclimatelaw.org/mcp</code></pre>
+<p class="small muted">(Exact subcommand depends on your Copilot CLI version; consult <code>gh copilot mcp --help</code>.)</p>
+
+<h2>Add to Google Gemini</h2>
+
+<h3>Gemini CLI</h3>
+<pre><code>gemini mcp add openclimatelaw --transport http --url https://mcp.openclimatelaw.org/mcp</code></pre>
+<p class="small muted">Or edit <code>~/.gemini/settings.json</code> directly with an <code>mcpServers</code> block (same shape as Claude Desktop).</p>
+
+<h3>Google AI Studio / Vertex AI <span class="badge">via tools API</span></h3>
+<p class="small">Gemini's tool-use API can call MCP servers via the SDK's MCP client integration:</p>
+<pre><code>import asyncio
+from google import genai
+from mcp import ClientSession
+from mcp.client.streamable_http import streamablehttp_client
+
+async def run():
+    async with streamablehttp_client("https://mcp.openclimatelaw.org/mcp") as (read, write, _):
+        async with ClientSession(read, write) as session:
+            await session.initialize()
+            client = genai.Client()
+            resp = await client.aio.models.generate_content(
+                model="gemini-2.5-pro",
+                contents="How many climate cases involve Germany? Use the MCP tools.",
+                config={"tools": [session]},
+            )
+            print(resp.text)
+
+asyncio.run(run())</code></pre>
+
+<h2>Other MCP clients</h2>
+
+<p class="small">Any MCP client supporting Streamable HTTP works. Point it at <code>https://mcp.openclimatelaw.org/mcp</code>.</p>
+
+<ul class="small">
+    <li><strong>Cursor:</strong> <kbd>Settings</kbd> → <kbd>MCP</kbd> → <kbd>Add new MCP server</kbd> → URL transport.</li>
+    <li><strong>Continue.dev:</strong> add to <code>~/.continue/config.yaml</code> under <code>mcpServers</code> with <code>type: streamable-http</code>.</li>
+    <li><strong>Cline (VS Code):</strong> MCP Servers panel → Edit settings → add a URL entry.</li>
+    <li><strong>Goose:</strong> <code>goose configure</code> → Add MCP Server → choose <code>SSE</code> or <code>HTTP</code>.</li>
+    <li><strong>Zed:</strong> add to <code>settings.json</code> under <code>"context_servers"</code>.</li>
+    <li><strong>Custom code:</strong> any HTTP client speaking the <a href="https://modelcontextprotocol.io/specification/2025-06-18/basic/transports">MCP Streamable HTTP spec</a>.</li>
+</ul>
+
+<h2>What you can do</h2>
+
+<p class="small">Five tools available right now:</p>
+
+<ul class="small">
+    <li><code>get_case(case_id_or_sabin_id)</code> — full case record: parties, claim types, documents, citation strings, field-level provenance.</li>
+    <li><code>get_statistics(scope, group_by?)</code> — aggregates: case/doc/statute counts, group by jurisdiction / claim_type / year / status / outcome.</li>
+    <li><code>cite(case_id, lang, format)</code> — verbatim citation_string for a case in a given language and format. <strong>R1: never construct citations from training data.</strong></li>
+    <li><code>check_claim_support(quote, source_id, source_kind)</code> — verify a quotation appears verbatim in <code>case_summary</code> / <code>document_text</code> / <code>citation_string</code>. <strong>R2.</strong></li>
+    <li><code>attest_response(draft_text, retrieved_ids[])</code> — scans a draft for citation-shaped strings (ECLI, BVerfGE, BGE, US reporter) and flags any not present in the citation_strings of the retrieved cases. <strong>R1 enforcement.</strong></li>
+</ul>
+
+<p class="small muted">Coming next: <code>search_cases</code> (full-text + semantic + filters), <code>find_citations</code> / <code>find_cited_by</code>, statute layer (CCLW), and a unified <code>find_related_cases</code>.</p>
+
+<h2>Anti-hallucination contract</h2>
+
+<p class="small">The MCP enforces three rules from the project spec:</p>
+<ul class="small">
+    <li><strong>R1 (don't fabricate citations):</strong> every case reference returned includes a verbatim <code>citation_string</code>. Use <code>cite()</code> to fetch one — never construct from training data. <code>attest_response()</code> catches violations after the fact.</li>
+    <li><strong>R2 (don't misquote):</strong> use <code>check_claim_support()</code> to verify any quotation appears verbatim in the named source.</li>
+    <li><strong>R5 (don't fudge outcomes):</strong> <code>get_case</code> returns structured <code>status_code</code> from the source taxonomy.</li>
+</ul>
+
+<h2>Try it</h2>
+
+<p class="small">Once connected, ask in any compatible client:</p>
+
+<ul class="small">
+    <li>"How many climate cases are there per jurisdiction? Show the top 10."</li>
+    <li>"Look up <code>Sabin.family.9998.0</code> and tell me the parties and claims."</li>
+    <li>"Find Urgenda v. Netherlands (sabin id <code>urgenda-foundation-v-state-of-the-netherlands</code>), cite it in en/sabin format, and quote one sentence from its summary verbatim — but verify the quote first."</li>
+    <li>"Validate this draft: 'In ECLI:NL:HR:2019:2007 the court reasoned, citing Massachusetts v. EPA, 549 U.S. 497 (2007)...' against retrieved cases [<code>urgenda-foundation-v-state-of-the-netherlands</code>]."</li>
+</ul>
+
+<h2>Data sources &amp; licence</h2>
+
+<p class="small">
+    Centred on the <a href="https://climatecasechart.com/">Sabin Center for Climate Change Law's Climate Litigation Database</a>, ingested via <a href="https://www.climatepolicyradar.org/">Climate Policy Radar</a>'s public API under <a href="https://creativecommons.org/licenses/by/4.0/">CC-BY 4.0</a> (4,831 cases, full metadata + summaries).
+</p>
+
+<p class="small">
+    Metadata-only references to <a href="https://climaterightsdatabase.com/">Climate Rights Database</a> cases are also included with redirect-to-source links (215 cases, no full text — consult CRD directly for substantive content).
+</p>
+
+<p class="small">
+    Per CC-BY 4.0, every <code>citation_string</code> in this MCP carries upstream attribution. The MCP server itself is open-source under the MIT licence.
+</p>
+
+<h2>Source &amp; status</h2>
+
+<p class="small">
+    Open-source: <a href="https://github.com/jonashertner/openclimatelaw">github.com/jonashertner/openclimatelaw</a> · v0.1 · Streamable HTTP MCP · Hetzner Cloud · Let's Encrypt.
+</p>
+
+<p class="small">
+    Health check: <a href="https://mcp.openclimatelaw.org/health">https://mcp.openclimatelaw.org/health</a>
+</p>
+
+<footer>
+    <p>Built and maintained by Jonas Hertner. <a href="mailto:jonashertner@protonmail.ch">Contact</a> · <a href="https://github.com/jonashertner/openclimatelaw/issues">Report an issue</a></p>
+</footer>
+
+</main>
+</body>
+</html>
