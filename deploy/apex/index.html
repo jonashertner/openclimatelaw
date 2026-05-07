@@ -2,10 +2,14 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>OpenClimateLaw — public MCP for climate litigation</title>
+    <title>OpenClimateLaw — research preview · MCP for climate litigation</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="A public, no-auth MCP server with 5,046+ climate cases, anti-hallucination guarantees, and CC-BY data. Free for AI agents and researchers.">
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9A%96%EF%B8%8F%3C/text%3E%3C/svg%3E">
+    <meta name="description" content="Research preview of an MCP server providing AI agents with citation-safe access to the Sabin Center's Climate Litigation Database and the Climate Rights Database. Pending partnership confirmations.">
+    <meta name="robots" content="noindex, nofollow">
+    <meta property="og:title" content="OpenClimateLaw — research preview">
+    <meta property="og:description" content="Citation-safe MCP access to climate litigation. Research preview, not a public service.">
+    <meta property="og:type" content="website">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230a6b4d'/%3E%3Cpath d='M9 22l3-12h2l-2.5 10h6.5l-.5 2H9z' fill='%23fff'/%3E%3C/svg%3E">
     <style>
         :root {
             --fg: #1a1a1a;
@@ -15,6 +19,10 @@
             --accent-soft: #e8f3ee;
             --code-bg: #f0ede5;
             --border: #ddd8cc;
+            --warning-bg: #fff8e1;
+            --warning-border: #f0e2a8;
+            --warning-fg: #6a5510;
+            --modal-shadow: 0 14px 42px rgba(0,0,0,0.18);
         }
         @media (prefers-color-scheme: dark) {
             :root {
@@ -25,6 +33,10 @@
                 --accent-soft: #1f2e26;
                 --code-bg: #2a2823;
                 --border: #3a3730;
+                --warning-bg: #2c2715;
+                --warning-border: #514421;
+                --warning-fg: #d6c47c;
+                --modal-shadow: 0 14px 42px rgba(0,0,0,0.55);
             }
         }
         * { box-sizing: border-box; }
@@ -37,9 +49,58 @@
             font-size: 16px;
             -webkit-font-smoothing: antialiased;
         }
-        main { max-width: 44rem; margin: 3rem auto; padding: 0 1.5rem 6rem; }
-        h1 { font-size: 2rem; margin: 0 0 0.4rem; font-weight: 700; letter-spacing: -0.02em; }
-        h1 .icon { font-size: 0.85em; margin-right: 0.25em; }
+        a.skip-link {
+            position: absolute;
+            left: -10000px;
+            top: auto;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+        }
+        a.skip-link:focus {
+            position: fixed;
+            left: 1rem;
+            top: 1rem;
+            width: auto;
+            height: auto;
+            padding: 0.5rem 0.85rem;
+            background: var(--accent);
+            color: #fff;
+            border-radius: 4px;
+            z-index: 100;
+            text-decoration: none;
+        }
+        .preview-banner {
+            background: var(--warning-bg);
+            border-bottom: 1px solid var(--warning-border);
+            padding: 0.55rem 1.5rem;
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--warning-fg);
+            letter-spacing: 0.005em;
+        }
+        .preview-banner strong { font-weight: 600; }
+        main { max-width: 44rem; margin: 2.5rem auto; padding: 0 1.5rem 6rem; }
+        .header-row {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+            margin-bottom: 0.4rem;
+        }
+        h1 { font-size: 2rem; margin: 0; font-weight: 700; letter-spacing: -0.02em; }
+        .preview-tag {
+            display: inline-block;
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 0.25em 0.55em;
+            border-radius: 4px;
+            background: var(--warning-bg);
+            color: var(--warning-fg);
+            border: 1px solid var(--warning-border);
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
         .tagline { color: var(--muted); font-size: 1.05rem; margin: 0 0 2rem; }
         h2 {
             font-size: 1.25rem;
@@ -75,38 +136,31 @@
         pre code { background: transparent; padding: 0; }
         .stats {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 0.75rem;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.6rem;
             margin: 1rem 0 2rem;
+        }
+        @media (max-width: 30rem) {
+            .stats { grid-template-columns: repeat(2, 1fr); }
         }
         .stat {
             text-align: center;
-            padding: 1rem 0.5rem;
+            padding: 0.9rem 0.4rem;
             background: var(--accent-soft);
             border-radius: 8px;
         }
         .stat-num {
             display: block;
-            font-size: 1.55rem;
+            font-size: 1.5rem;
             font-weight: 700;
             color: var(--accent);
             font-variant-numeric: tabular-nums;
         }
         .stat-label {
-            font-size: 0.8em;
+            font-size: 0.75em;
             color: var(--muted);
             margin-top: 0.2em;
-        }
-        .url {
-            display: inline-block;
-            font-family: "SF Mono", Menlo, monospace;
-            background: var(--code-bg);
-            border: 1px solid var(--border);
-            padding: 0.4em 0.7em;
-            border-radius: 4px;
-            user-select: all;
-            font-size: 0.95em;
-            word-break: break-all;
+            line-height: 1.25;
         }
         .url-banner {
             background: var(--accent-soft);
@@ -120,6 +174,17 @@
             color: var(--muted);
             margin-bottom: 0.4em;
             display: block;
+        }
+        .url {
+            display: inline-block;
+            font-family: "SF Mono", Menlo, monospace;
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            padding: 0.4em 0.7em;
+            border-radius: 4px;
+            user-select: all;
+            font-size: 0.95em;
+            word-break: break-all;
         }
         ul, ol { padding-left: 1.5rem; margin: 0.75rem 0; }
         li { margin: 0.3rem 0; }
@@ -152,36 +217,193 @@
             margin-left: 0.4em;
             vertical-align: middle;
         }
-        details {
+
+        /* Tool-group cards */
+        .tool-group {
             border: 1px solid var(--border);
-            border-radius: 6px;
-            padding: 0.75rem 1rem;
-            margin: 0.75rem 0;
-            background: var(--code-bg);
+            border-radius: 8px;
+            padding: 1rem 1.25rem;
+            margin: 0.85rem 0;
+            background: var(--bg);
         }
-        details[open] { padding-bottom: 1rem; }
-        summary { cursor: pointer; font-weight: 600; font-size: 0.95rem; }
+        .tool-group h4 {
+            margin: 0 0 0.4rem;
+            font-size: 0.95rem;
+            font-weight: 700;
+            letter-spacing: -0.005em;
+        }
+        .tool-group .group-summary {
+            font-size: 0.88em;
+            color: var(--muted);
+            margin: 0 0 0.6rem;
+        }
+        .tool-group ul {
+            font-size: 0.88em;
+            margin: 0.4rem 0 0;
+            padding-left: 1.25rem;
+        }
+
+        /* Modal overlay */
+        .modal {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+        }
+        .modal[hidden] { display: none; }
+        .modal-backdrop {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.55);
+            backdrop-filter: blur(3px);
+            -webkit-backdrop-filter: blur(3px);
+        }
+        .modal-card {
+            position: relative;
+            max-width: 34rem;
+            width: 100%;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem 2.25rem;
+            box-shadow: var(--modal-shadow);
+        }
+        @media (max-width: 30rem) {
+            .modal-card { padding: 1.5rem; }
+        }
+        .modal-card h2 {
+            margin: 0 0 0.85rem;
+            border-top: none;
+            padding-top: 0;
+            font-size: 1.35rem;
+        }
+        .modal-card p {
+            margin: 0.55rem 0;
+            font-size: 0.95rem;
+            line-height: 1.55;
+        }
+        .modal-card .modal-actions {
+            margin-top: 1.4rem;
+            display: flex;
+            justify-content: flex-end;
+        }
+        .modal-card button {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            padding: 0.7rem 1.4rem;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .modal-card button:hover { filter: brightness(1.05); }
+        .modal-card button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+        @media (prefers-color-scheme: dark) {
+            .modal-card button { color: #0d1f17; }
+        }
     </style>
 </head>
 <body>
-<main>
+<a class="skip-link" href="#main">Skip to content</a>
 
-<h1><span class="icon">⚖️</span>OpenClimateLaw</h1>
+<!-- Persistent preview banner: stays visible after modal dismissal -->
+<div class="preview-banner" role="note">
+    <strong>Research preview</strong> — not yet endorsed by the upstream data sources. Please test but do not promote as a public service.
+</div>
 
-<p class="tagline">A public, no-auth MCP server for climate litigation. Anti-hallucination guarantees. Free for AI agents and researchers.</p>
+<!-- First-visit acknowledgement modal -->
+<div id="preview-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="preview-title" hidden>
+    <div class="modal-backdrop" aria-hidden="true"></div>
+    <div class="modal-card">
+        <h2 id="preview-title">Research preview</h2>
+        <p>OpenClimateLaw is a non-public research demonstration, not a launched service. The corpus integrates the <strong>Sabin Center's Climate Litigation Database</strong> and the <strong>Climate Rights Database</strong> at the University of Zurich; outreach to both is in progress and the integration has not yet been endorsed.</p>
+        <p>You are welcome to test, evaluate, and provide feedback. <strong>Please do not share this URL as a public service or cite results in production work</strong> until the data sources have confirmed the partnership. The endpoint, the data, and this site may move, change, or pause without notice.</p>
+        <div class="modal-actions">
+            <button type="button" id="preview-ack">I understand — continue</button>
+        </div>
+    </div>
+</div>
 
-<div class="stats">
+<main id="main">
+
+<div class="header-row">
+    <h1>OpenClimateLaw</h1>
+    <span class="preview-tag" aria-label="Status: research preview">Research preview</span>
+</div>
+
+<p class="tagline">A citation-safe Model Context Protocol layer over climate-litigation databases. Built so AI agents (Claude, ChatGPT, Gemini, Copilot, Cursor and others) can quote and cite climate cases without fabricating either.</p>
+
+<div class="stats" aria-label="Corpus size">
     <div class="stat"><span class="stat-num">5,046</span><span class="stat-label">cases</span></div>
-    <div class="stat"><span class="stat-num">17,146</span><span class="stat-label">documents</span></div>
     <div class="stat"><span class="stat-num">67</span><span class="stat-label">jurisdictions</span></div>
+    <div class="stat"><span class="stat-num">41k+</span><span class="stat-label">court documents</span></div>
+    <div class="stat"><span class="stat-num">14k+</span><span class="stat-label">citation edges</span></div>
 </div>
 
 <div class="url-banner">
-    <span class="label">MCP endpoint (Streamable HTTP, no authentication required):</span>
+    <span class="label">MCP endpoint (Streamable HTTP, no authentication on this preview):</span>
     <span class="url">https://mcp.openclimatelaw.org/mcp</span>
 </div>
 
-<h2>Add to Claude</h2>
+<h2 id="capabilities">What it does</h2>
+
+<p>Nine tools, organized into four groups. Each is callable from any MCP client; combine them for full-fidelity legal research.</p>
+
+<div class="tool-group">
+    <h4>Discovery</h4>
+    <p class="group-summary">Find the right case to cite.</p>
+    <ul>
+        <li><code>search_cases(query, jurisdiction?, claim_type?, status?, limit?, semantic?)</code> — hybrid full-text + trigram (typo-tolerant) + sentence-transformer cosine ranking. Returns case IDs, titles, summaries, jurisdictions, and verbatim citation strings.</li>
+        <li><code>get_case(case_id_or_sabin_id)</code> — full record by canonical UUID or Sabin family ID. Includes <code>case_number</code>, <code>core_object</code> (one-sentence holding), <code>principal_laws</code> (statutes the case turns on), parties, claim types, documents (with extracted text where available), citation strings, and field-level provenance.</li>
+    </ul>
+</div>
+
+<div class="tool-group">
+    <h4>Graph navigation</h4>
+    <p class="group-summary">Follow citation edges and find semantic analogues.</p>
+    <ul>
+        <li><code>find_citations(case_id, limit?)</code> — cases this case cites (forward edges). Each result tagged with <code>source_of_edge</code>: <code>title_match</code> (canonical-title matched by Aho-Corasick), <code>inferred_nlp</code> (formal cite — ECLI / BGE / US reporter — extracted by regex), or <code>sabin_structured</code>.</li>
+        <li><code>find_cited_by(case_id, limit?)</code> — cases citing this case (backward edges). Use for influence analysis.</li>
+        <li><code>find_related_cases(case_id, jurisdiction?, claim_type?, status?, limit?)</code> — semantic similarity via sentence-transformer cosine on case embeddings. Surfaces cross-language and cross-phrasing analogues (e.g. <em>Urgenda</em> → <em>Klimaatzaak</em>, the Shell appeal, <em>Luca Salis</em>).</li>
+    </ul>
+</div>
+
+<div class="tool-group">
+    <h4>Citation safety</h4>
+    <p class="group-summary">The contract that makes AI-assisted legal research trustworthy: cannot fabricate a citation, cannot fabricate a quote, cannot smuggle either past attestation.</p>
+    <ul>
+        <li><code>cite(case_id, lang, format)</code> — returns the verbatim <code>citation_string</code> of a previously retrieved case. Agents are required not to construct citations from training data; they must call this tool.</li>
+        <li><code>check_claim_support(quote, source_id, source_kind)</code> — verifies a quoted string appears verbatim in <code>case_summary</code>, <code>document_text</code> (note: takes a document UUID from <code>get_case().documents[].id</code>, not a case ID), or <code>citation_string</code>.</li>
+        <li><code>attest_response(draft_text, retrieved_ids[])</code> — scans an LLM's draft for citation-shaped strings (ECLI, BVerfGE, BGE, US reporter, paragraph references) and flags any not present in the retrieved cases.</li>
+    </ul>
+</div>
+
+<div class="tool-group">
+    <h4>Aggregates</h4>
+    <p class="group-summary">Corpus-wide statistics for dashboards and analysis.</p>
+    <ul>
+        <li><code>get_statistics(scope, group_by?)</code> — case / document / jurisdiction counts, optionally grouped by jurisdiction, claim type, year, status, or outcome.</li>
+    </ul>
+</div>
+
+<h2 id="try">Try it</h2>
+
+<p class="small">Once connected, ask any compatible client:</p>
+
+<ul class="small">
+    <li>"Search the climate-litigation corpus for 'Amazon deforestation' filed in Brazil; show the top five with their core_object."</li>
+    <li>"Find <em>Urgenda Foundation v. State of the Netherlands</em>, cite it in en/sabin format, and quote one sentence from its summary verbatim — but verify the quote first using check_claim_support."</li>
+    <li>"Find youth-plaintiff cases in the United States and summarize their claim types."</li>
+    <li>"How many climate cases are filed against governments per jurisdiction? Top 10."</li>
+    <li>"Validate this draft: 'In ECLI:NL:HR:2019:2007 the court reasoned, citing Massachusetts v. EPA, 549 U.S. 497 (2007)…' against retrieved cases [<code>urgenda-foundation-v-state-of-the-netherlands</code>]."</li>
+</ul>
+
+<h2 id="claude">Add to Claude</h2>
 
 <h3>Claude Code (CLI)</h3>
 <pre><code>claude mcp add openclimatelaw https://mcp.openclimatelaw.org/mcp --transport http</code></pre>
@@ -216,7 +438,7 @@ resp = client.beta.messages.create(
     extra_headers={"anthropic-beta": "mcp-client-2025-04-04"},
 )</code></pre>
 
-<h2>Add to ChatGPT &amp; OpenAI</h2>
+<h2 id="chatgpt">Add to ChatGPT &amp; OpenAI</h2>
 
 <h3>ChatGPT (Plus / Pro / Team / Enterprise)</h3>
 <p class="small"><kbd>Settings</kbd> → <kbd>Connectors</kbd> → <kbd>Add custom connector</kbd> → paste <code>https://mcp.openclimatelaw.org/mcp</code>. (Custom connectors are unavailable on the Free plan.)</p>
@@ -246,7 +468,7 @@ resp = client.responses.create(
     input="Look up the Urgenda case and quote one sentence verbatim, validated.",
 )</code></pre>
 
-<h2>Add to GitHub Copilot</h2>
+<h2 id="copilot">Add to GitHub Copilot</h2>
 
 <h3>VS Code (workspace)</h3>
 <p class="small">Add to <code>.vscode/mcp.json</code>:</p>
@@ -263,7 +485,7 @@ resp = client.responses.create(
 <pre><code>gh copilot mcp add openclimatelaw --type http --url https://mcp.openclimatelaw.org/mcp</code></pre>
 <p class="small muted">(Exact subcommand depends on your Copilot CLI version; consult <code>gh copilot mcp --help</code>.)</p>
 
-<h2>Add to Google Gemini</h2>
+<h2 id="gemini">Add to Google Gemini</h2>
 
 <h3>Gemini CLI</h3>
 <pre><code>gemini mcp add openclimatelaw --transport http --url https://mcp.openclimatelaw.org/mcp</code></pre>
@@ -290,7 +512,7 @@ async def run():
 
 asyncio.run(run())</code></pre>
 
-<h2>Other MCP clients</h2>
+<h2 id="other">Other MCP clients</h2>
 
 <p class="small">Any MCP client supporting Streamable HTTP works. Point it at <code>https://mcp.openclimatelaw.org/mcp</code>.</p>
 
@@ -303,63 +525,28 @@ asyncio.run(run())</code></pre>
     <li><strong>Custom code:</strong> any HTTP client speaking the <a href="https://modelcontextprotocol.io/specification/2025-06-18/basic/transports">MCP Streamable HTTP spec</a>.</li>
 </ul>
 
-<h2>What you can do</h2>
-
-<p class="small">Nine tools available right now:</p>
-
-<ul class="small">
-    <li><code>search_cases(query, jurisdiction?, claim_type?, status?, limit?, semantic?)</code> — <strong>hybrid keyword + fuzzy + semantic search</strong> over titles + summaries with optional filters. Combines Postgres FTS, trigram similarity (typo-tolerant), and sentence-transformer vector cosine. Returns ranked matches with <code>sabin_id</code>, title, summary excerpt, and a verbatim <code>citation_string</code>.</li>
-    <li><code>get_case(case_id_or_sabin_id)</code> — full case record: parties, claim types, documents (with extracted text where available), citation strings, field-level provenance.</li>
-    <li><code>get_statistics(scope, group_by?)</code> — aggregates: case/doc/statute counts, group by jurisdiction / claim_type / year / status / outcome.</li>
-    <li><code>find_related_cases(case_id_or_sabin_id, jurisdiction?, claim_type?, status?, limit?)</code> — cases <em>semantically</em> similar to the given one via sentence-transformer cosine. Useful for "other cases like this one" even when titles share no keywords. Filters layer in.</li>
-    <li><code>find_citations(case_id_or_sabin_id, limit?)</code> — cases this case cites (forward edges). NLP-extracted from summaries + document text via formal-cite regex AND title-substring matching.</li>
-    <li><code>find_cited_by(case_id_or_sabin_id, limit?)</code> — cases that cite this case (backward edges). Use for influence analysis: <em>"how often is Urgenda cited?"</em></li>
-    <li><code>cite(case_id, lang, format)</code> — verbatim citation_string for a case in a given language and format. <strong>R1: never construct citations from training data.</strong></li>
-    <li><code>check_claim_support(quote, source_id, source_kind)</code> — verify a quotation appears verbatim in <code>case_summary</code> / <code>document_text</code> / <code>citation_string</code>. <strong>R2.</strong> Note: <code>document_text</code> requires a <em>document</em> UUID (from <code>get_case().documents[].id</code>), not a case ID.</li>
-    <li><code>attest_response(draft_text, retrieved_ids[])</code> — scans a draft for citation-shaped strings (ECLI, BVerfGE, BGE, US reporter) and flags any not present in the citation_strings of the retrieved cases. <strong>R1 enforcement.</strong></li>
-</ul>
-
-<p class="small muted">Coming next: statute layer (CCLW), unified <code>find_related_cases</code>, expanded citation graph as Sabin's case-number metadata gets enriched into citation_string variants.</p>
-
-<h2>Anti-hallucination contract</h2>
-
-<p class="small">The MCP enforces three rules from the project spec:</p>
-<ul class="small">
-    <li><strong>R1 (don't fabricate citations):</strong> every case reference returned includes a verbatim <code>citation_string</code>. Use <code>cite()</code> to fetch one — never construct from training data. <code>attest_response()</code> catches violations after the fact.</li>
-    <li><strong>R2 (don't misquote):</strong> use <code>check_claim_support()</code> to verify any quotation appears verbatim in the named source.</li>
-    <li><strong>R5 (don't fudge outcomes):</strong> <code>get_case</code> returns structured <code>status_code</code> from the source taxonomy.</li>
-</ul>
-
-<h2>Try it</h2>
-
-<p class="small">Once connected, ask in any compatible client:</p>
-
-<ul class="small">
-    <li>"Search the climate-litigation corpus for 'Amazon deforestation' filed in Brazil and tell me the top 5 cases."</li>
-    <li>"Find Urgenda v. Netherlands, cite it in en/sabin format, and quote one sentence from its summary verbatim — but verify the quote first."</li>
-    <li>"Find youth-plaintiff cases in the US and summarize their claim types."</li>
-    <li>"How many climate cases are there per jurisdiction? Show the top 10."</li>
-    <li>"Validate this draft: 'In ECLI:NL:HR:2019:2007 the court reasoned, citing Massachusetts v. EPA, 549 U.S. 497 (2007)...' against retrieved cases [<code>urgenda-foundation-v-state-of-the-netherlands</code>]."</li>
-</ul>
-
-<h2>Data sources &amp; licence</h2>
+<h2 id="data">Data sources, methodology &amp; licence</h2>
 
 <p class="small">
-    Centred on the <a href="https://climatecasechart.com/">Sabin Center for Climate Change Law's Climate Litigation Database</a> (~4,830 cases, full metadata + summaries + court-document text), scraped directly from <code>www.climatecasechart.com</code> under the <a href="https://creativecommons.org/licenses/by/4.0/">CC-BY 4.0</a> licence Sabin publishes the data under. PDFs are downloaded only from <code>climatecasechart.com/wp-content/uploads/...</code> (Sabin's own domain). No third-party API in the loop.
+    Centred on the <a href="https://climatecasechart.com/">Sabin Center for Climate Change Law's Climate Litigation Database</a> (4,831 cases, full metadata + summaries + court-document text), scraped directly from <code>www.climatecasechart.com</code> under the <a href="https://creativecommons.org/licenses/by/4.0/">CC-BY 4.0</a> licence Sabin publishes the data under. Court-document PDFs are downloaded only from <code>climatecasechart.com/wp-content/uploads/…</code> on Sabin's own domain. No third-party API in the loop.
 </p>
 
 <p class="small">
-    Metadata-only references to <a href="https://climaterightsdatabase.com/">Climate Rights Database</a> cases are also included with redirect-to-source links (215 cases, no full text — consult CRD directly for substantive content).
+    Metadata-only references to the <a href="https://climaterightsdatabase.com/">Climate Rights Database</a> (215 cases) are included with redirect-to-source links. Full case summaries are <strong>not</strong> copied — consult CRD directly for substantive content.
 </p>
 
 <p class="small">
-    Per CC-BY 4.0, every <code>citation_string</code> returned by this MCP carries upstream attribution. The MCP server itself is open-source under the MIT licence.
+    Per CC-BY 4.0, every <code>citation_string</code> returned by this MCP carries upstream attribution. The MCP server itself is open source under the MIT licence at <a href="https://github.com/jonashertner/openclimatelaw">github.com/jonashertner/openclimatelaw</a>.
 </p>
 
-<h2>Source &amp; status</h2>
+<p class="small muted">
+    Embeddings: <code>sentence-transformers/all-MiniLM-L6-v2</code> (384-dim) stored as pgvector with HNSW indexing. Citation graph: Aho-Corasick canonical-title matching plus formal-cite regex extraction. Roadmap: bulk-export ingestion path with the data sources, statute layer drawing on the ClimatePolicyRadar / CCLW HuggingFace dataset.
+</p>
+
+<h2 id="status">Source &amp; status</h2>
 
 <p class="small">
-    Open-source: <a href="https://github.com/jonashertner/openclimatelaw">github.com/jonashertner/openclimatelaw</a> · v0.1 · Streamable HTTP MCP · Hetzner Cloud · Let's Encrypt.
+    Open source: <a href="https://github.com/jonashertner/openclimatelaw">github.com/jonashertner/openclimatelaw</a> · MIT · v0.1 · Streamable HTTP MCP · Hetzner Cloud · Let's Encrypt automatic TLS.
 </p>
 
 <p class="small">
@@ -367,9 +554,51 @@ asyncio.run(run())</code></pre>
 </p>
 
 <footer>
-    <p>built with <svg aria-label="love" role="img" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align: -2px;"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg> by <a href="https://regenerative.law">regenerative.law</a> · <a href="mailto:jonashertner@protonmail.ch">contact</a> · <a href="https://github.com/jonashertner/openclimatelaw/issues">report an issue</a></p>
+    <p>built with <svg aria-label="love" role="img" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align: -2px;"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg> by <a href="https://regenerative.law">regenerative.law</a> · <a href="mailto:jh@jonashertner.com">contact</a> · <a href="https://github.com/jonashertner/openclimatelaw/issues">report an issue</a></p>
 </footer>
 
 </main>
+
+<script>
+(function () {
+    var KEY = 'openclimatelaw.preview.acknowledged.v1';
+    var modal = document.getElementById('preview-modal');
+    var button = document.getElementById('preview-ack');
+    if (!modal || !button) return;
+
+    var acknowledged = false;
+    try { acknowledged = localStorage.getItem(KEY) === '1'; } catch (e) { /* private mode */ }
+
+    if (!acknowledged) {
+        modal.hidden = false;
+        // Defer focus so screenreaders pick up role=dialog first.
+        setTimeout(function () { button.focus(); }, 50);
+    }
+
+    function dismiss() {
+        try { localStorage.setItem(KEY, '1'); } catch (e) { /* ignore */ }
+        modal.hidden = true;
+        // After dismissal, return focus to the page so keyboard nav resumes from the top.
+        var skip = document.querySelector('.skip-link');
+        if (skip) skip.focus();
+    }
+
+    button.addEventListener('click', dismiss);
+
+    document.addEventListener('keydown', function (e) {
+        if (modal.hidden) return;
+        if (e.key === 'Escape' || e.key === 'Enter') {
+            e.preventDefault();
+            dismiss();
+        }
+        if (e.key === 'Tab') {
+            // Trap focus on the single button while modal is open.
+            e.preventDefault();
+            button.focus();
+        }
+    });
+})();
+</script>
+
 </body>
 </html>
