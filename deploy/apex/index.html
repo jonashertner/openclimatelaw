@@ -305,18 +305,20 @@ asyncio.run(run())</code></pre>
 
 <h2>What you can do</h2>
 
-<p class="small">Six tools available right now:</p>
+<p class="small">Eight tools available right now:</p>
 
 <ul class="small">
-    <li><code>search_cases(query, jurisdiction?, claim_type?, status?, limit?)</code> — free-text search over titles + summaries with optional filters. Returns ranked matches with <code>sabin_id</code>, title, summary excerpt, and a verbatim <code>citation_string</code> — the right entry point when you don't already have a case_id.</li>
+    <li><code>search_cases(query, jurisdiction?, claim_type?, status?, limit?, semantic?)</code> — <strong>hybrid keyword + fuzzy + semantic search</strong> over titles + summaries with optional filters. Combines Postgres FTS, trigram similarity (typo-tolerant), and sentence-transformer vector cosine. Returns ranked matches with <code>sabin_id</code>, title, summary excerpt, and a verbatim <code>citation_string</code>.</li>
     <li><code>get_case(case_id_or_sabin_id)</code> — full case record: parties, claim types, documents (with extracted text where available), citation strings, field-level provenance.</li>
     <li><code>get_statistics(scope, group_by?)</code> — aggregates: case/doc/statute counts, group by jurisdiction / claim_type / year / status / outcome.</li>
+    <li><code>find_citations(case_id_or_sabin_id, limit?)</code> — cases this case cites (forward edges). NLP-extracted from summaries + document text.</li>
+    <li><code>find_cited_by(case_id_or_sabin_id, limit?)</code> — cases that cite this case (backward edges). Use for influence analysis: <em>"how often is Urgenda cited?"</em></li>
     <li><code>cite(case_id, lang, format)</code> — verbatim citation_string for a case in a given language and format. <strong>R1: never construct citations from training data.</strong></li>
     <li><code>check_claim_support(quote, source_id, source_kind)</code> — verify a quotation appears verbatim in <code>case_summary</code> / <code>document_text</code> / <code>citation_string</code>. <strong>R2.</strong> Note: <code>document_text</code> requires a <em>document</em> UUID (from <code>get_case().documents[].id</code>), not a case ID.</li>
     <li><code>attest_response(draft_text, retrieved_ids[])</code> — scans a draft for citation-shaped strings (ECLI, BVerfGE, BGE, US reporter) and flags any not present in the citation_strings of the retrieved cases. <strong>R1 enforcement.</strong></li>
 </ul>
 
-<p class="small muted">Coming next: <code>find_citations</code> / <code>find_cited_by</code>, statute layer (CCLW), and a unified <code>find_related_cases</code>.</p>
+<p class="small muted">Coming next: statute layer (CCLW), unified <code>find_related_cases</code>, expanded citation graph as Sabin's case-number metadata gets enriched into citation_string variants.</p>
 
 <h2>Anti-hallucination contract</h2>
 
