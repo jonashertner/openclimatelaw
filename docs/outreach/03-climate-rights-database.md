@@ -62,17 +62,13 @@ If the CRD content is publishable under CC-BY 4.0 (or another open licence), or 
 
 **1. What licence governs the CRD content?** If your case summaries are published under CC-BY 4.0 (or CC-BY-NC, CC-BY-SA, etc.), we would happily ingest them with full attribution and proper licence-tag preservation. If you prefer they remain on `climaterightsdatabase.com` and we keep our current redirect-only posture, that is also entirely fine — we would just like to know explicitly so we are not guessing.
 
-**2. Is a bulk export available, or worth building?** A periodic export (CSV / JSON / SQLite — whatever format works for you) would let us preserve structured fields not exposed by the default REST endpoint (rights at stake, deciding bodies, state concerned), give us deterministic provenance, and be friendlier to your infrastructure than continuous polling. If a bulk export does not currently exist on your end and producing one would require nontrivial work, **regenerative.law is happy to write the export script and run it under your direction** as part of our sponsorship of this initiative.
+**2. Is a bulk export available, or worth building?** A periodic export (CSV / JSON / SQLite — whatever format works for you) would let us preserve structured fields not exposed by the default REST endpoint (rights at stake, deciding bodies, state concerned), give us deterministic provenance, and be friendlier to your infrastructure than continuous polling. If a bulk export does not currently exist on your end and producing one would require nontrivial work, we would be happy to write the export script and run it under your direction.
 
-## What we propose
+## How we'd like to help
 
-If, after testing, you find the approach valuable, we would be honored to do either of the following — in whatever combination the CRRP prefers:
+This is an informal outreach, not a structured proposal. If, after testing, you find this approach useful, we would simply like to support your work in whatever way is most helpful. We would be honored to underwrite the operating costs of an MCP service like this one — infrastructure, data refresh, ongoing maintenance — so it can run as a free resource for the climate-rights and broader climate-litigation community, under your guidance and with full attribution. We would equally be glad to contribute engineering capacity to anything else that serves your mission — co-listing, support for specific research initiatives, coordination with the Sabin Center's database, or any other form that is useful to the Project.
 
-1. **Sponsor this as a free public service** for the climate-rights and broader climate-litigation community. regenerative.law would underwrite the operation — infrastructure, data refresh, ongoing maintenance — under your guidance and with full attribution. Governed by an MoU we draft in consultation with you, including takedown rights, attribution requirements, and any constraints on use you wish to impose.
-
-2. **Explore any other collaboration that makes sense to the Project** — co-listing arrangements, support for specific research initiatives, coordination with the Sabin Center's database, or any other shape that serves your mission.
-
-We are deliberately flexible on form. The underlying commitment is to make CRD's editorial work as broadly accessible as possible without compromising the integrity that makes it valuable.
+We are not attached to any particular shape. The underlying commitment is straightforward: the work the CRRP does in this field deserves the broadest possible reach, and we would like to help you achieve that on whatever terms you find appropriate.
 
 ## Veto rights
 

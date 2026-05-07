@@ -42,15 +42,11 @@ The practical effect is that a practitioner who asks an AI assistant to draft a 
 
 The demonstration consumes no third-party API. It fetches each case detail page on `www.climatecasechart.com` directly, parses the structured family record from the page, and downloads court documents only from `wp-content/uploads/` on your domain. Identifying contact-bearing User-Agent, ~one request per second, ≤4 concurrent PDF downloads, exponential back-off on 429/5xx. Every record carries explicit Sabin Center attribution and points users back to your canonical page for substantive content. Redistribution follows the same CC-BY 4.0 licence Sabin publishes the data under. The full source code is open under the MIT licence at [github.com/jonashertner/openclimatelaw](https://github.com/jonashertner/openclimatelaw) — what we are doing is auditable end-to-end.
 
-## What we propose
+## How we'd like to help
 
-If, after testing, you find the approach valuable, we would be honored to do either of the following — in whatever combination the Sabin Center prefers:
+This is an informal outreach, not a structured proposal. If, after testing, you find this approach useful, we would simply like to support your work in whatever way is most helpful. We would be honored to underwrite the operating costs of an MCP service like this one — infrastructure, data refresh, ongoing maintenance — so it can run as a free resource for the climate-litigation community, under your guidance and with full attribution. We would equally be glad to contribute engineering capacity to anything else that serves your mission: a bulk-export ingestion path that is friendlier to your infrastructure than per-page scraping, a joint HuggingFace dataset under your existing CC-BY 4.0 (along the same lines as `ClimatePolicyRadar/all-document-text-data`), co-listing, or any other form that is useful to you.
 
-1. **Sponsor this as a free public service** for the global climate-litigation community. regenerative.law would underwrite the operation — infrastructure, data refresh, ongoing maintenance — under your guidance and with full attribution. The endpoint and landing page would be governed by an MoU we draft in consultation with you, including takedown rights, attribution requirements, and any constraints on use you wish to impose.
-
-2. **Explore any other collaboration that makes sense to the Center** — a bulk-export ingestion path that is friendlier to your infrastructure than per-page scraping, a joint HuggingFace dataset under your CC-BY 4.0 (along the same lines as `ClimatePolicyRadar/all-document-text-data`), co-listing arrangements, or any other shape that serves your mission.
-
-We are deliberately flexible on form. We are committed to the underlying goal: making your work as broadly accessible as possible without compromising the editorial integrity that makes it valuable in the first place.
+We are not attached to any particular shape. The underlying commitment is straightforward: the work the Sabin Center does in this field deserves the broadest possible reach, and we would like to help you achieve that on whatever terms you find appropriate.
 
 ## Veto rights
 
