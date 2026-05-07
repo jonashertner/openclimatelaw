@@ -250,7 +250,14 @@ async def scrape_one_case(
                 ok = await download_pdf(client, url, target)
                 if not ok:
                     return None
-                text = extract_pdf_text(target)
+                try:
+                    text = extract_pdf_text(target)
+                finally:
+                    # The text is now in memory and will be persisted to
+                    # postgres by the caller — we don't need the PDF on disk.
+                    # Without this, ~14 PDFs/case x 4,800 cases x ~1 MB
+                    # accumulates to ~65 GB and fills the VPS.
+                    target.unlink(missing_ok=True)
                 if not text:
                     return None
                 return {
@@ -273,12 +280,18 @@ async def scrape_one_case(
     return parsed
 
 
-async def get_known_slugs() -> list[str]:
+async def get_known_slugs(*, only_missing_metadata: bool = False) -> list[str]:
     """Read existing Sabin family slugs from citation_string.text.
 
     During the prior CPR-API ingest we stored each case's family slug inside
     the citation_string text as a URL of the form
     "...climatecasechart.com/document/<family-slug>)". Extract those.
+
+    Args:
+        only_missing_metadata: when True, return only slugs of cases whose
+            upstream_metadata column is NULL — i.e. cases that haven't been
+            re-processed by the current scraper. Use this on restart to
+            avoid re-downloading PDFs for cases already enriched.
 
     (We don't have a dedicated family_slug column on case_record yet — adding
     one would be cleaner long-term but for the bootstrap migration this works.)
@@ -287,10 +300,11 @@ async def get_known_slugs() -> list[str]:
 
     pool = await get_pool()
     slugs: list[str] = []
+    extra_where = "AND c.upstream_metadata IS NULL" if only_missing_metadata else ""
     async with pool.connection() as conn:
         async with conn.cursor() as cur:
             await cur.execute(
-                r"""
+                rf"""
                 SELECT DISTINCT (regexp_match(
                     cs.text,
                     'climatecasechart\.com/document/([^)\s]+)'
@@ -299,6 +313,7 @@ async def get_known_slugs() -> list[str]:
                 JOIN case_record c ON c.id = cs.case_id
                 WHERE c.primary_source = 'sabin'
                   AND cs.text ~ 'climatecasechart\.com/document/'
+                  {extra_where}
                 ORDER BY slug
                 """
             )
@@ -313,6 +328,7 @@ async def scrape_all(
     upstream_version: str | None = None,
     max_records: int | None = None,
     pdf_dir: Path = PDF_DIR,
+    only_missing_metadata: bool = False,
 ) -> dict[str, int]:
     """Scrape all known case slugs from climatecasechart.com directly."""
     from server.db import get_pool
@@ -322,8 +338,8 @@ async def scrape_all(
     retrieved_at = datetime.now(tz=UTC)
 
     if slugs is None:
-        log.info("loading_slugs_from_db")
-        slugs = await get_known_slugs()
+        log.info("loading_slugs_from_db", only_missing_metadata=only_missing_metadata)
+        slugs = await get_known_slugs(only_missing_metadata=only_missing_metadata)
         log.info("slugs_loaded", count=len(slugs))
 
     if max_records is not None:
@@ -399,6 +415,14 @@ def main() -> int:
         default=str(PDF_DIR),
         help=f"Local directory for downloaded PDFs (default: {PDF_DIR}).",
     )
+    parser.add_argument(
+        "--only-missing",
+        action="store_true",
+        help=(
+            "Only process cases whose upstream_metadata column is NULL. "
+            "Use on restart to avoid re-downloading PDFs for cases already enriched."
+        ),
+    )
     args = parser.parse_args()
 
     configure_logging(level="INFO", json=False)
@@ -410,6 +434,7 @@ def main() -> int:
                 upstream_version=args.upstream_version,
                 max_records=args.max_records,
                 pdf_dir=Path(args.pdf_dir),
+                only_missing_metadata=args.only_missing,
             )
         finally:
             await close_pool()
