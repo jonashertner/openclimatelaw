@@ -13,7 +13,8 @@ async def get_case(case_id_or_sabin_id: str) -> dict[str, Any] | None:
                 """
                 SELECT id, sabin_id, canonical_title, jurisdiction_code, court_id,
                        filing_date, decision_date, status_code, outcome_code,
-                       summary, summary_lang, primary_source, provenance, updated_at
+                       summary, summary_lang, primary_source, provenance, updated_at,
+                       upstream_metadata
                 FROM case_record
                 WHERE id::text = %s OR sabin_id = %s
                 """,
@@ -37,6 +38,7 @@ async def get_case(case_id_or_sabin_id: str) -> dict[str, Any] | None:
                 primary_source,
                 provenance,
                 updated_at,
+                upstream_metadata,
             ) = row
 
             await cur.execute(
@@ -91,6 +93,8 @@ async def get_case(case_id_or_sabin_id: str) -> dict[str, Any] | None:
                 {"lang": r[0], "format": r[1], "text": r[2]} for r in await cur.fetchall()
             ]
 
+    case_number, core_object, principal_laws = _project_upstream_metadata(upstream_metadata)
+
     return {
         "id": str(_id),
         "sabin_id": sabin_id,
@@ -106,8 +110,39 @@ async def get_case(case_id_or_sabin_id: str) -> dict[str, Any] | None:
         "primary_source": primary_source,
         "provenance": provenance,
         "updated_at": updated_at.isoformat() if updated_at else None,
+        "case_number": case_number,
+        "core_object": core_object,
+        "principal_laws": principal_laws,
         "parties": parties,
         "claim_types": claim_types,
         "documents": documents,
         "citation_strings": citation_strings,
+        "upstream_metadata": upstream_metadata,
     }
+
+
+def _project_upstream_metadata(
+    upstream_metadata: dict[str, Any] | None,
+) -> tuple[str | None, str | None, list[str]]:
+    """Pull the most useful fields out of the upstream blob into top-level surface area.
+
+    - case_number: docket / formal cite from upstream (e.g. ECLI, US reporter)
+    - core_object: one-sentence holding/issue text
+    - principal_laws: statutes the case turns on (from concept_preferred_label)
+    """
+    if not upstream_metadata:
+        return None, None, []
+    md = upstream_metadata.get("metadata") or {}
+
+    case_number_list = md.get("case_number") or []
+    case_number = case_number_list[0] if case_number_list else None
+
+    core_object_list = md.get("core_object") or []
+    core_object = core_object_list[0] if core_object_list else None
+
+    principal_laws: list[str] = []
+    for label in md.get("concept_preferred_label") or []:
+        if isinstance(label, str) and label.startswith("principal_law/"):
+            principal_laws.append(label.removeprefix("principal_law/"))
+
+    return case_number, core_object, principal_laws

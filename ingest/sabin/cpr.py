@@ -211,6 +211,18 @@ def parse_family_record(
     published_date = family.get("published_date")
     last_updated = family.get("last_updated_date")
 
+    # Preserve full upstream payload for fields we don't yet model as columns:
+    # case_number, core_object, principal_law refs, events timeline, full
+    # concepts hierarchy. Source of truth for future feature layers.
+    upstream_metadata: dict[str, Any] = {
+        "metadata": metadata,
+        "concepts": family.get("concepts") or [],
+        "events": family.get("events") or [],
+    }
+    for opt_key in ("attribution", "collections", "organisations"):
+        if family.get(opt_key) is not None:
+            upstream_metadata[opt_key] = family[opt_key]
+
     pb = ProvenanceBuilder()
     sabin_prov = ProvenanceEntry(
         source="sabin",
@@ -240,6 +252,7 @@ def parse_family_record(
         "summary_lang": "en",
         "primary_source": "sabin",
         "provenance": pb.build(),
+        "upstream_metadata": upstream_metadata,
     }
 
     # Parties: CPR's family record doesn't expose plaintiff/defendant cleanly.
@@ -263,10 +276,17 @@ def parse_family_record(
             }
         )
 
-    # Citation string: synthesize from upstream attribution
+    # Citation string: synthesize from upstream attribution.
+    # Enrich with case_number when present (e.g., docket, ECLI, etc.) so the
+    # cite is parseable by formal-cite extractors and useful to lawyers.
     family_slug = family.get("slug") or ""
     case_url = f"{CCC_BASE}/document/{family_slug}" if family_slug else CCC_BASE
-    cite_text = f"{title} (Sabin Center for Climate Change Law, {case_url})"
+    case_number_list = metadata.get("case_number") or []
+    case_number = case_number_list[0] if case_number_list else None
+    if case_number:
+        cite_text = f"{title}, {case_number} (Sabin Center for Climate Change Law, {case_url})"
+    else:
+        cite_text = f"{title} (Sabin Center for Climate Change Law, {case_url})"
     citation_strings = [
         {"lang": "en", "format": "sabin", "text": cite_text},
     ]
@@ -441,12 +461,14 @@ async def upsert_parsed_case_minimal(pool: AsyncConnectionPool, parsed: ParsedCa
                     INSERT INTO case_record (
                         sabin_id, canonical_title, jurisdiction_code, court_id,
                         filing_date, decision_date, status_code, outcome_code,
-                        summary, summary_lang, primary_source, provenance, updated_at
+                        summary, summary_lang, primary_source, provenance,
+                        upstream_metadata, updated_at
                     )
                     VALUES (%(sabin_id)s, %(canonical_title)s, %(jurisdiction_code)s,
                             %(court_id)s, %(filing_date)s, %(decision_date)s,
                             %(status_code)s, %(outcome_code)s, %(summary)s,
-                            %(summary_lang)s, %(primary_source)s, %(provenance)s, now())
+                            %(summary_lang)s, %(primary_source)s, %(provenance)s,
+                            %(upstream_metadata)s, now())
                     ON CONFLICT (sabin_id) DO UPDATE SET
                         canonical_title = EXCLUDED.canonical_title,
                         jurisdiction_code = EXCLUDED.jurisdiction_code,
@@ -459,10 +481,15 @@ async def upsert_parsed_case_minimal(pool: AsyncConnectionPool, parsed: ParsedCa
                         summary_lang = EXCLUDED.summary_lang,
                         primary_source = EXCLUDED.primary_source,
                         provenance = EXCLUDED.provenance,
+                        upstream_metadata = EXCLUDED.upstream_metadata,
                         updated_at = now()
                     RETURNING id
                     """,
-                    {**case, "provenance": Jsonb(case["provenance"])},
+                    {
+                        **case,
+                        "provenance": Jsonb(case["provenance"]),
+                        "upstream_metadata": Jsonb(case.get("upstream_metadata") or {}),
+                    },
                 )
                 row = await cur.fetchone()
                 assert row is not None
