@@ -143,7 +143,7 @@ See `docs/superpowers/specs/2026-05-05-openclimatelaw-mcp-design.md` for the des
 ```bash
 docker compose up -d postgres
 uv sync
-uv run yoyo apply --database "postgresql://openclimate:dev@localhost:5432/openclimate" migrations
+uv run yoyo apply --database "postgresql+psycopg://openclimate:dev@localhost:5432/openclimate" migrations
 uv run python -m server.main
 ```
 ```
@@ -323,7 +323,7 @@ git commit -m "feat: add env-driven Settings via pydantic-settings"
 ```python
 import pytest
 
-from server.db import get_pool
+from server.db import close_pool, get_pool
 
 
 @pytest.mark.asyncio
@@ -334,7 +334,7 @@ async def test_pool_executes_select_one():
             await cur.execute("SELECT 1 AS n")
             row = await cur.fetchone()
             assert row == (1,)
-    await pool.close()
+    await close_pool()
 ```
 
 - [ ] **Step 2: Write `tests/conftest.py` to set DATABASE_URL for the test DB**
@@ -422,7 +422,7 @@ git commit -m "feat: add async psycopg connection pool"
 ```python
 import pytest
 
-from server.db import get_pool
+from server.db import close_pool, get_pool
 
 
 @pytest.mark.asyncio
@@ -451,7 +451,7 @@ async def test_vocabulary_tables_exist():
                 "vocabulary_outcome",
                 "vocabulary_status",
             ]
-    await pool.close()
+    await close_pool()
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
@@ -523,7 +523,7 @@ CREATE TABLE vocabulary_document_category (
 Run:
 
 ```bash
-uv run yoyo apply --batch --database "postgresql://openclimate:dev@localhost:5432/openclimate" migrations
+uv run yoyo apply --batch --database "postgresql+psycopg://openclimate:dev@localhost:5432/openclimate" migrations
 ```
 
 Expected: applies migration 0001; output ends with "applied 1 migration".
@@ -576,7 +576,7 @@ async def test_case_tables_exist():
                 "case_record",
                 "citation_string",
             ]
-    await pool.close()
+    await close_pool()
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
@@ -649,7 +649,7 @@ CREATE INDEX citation_string_text_idx ON citation_string(text);
 Run:
 
 ```bash
-uv run yoyo apply --batch --database "postgresql://openclimate:dev@localhost:5432/openclimate" migrations
+uv run yoyo apply --batch --database "postgresql+psycopg://openclimate:dev@localhost:5432/openclimate" migrations
 ```
 
 Expected: applies migration 0002.
@@ -701,7 +701,7 @@ async def test_document_table_exists():
                 "text_translation_en", "provenance", "created_at",
             ]:
                 assert required in names, f"missing column: {required}"
-    await pool.close()
+    await close_pool()
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
@@ -749,7 +749,7 @@ CREATE INDEX document_translation_fts_idx ON document
 Run:
 
 ```bash
-uv run yoyo apply --batch --database "postgresql://openclimate:dev@localhost:5432/openclimate" migrations
+uv run yoyo apply --batch --database "postgresql+psycopg://openclimate:dev@localhost:5432/openclimate" migrations
 uv run pytest tests/test_migrations.py -v
 ```
 
@@ -792,7 +792,7 @@ async def test_statute_tables_exist():
             rows = await cur.fetchall()
             names = [r[0] for r in rows]
             assert names == ["case_statute", "statute"]
-    await pool.close()
+    await close_pool()
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
@@ -841,7 +841,7 @@ CREATE TABLE case_statute (
 Run:
 
 ```bash
-uv run yoyo apply --batch --database "postgresql://openclimate:dev@localhost:5432/openclimate" migrations
+uv run yoyo apply --batch --database "postgresql+psycopg://openclimate:dev@localhost:5432/openclimate" migrations
 uv run pytest tests/test_migrations.py -v
 ```
 
@@ -881,7 +881,7 @@ async def test_citation_edge_table_exists():
             )
             row = await cur.fetchone()
             assert row is not None
-    await pool.close()
+    await close_pool()
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
@@ -919,7 +919,7 @@ CREATE INDEX citation_edge_cited_idx ON citation_edge(cited_case_id);
 Run:
 
 ```bash
-uv run yoyo apply --batch --database "postgresql://openclimate:dev@localhost:5432/openclimate" migrations
+uv run yoyo apply --batch --database "postgresql+psycopg://openclimate:dev@localhost:5432/openclimate" migrations
 uv run pytest tests/test_migrations.py -v
 ```
 
@@ -959,7 +959,7 @@ async def test_merge_candidate_table_exists():
             )
             row = await cur.fetchone()
             assert row is not None
-    await pool.close()
+    await close_pool()
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
@@ -992,7 +992,7 @@ CREATE INDEX merge_candidate_pair_idx ON merge_candidate(case_id_a, case_id_b);
 Run:
 
 ```bash
-uv run yoyo apply --batch --database "postgresql://openclimate:dev@localhost:5432/openclimate" migrations
+uv run yoyo apply --batch --database "postgresql+psycopg://openclimate:dev@localhost:5432/openclimate" migrations
 uv run pytest tests/test_migrations.py -v
 ```
 
@@ -1037,7 +1037,7 @@ async def test_embedding_columns_exist():
             names = [(r[0], r[1], r[2]) for r in rows]
             assert ("document", "embedding", "vector") in names
             assert ("statute", "embedding", "vector") in names
-    await pool.close()
+    await close_pool()
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
@@ -1066,7 +1066,7 @@ CREATE INDEX statute_embedding_hnsw_idx ON statute
 Run:
 
 ```bash
-uv run yoyo apply --batch --database "postgresql://openclimate:dev@localhost:5432/openclimate" migrations
+uv run yoyo apply --batch --database "postgresql+psycopg://openclimate:dev@localhost:5432/openclimate" migrations
 uv run pytest tests/test_migrations.py -v
 ```
 
@@ -1588,7 +1588,7 @@ Expected: `postgres` healthy, `server` running.
 Run:
 
 ```bash
-uv run yoyo apply --batch --database "postgresql://openclimate:dev@localhost:5432/openclimate" migrations
+uv run yoyo apply --batch --database "postgresql+psycopg://openclimate:dev@localhost:5432/openclimate" migrations
 curl -s http://localhost:8000/health | jq
 ```
 
@@ -1605,7 +1605,7 @@ import asyncio
 from fastmcp import Client
 
 async def main():
-    async with Client("http://localhost:8000/") as client:
+    async with Client("http://localhost:8000/mcp") as client:
         tools = await client.list_tools()
         print("tools:", [t.name for t in tools])
         result = await client.call_tool("get_statistics", {"scope": "all"})
@@ -1729,7 +1729,7 @@ git commit -m "ci: GitHub Actions — lint, typecheck, migrations, tests"
 ```bash
 docker compose down -v
 docker compose up -d postgres
-uv run yoyo apply --batch --database "postgresql://openclimate:dev@localhost:5432/openclimate" migrations
+uv run yoyo apply --batch --database "postgresql+psycopg://openclimate:dev@localhost:5432/openclimate" migrations
 uv run pytest -v
 docker compose up -d --build server
 sleep 3
@@ -1741,7 +1741,7 @@ import asyncio
 from fastmcp import Client
 
 async def main():
-    async with Client("http://localhost:8000/") as client:
+    async with Client("http://localhost:8000/mcp") as client:
         tools = await client.list_tools()
         names = [t.name for t in tools]
         assert "get_statistics" in names, names

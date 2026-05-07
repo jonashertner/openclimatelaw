@@ -1,0 +1,16 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.pyright/
+.venv/
+.env
+.env.local
+.env.production
+deploy/.env.production
+*.egg-info/
+dist/
+build/
+htmlcov/
+.coverage
+node_modules/

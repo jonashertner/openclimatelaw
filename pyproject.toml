@@ -1,0 +1,51 @@
+[project]
+name = "openclimatelaw"
+version = "0.1.0"
+description = "Public MCP server exposing the world's climate litigation and climate-law corpus"
+readme = "README.md"
+requires-python = ">=3.14"
+license = { text = "MIT" }
+authors = [{ name = "Jonas Hertner", email = "jonashertner@protonmail.ch" }]
+
+dependencies = [
+    "fastmcp>=3.0.2",
+    "psycopg[binary,pool]>=3.2.0",
+    "pgvector>=0.3.0",
+    "pydantic>=2.9.0",
+    "pydantic-settings>=2.5.0",
+    "yoyo-migrations>=9.0.0",
+    "structlog>=24.4.0",
+    "uvicorn[standard]>=0.32.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.0",
+    "pytest-asyncio>=0.24.0",
+    "ruff>=0.7.0",
+    "pyright>=1.1.380",
+    "httpx>=0.27.0",
+]
+
+[build-system]
+requires = ["setuptools>=68.0.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["server*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py314"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "RUF"]
+
+[tool.pyright]
+pythonVersion = "3.14"
+typeCheckingMode = "strict"
+include = ["server", "ingest", "tests"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
