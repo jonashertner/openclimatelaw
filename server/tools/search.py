@@ -42,7 +42,7 @@ async def search_cases(
     async with pool.connection() as conn:
         async with conn.cursor() as cur:
             # Hybrid: FTS over title+summary OR trigram similarity on title.
-            # FTS rank is scaled (×10) so strong topic matches outrank weak
+            # FTS rank is scaled (x10) so strong topic matches outrank weak
             # fuzzy matches. Trigram threshold of 0.2 catches reasonable typos
             # without flooding results with unrelated cases.
             sql = """
@@ -67,13 +67,19 @@ async def search_cases(
                             ORDER BY format LIMIT 1
                         ) AS citation_string,
                         ts_rank(
-                            to_tsvector('simple', c.canonical_title || ' ' || coalesce(c.summary, '')),
+                            to_tsvector(
+                                'simple',
+                                c.canonical_title || ' ' || coalesce(c.summary, '')
+                            ),
                             (SELECT tsq FROM q)
                         ) AS fts_rank,
                         similarity(c.canonical_title, (SELECT qstr FROM q)) AS trgm_sim,
                         GREATEST(
                             ts_rank(
-                                to_tsvector('simple', c.canonical_title || ' ' || coalesce(c.summary, '')),
+                                to_tsvector(
+                                    'simple',
+                                    c.canonical_title || ' ' || coalesce(c.summary, '')
+                                ),
                                 (SELECT tsq FROM q)
                             ) * 10.0,
                             similarity(c.canonical_title, (SELECT qstr FROM q))
@@ -81,8 +87,10 @@ async def search_cases(
                     FROM case_record c, q
                     WHERE
                         (
-                            to_tsvector('simple', c.canonical_title || ' ' || coalesce(c.summary, ''))
-                                @@ q.tsq
+                            to_tsvector(
+                                'simple',
+                                c.canonical_title || ' ' || coalesce(c.summary, '')
+                            ) @@ q.tsq
                             OR similarity(c.canonical_title, q.qstr) > 0.2
                         )
                         AND (%(jurisdiction)s::text IS NULL OR c.jurisdiction_code = %(jurisdiction)s::text)
