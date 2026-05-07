@@ -1,5 +1,5 @@
-"""search_cases — hybrid full-text + trigram fuzzy search across case titles
-and summaries.
+# pyright: basic
+"""search_cases — hybrid full-text + trigram + vector semantic search.
 
 The major usability gap before this tool: LLMs could only retrieve cases by
 sabin_id (e.g. Sabin.family.9998.0) or canonical UUID. Without knowing those,
