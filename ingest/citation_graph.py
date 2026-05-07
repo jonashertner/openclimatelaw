@@ -23,7 +23,6 @@ import argparse
 import asyncio
 import sys
 from collections import defaultdict
-from datetime import UTC, datetime
 
 import structlog
 

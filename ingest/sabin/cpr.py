@@ -291,7 +291,7 @@ def _parse_date(value: str | None) -> Any:
         return None
     try:
         d = datetime.fromisoformat(value.replace("Z", "+00:00")).date()
-    except (ValueError, AttributeError, TypeError):
+    except ValueError, AttributeError, TypeError:
         return None
     if d.year < 1900:
         return None

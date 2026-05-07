@@ -88,8 +88,8 @@ def build_mcp() -> FastMCP:
     ) -> dict[str, object]:
         return await _attest_response(draft_text=draft_text, retrieved_ids=retrieved_ids)
 
-    from server.tools.citations import find_cited_by as _find_cited_by
     from server.tools.citations import find_citations as _find_citations
+    from server.tools.citations import find_cited_by as _find_cited_by
 
     @mcp.tool(
         name="find_citations",
