@@ -12,8 +12,10 @@ set -euo pipefail
 VPS="${1:?usage: deploy.sh <user@host>}"
 APP_DIR="${APP_DIR:-/srv/openclimatelaw}"
 BRANCH="${BRANCH:-master}"
+SSH_KEY="${SSH_KEY:-$HOME/.ssh/openclimate_ed25519}"
 
-ssh "$VPS" bash <<EOF
+ssh -i "$SSH_KEY" -o IdentitiesOnly=yes "$VPS" \
+  APP_DIR="$APP_DIR" BRANCH="$BRANCH" bash <<'EOF'
 set -euo pipefail
 
 cd "$APP_DIR"
