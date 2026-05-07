@@ -88,6 +88,36 @@ def build_mcp() -> FastMCP:
     ) -> dict[str, object]:
         return await _attest_response(draft_text=draft_text, retrieved_ids=retrieved_ids)
 
+    from server.tools.search import search_cases as _search_cases
+
+    @mcp.tool(
+        name="search_cases",
+        description=(
+            "Free-text search over case titles and summaries with optional filters. "
+            "Returns ranked matches with sabin_id, title, jurisdiction, status, "
+            "summary excerpt, and a verbatim citation_string ready to use. "
+            "Use this when you don't already have a case_id — for example to find "
+            "'Urgenda Netherlands' or 'youth plaintiffs Montana' or 'fossil fuel "
+            "subsidies Brazil'. Filters: jurisdiction (ISO alpha-2 like 'US' / 'NL' "
+            "or special body code 'ICJ'/'ECTHR'), claim_type (e.g. 'human_rights'), "
+            "status ('decided'/'pending'/etc.). limit max 50."
+        ),
+    )
+    async def search_cases_tool(  # pyright: ignore[reportUnusedFunction]
+        query: str,
+        jurisdiction: str | None = None,
+        claim_type: str | None = None,
+        status: str | None = None,
+        limit: int = 20,
+    ) -> dict[str, object]:
+        return await _search_cases(
+            query=query,
+            jurisdiction=jurisdiction,
+            claim_type=claim_type,
+            status=status,
+            limit=limit,
+        )
+
     return mcp
 
 

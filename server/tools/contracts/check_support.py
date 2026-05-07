@@ -23,6 +23,14 @@ async def check_claim_support(quote: str, source_id: str, source_kind: str) -> d
         raise ValueError(
             f"invalid source_kind: {source_kind!r} (must be one of {sorted(VALID_SOURCE_KINDS)})"
         )
+    # Empty/whitespace-only quote: vacuously a substring of everything; reject explicitly.
+    if not quote or not quote.strip():
+        return {
+            "supported": False,
+            "reason": "empty quote — supply non-whitespace text to validate",
+            "source_id": source_id,
+            "source_kind": source_kind,
+        }
 
     pool = await get_pool()
     async with pool.connection() as conn:
