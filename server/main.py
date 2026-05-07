@@ -95,9 +95,11 @@ def build_mcp() -> FastMCP:
         name="find_citations",
         description=(
             "Return cases that the given case cites (forward edges). The case "
-            "is identified by canonical UUID or Sabin ID. Citation graph is "
-            "extracted via NLP from case summaries and document text — "
-            "source_of_edge='inferred_nlp'. limit max 200."
+            "is identified by canonical UUID or Sabin ID. Each result includes "
+            "source_of_edge: 'title_match' (canonical_title found in summary or "
+            "document text via Aho-Corasick), 'inferred_nlp' (formal cite — "
+            "ECLI/BGE/US-reporter — extracted from text), or 'sabin_structured'. "
+            "limit max 200."
         ),
     )
     async def find_citations_tool(  # pyright: ignore[reportUnusedFunction]
