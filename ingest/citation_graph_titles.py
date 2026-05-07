@@ -1,16 +1,18 @@
 # pyright: basic
-"""Grow the citation_edge graph by title-substring matching.
+"""Grow the citation_edge graph by case-title substring matching.
 
-Complements ingest.citation_graph (which uses formal cite formats —
-ECLI/BVerfGE/BGE/US-reporter). That approach captures only cases whose
-citation_string already contains a recognizable formal cite, which means
-roughly Urgenda alone in our current data.
+Complements ingest.citation_graph (formal cite formats — ECLI/BVerfGE/BGE/
+US-reporter) which only catches cases whose citation_string already
+contains a recognizable formal cite (≈Urgenda alone in our data).
 
-This module builds a single big regex from every case's canonical_title
-(filtered to titles ≥25 characters to avoid generic short titles like
-'Held v. State' that would over-match), then scans every case's summary
-and document text for occurrences. Each match → a citation_edge with
-source_of_edge='title_match'.
+This module uses Aho-Corasick for true linear-time multi-pattern matching:
+build one automaton from every case's canonical_title (filtered ≥25 chars
+to avoid generic short titles), then scan each case's summary + first 500K
+of document text in O(text_len + matches) regardless of pattern count.
+
+Each automaton hit → a citation_edge with source_of_edge='title_match'.
+Edges are committed per citing-case so an interrupt doesn't roll back the
+whole graph build.
 
 Run via: uv run python -m ingest.citation_graph_titles
 """
@@ -19,60 +21,69 @@ from __future__ import annotations
 
 import argparse
 import asyncio
-import re
 import sys
 
+import ahocorasick
 import structlog
 
 MIN_TITLE_LENGTH = 25
-MAX_TITLE_LENGTH = 200  # extremely long titles are usually generic descriptions
+MAX_TITLE_LENGTH = 200
+DOC_TEXT_SCAN_LIMIT = 500_000
+
+
+def _is_word_boundary(text: str, start: int, end: int) -> bool:
+    """Check that match[start:end] is bounded by non-word characters or string edges.
+
+    Aho-Corasick matches anywhere — without a boundary check, the pattern
+    'Held v. State' would match inside 'Withheld v. State of X'. We require
+    the char immediately before start and immediately after end to be a
+    non-word character (or the edge of the string).
+    """
+    before_ok = start == 0 or not (text[start - 1].isalnum() or text[start - 1] == "_")
+    after_ok = end >= len(text) or not (text[end].isalnum() or text[end] == "_")
+    return before_ok and after_ok
 
 
 async def build_title_citation_graph(*, clear_first: bool = True) -> dict[str, int]:
-    """Insert citation_edges by matching other cases' titles in this case's text."""
     from server.db import get_pool
 
     log = structlog.get_logger("ingest.citation_graph_titles")
     pool = await get_pool()
 
+    # ── Phase 1: load titles, build automaton ──────────────────────────────
     async with pool.connection() as conn:
         async with conn.cursor() as cur:
-            # 1. Pull all (id, canonical_title) for cases with sufficiently long titles
             await cur.execute(
                 f"""
                 SELECT id::text, canonical_title FROM case_record
                 WHERE length(canonical_title) BETWEEN {MIN_TITLE_LENGTH} AND {MAX_TITLE_LENGTH}
-                ORDER BY length(canonical_title) DESC
                 """
             )
             title_rows = await cur.fetchall()
-            log.info("titles_loaded", n=len(title_rows))
 
-            # 2. Build title → case_ids map. Multiple cases share a title (same lawsuit
-            # named over time) so we collect into a list per title.
-            title_to_ids: dict[str, list[str]] = {}
-            for cid, title in title_rows:
-                title_to_ids.setdefault(title, []).append(cid)
+    log.info("titles_loaded", n=len(title_rows))
 
-            # 3. Compile one big regex with longest titles first (greedy matching)
-            sorted_titles = sorted(title_to_ids.keys(), key=len, reverse=True)
-            log.info("compiling_pattern", n_unique_titles=len(sorted_titles))
-            try:
-                # Word-boundary-anchored to avoid matching mid-word
-                pattern = re.compile(
-                    r"\b(" + "|".join(re.escape(t) for t in sorted_titles) + r")\b"
-                )
-            except re.error as e:
-                log.error("pattern_compile_failed", error=str(e))
-                return {"cases_scanned": 0, "edges_inserted": 0}
-            log.info("pattern_compiled", pattern_size=pattern.pattern.__len__())
+    title_to_ids: dict[str, list[str]] = {}
+    for cid, title in title_rows:
+        title_to_ids.setdefault(title, []).append(cid)
 
-            # 4. Optionally clear prior title_match edges
-            if clear_first:
+    automaton: ahocorasick.Automaton = ahocorasick.Automaton()
+    for title, ids in title_to_ids.items():
+        automaton.add_word(title, (title, ids))
+    automaton.make_automaton()
+    log.info("automaton_built", n_unique_titles=len(title_to_ids))
+
+    # ── Phase 2: optionally clear prior title_match edges ──────────────────
+    if clear_first:
+        async with pool.connection() as conn:
+            async with conn.cursor() as cur:
                 await cur.execute("DELETE FROM citation_edge WHERE source_of_edge = 'title_match'")
-                log.info("cleared_existing_title_match_edges")
+            await conn.commit()
+        log.info("cleared_existing_title_match_edges")
 
-            # 5. Walk every case, scan summary + each document text
+    # ── Phase 3: scan every case (commit per-case to be interrupt-safe) ────
+    async with pool.connection() as conn:
+        async with conn.cursor() as cur:
             await cur.execute(
                 """
                 SELECT id::text, summary
@@ -81,56 +92,67 @@ async def build_title_citation_graph(*, clear_first: bool = True) -> dict[str, i
                 """
             )
             cases = await cur.fetchall()
-            log.info("cases_to_scan", n=len(cases))
+    log.info("cases_to_scan", n=len(cases))
 
-            edges_inserted = 0
-            cases_scanned = 0
+    edges_inserted = 0
+    cases_scanned = 0
 
-            for citing_id, summary in cases:
-                edges: set[tuple[str, str]] = set()
-                # Scan summary
-                for m in pattern.finditer(summary):
-                    matched_title = m.group(1)
-                    for cited_id in title_to_ids.get(matched_title, ()):
-                        if cited_id != citing_id:
-                            edges.add((cited_id, matched_title))
+    for citing_id, summary in cases:
+        edges: set[tuple[str, str]] = set()
 
-                # Scan document text — but limit length to keep regex tractable
+        # Scan summary
+        for end_idx, (matched_title, ids) in automaton.iter(summary):
+            start_idx = end_idx - len(matched_title) + 1
+            if not _is_word_boundary(summary, start_idx, end_idx + 1):
+                continue
+            for cited_id in ids:
+                if cited_id != citing_id:
+                    edges.add((cited_id, matched_title))
+
+        # Scan document text(s)
+        async with pool.connection() as conn:
+            async with conn.cursor() as cur:
                 await cur.execute(
                     """
-                    SELECT substring(text FROM 1 FOR 500000) FROM document
+                    SELECT substring(text FROM 1 FOR %s) FROM document
                     WHERE case_id::text = %s AND text IS NOT NULL AND length(text) > 50
                     """,
-                    (citing_id,),
+                    (DOC_TEXT_SCAN_LIMIT, citing_id),
                 )
                 for (doc_text,) in await cur.fetchall():
-                    for m in pattern.finditer(doc_text):
-                        matched_title = m.group(1)
-                        for cited_id in title_to_ids.get(matched_title, ()):
+                    for end_idx, (matched_title, ids) in automaton.iter(doc_text):
+                        start_idx = end_idx - len(matched_title) + 1
+                        if not _is_word_boundary(doc_text, start_idx, end_idx + 1):
+                            continue
+                        for cited_id in ids:
                             if cited_id != citing_id:
                                 edges.add((cited_id, matched_title))
 
-                # Insert deduped edges
-                for cited_id, matched_title in edges:
-                    await cur.execute(
-                        """
-                        INSERT INTO citation_edge (
-                            citing_case_id, cited_case_id, citation_string,
-                            source_of_edge
+        # Insert deduped edges, commit per-case
+        if edges:
+            async with pool.connection() as conn:
+                async with conn.cursor() as cur:
+                    for cited_id, matched_title in edges:
+                        await cur.execute(
+                            """
+                            INSERT INTO citation_edge (
+                                citing_case_id, cited_case_id, citation_string,
+                                source_of_edge
+                            )
+                            VALUES (%s::uuid, %s::uuid, %s, 'title_match')
+                            """,
+                            (citing_id, cited_id, matched_title[:500]),
                         )
-                        VALUES (%s::uuid, %s::uuid, %s, 'title_match')
-                        """,
-                        (citing_id, cited_id, matched_title[:500]),
-                    )
-                    edges_inserted += 1
+                        edges_inserted += 1
+                await conn.commit()
 
-                cases_scanned += 1
-                if cases_scanned % 200 == 0:
-                    log.info(
-                        "progress",
-                        cases_scanned=cases_scanned,
-                        edges_inserted=edges_inserted,
-                    )
+        cases_scanned += 1
+        if cases_scanned % 500 == 0:
+            log.info(
+                "progress",
+                cases_scanned=cases_scanned,
+                edges_inserted=edges_inserted,
+            )
 
     log.info(
         "title_graph_built",
@@ -145,7 +167,7 @@ def main() -> int:
     from server.db import close_pool
 
     parser = argparse.ArgumentParser(
-        description="Grow citation_edge graph by case-title substring matching."
+        description="Grow citation_edge graph by case-title substring matching (Aho-Corasick)."
     )
     parser.add_argument(
         "--no-clear",
