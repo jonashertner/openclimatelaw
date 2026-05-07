@@ -340,7 +340,7 @@ asyncio.run(run())</code></pre>
 <h2>Data sources &amp; licence</h2>
 
 <p class="small">
-    Centred on the <a href="https://climatecasechart.com/">Sabin Center for Climate Change Law's Climate Litigation Database</a>, ingested via <a href="https://www.climatepolicyradar.org/">Climate Policy Radar</a>'s public API under <a href="https://creativecommons.org/licenses/by/4.0/">CC-BY 4.0</a> (4,831 cases, full metadata + summaries).
+    Centred on the <a href="https://climatecasechart.com/">Sabin Center for Climate Change Law's Climate Litigation Database</a> (~4,830 cases, full metadata + summaries + court-document text), scraped directly from <code>www.climatecasechart.com</code> under the <a href="https://creativecommons.org/licenses/by/4.0/">CC-BY 4.0</a> licence Sabin publishes the data under. PDFs are downloaded only from <code>climatecasechart.com/wp-content/uploads/...</code> (Sabin's own domain). No third-party API in the loop.
 </p>
 
 <p class="small">
@@ -348,7 +348,11 @@ asyncio.run(run())</code></pre>
 </p>
 
 <p class="small">
-    Per CC-BY 4.0, every <code>citation_string</code> in this MCP carries upstream attribution. The MCP server itself is open-source under the MIT licence.
+    Per CC-BY 4.0, every <code>citation_string</code> returned by this MCP carries upstream attribution. The MCP server itself is open-source under the MIT licence.
+</p>
+
+<p class="small">
+    <strong>Bulk download:</strong> the scraped corpus will be published as a versioned <a href="https://huggingface.co/datasets">HuggingFace dataset</a> (link incoming) so researchers can <code>datasets.load_dataset(...)</code> the whole thing without going through this MCP — same pattern as <a href="https://mcp.opencaselaw.ch">opencaselaw.ch</a>.
 </p>
 
 <h2>Source &amp; status</h2>
