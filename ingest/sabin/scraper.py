@@ -154,16 +154,22 @@ async def download_pdf(client: httpx.AsyncClient, url: str, target: Path) -> boo
 
 
 def extract_pdf_text(pdf_path: Path) -> str:
-    """Extract text from a PDF via pymupdf. Returns empty string on failure."""
+    """Extract text from a PDF via pymupdf. Returns empty string on failure.
+
+    Strips NUL (0x00) bytes — Postgres TEXT columns reject them — and
+    normalizes whitespace lightly. Other low-control characters are kept.
+    """
     log = structlog.get_logger("ingest.sabin.scraper")
     try:
         import pymupdf
 
         doc = pymupdf.open(pdf_path)
         try:
-            return "\n\n".join(str(page.get_text("text")) for page in doc)
+            text = "\n\n".join(str(page.get_text("text")) for page in doc)
         finally:
             doc.close()
+        # Postgres TEXT can't store NULs; pymupdf occasionally emits them.
+        return text.replace("\x00", "")
     except Exception as e:
         log.warning("pdf_extract_failed", path=str(pdf_path), error=str(e))
         return ""
