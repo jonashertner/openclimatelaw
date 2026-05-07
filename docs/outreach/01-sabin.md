@@ -38,7 +38,7 @@ This is intentionally the same pattern we use for `mcp.opencaselaw.ch` (Swiss le
 
 ## What we'd like to discuss
 
-We'd like to explore a more formal collaboration. Two specific asks:
+We'd like to explore a more formal collaboration. Three specific asks:
 
 ### 1. Bulk export
 
@@ -46,7 +46,15 @@ The case-detail pages give us the structured record + most PDFs. But there's alm
 
 A periodic dump (CSV / JSONL / parquet, whatever format works for you) would also be friendlier to your infrastructure than our per-page fetching, and would let us stamp records with deterministic provenance (snapshot dated X, hash Y) instead of "whatever the page returned at retrieval time."
 
-### 2. Co-listing / partnership
+### 2. Joint HuggingFace dataset under CC-BY 4.0 (suggestion)
+
+We follow the same pattern at `mcp.opencaselaw.ch` (Swiss legal data) of publishing the canonical corpus as a versioned **HuggingFace dataset** so researchers can `datasets.load_dataset("...")` and rebuild offline without going through any single API.
+
+If you'd be open to it, we'd happily do the engineering work to publish the Sabin corpus as a joint HF dataset under your existing CC-BY 4.0 terms — Sabin Center as the primary author of the dataset card, OpenClimateLaw as the technical maintainer. The dataset would credit Sabin and Sabin's editorial team prominently, ship versioned snapshots, and include both the structured records and the court-document text bundled together. It's a complementary distribution channel to `climatecasechart.com` (researchers and ML practitioners reach for HF datasets the way casual users reach for the website).
+
+We'd only do this with your buy-in. If you'd prefer the data stay only on `climatecasechart.com`, we honor that — we'd still serve via the MCP for AI agents but we wouldn't publish the dataset.
+
+### 3. Co-listing / partnership
 
 If you're open to it, we'd love to:
 
