@@ -119,6 +119,32 @@ def build_mcp() -> FastMCP:
     ) -> dict[str, object]:
         return await _find_cited_by(case_id_or_sabin_id=case_id_or_sabin_id, limit=limit)
 
+    from server.tools.related import find_related_cases as _find_related_cases
+
+    @mcp.tool(
+        name="find_related_cases",
+        description=(
+            "Return cases semantically similar to the given case via "
+            "sentence-transformer embedding cosine similarity. Useful for "
+            "'other cases like this one' even when titles share no keywords. "
+            "Filters: jurisdiction, claim_type, status. limit max 50."
+        ),
+    )
+    async def find_related_cases_tool(  # pyright: ignore[reportUnusedFunction]
+        case_id_or_sabin_id: str,
+        jurisdiction: str | None = None,
+        claim_type: str | None = None,
+        status: str | None = None,
+        limit: int = 10,
+    ) -> dict[str, object]:
+        return await _find_related_cases(
+            case_id_or_sabin_id=case_id_or_sabin_id,
+            jurisdiction=jurisdiction,
+            claim_type=claim_type,
+            status=status,
+            limit=limit,
+        )
+
     from server.tools.search import search_cases as _search_cases
 
     @mcp.tool(
