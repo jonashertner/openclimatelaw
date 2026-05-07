@@ -24,11 +24,22 @@ git pull --ff-only origin "$BRANCH"
 
 cd "$APP_DIR/deploy"
 
-echo "==> Applying migrations (if any)"
-docker compose -f compose.prod.yaml --env-file .env.production --profile migrate run --rm migrate
-
 echo "==> Rebuilding and restarting server"
 docker compose -f compose.prod.yaml --env-file .env.production up -d --build server
+
+# Wait for server to be healthy before running migrations through it.
+sleep 4
+
+echo "==> Applying migrations via the server container (always-fresh image)"
+# We bypass the dedicated migrate profile because docker-compose's image
+# caching makes it awkward to ensure the migrate image picks up new
+# migration files. The server container's image was just rebuilt above
+# so we know it has the latest migrations/ directory.
+PG_PASSWORD=$(grep '^POSTGRES_PASSWORD=' .env.production | cut -d= -f2-)
+docker compose -f compose.prod.yaml --env-file .env.production exec -T server \
+  uv run yoyo apply --batch \
+    --database "postgresql+psycopg://openclimate:${PG_PASSWORD}@postgres:5432/openclimate" \
+    /app/migrations
 
 echo "==> Status"
 docker compose -f compose.prod.yaml --env-file .env.production ps
