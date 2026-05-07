@@ -305,13 +305,14 @@ asyncio.run(run())</code></pre>
 
 <h2>What you can do</h2>
 
-<p class="small">Eight tools available right now:</p>
+<p class="small">Nine tools available right now:</p>
 
 <ul class="small">
     <li><code>search_cases(query, jurisdiction?, claim_type?, status?, limit?, semantic?)</code> — <strong>hybrid keyword + fuzzy + semantic search</strong> over titles + summaries with optional filters. Combines Postgres FTS, trigram similarity (typo-tolerant), and sentence-transformer vector cosine. Returns ranked matches with <code>sabin_id</code>, title, summary excerpt, and a verbatim <code>citation_string</code>.</li>
     <li><code>get_case(case_id_or_sabin_id)</code> — full case record: parties, claim types, documents (with extracted text where available), citation strings, field-level provenance.</li>
     <li><code>get_statistics(scope, group_by?)</code> — aggregates: case/doc/statute counts, group by jurisdiction / claim_type / year / status / outcome.</li>
-    <li><code>find_citations(case_id_or_sabin_id, limit?)</code> — cases this case cites (forward edges). NLP-extracted from summaries + document text.</li>
+    <li><code>find_related_cases(case_id_or_sabin_id, jurisdiction?, claim_type?, status?, limit?)</code> — cases <em>semantically</em> similar to the given one via sentence-transformer cosine. Useful for "other cases like this one" even when titles share no keywords. Filters layer in.</li>
+    <li><code>find_citations(case_id_or_sabin_id, limit?)</code> — cases this case cites (forward edges). NLP-extracted from summaries + document text via formal-cite regex AND title-substring matching.</li>
     <li><code>find_cited_by(case_id_or_sabin_id, limit?)</code> — cases that cite this case (backward edges). Use for influence analysis: <em>"how often is Urgenda cited?"</em></li>
     <li><code>cite(case_id, lang, format)</code> — verbatim citation_string for a case in a given language and format. <strong>R1: never construct citations from training data.</strong></li>
     <li><code>check_claim_support(quote, source_id, source_kind)</code> — verify a quotation appears verbatim in <code>case_summary</code> / <code>document_text</code> / <code>citation_string</code>. <strong>R2.</strong> Note: <code>document_text</code> requires a <em>document</em> UUID (from <code>get_case().documents[].id</code>), not a case ID.</li>
