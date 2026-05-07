@@ -1,88 +1,88 @@
-# Outreach — Climate Rights Database / CRRP
+# Outreach — Climate Rights Database / CRRP (Deutsch)
 
-**To:** Climate Rights and Remedies Project (CRRP), University of Zurich
-   - Verify lead contact via [rwi.uzh.ch](https://www.rwi.uzh.ch/) directory
-   - Likely institutional addresses: `info@climaterights.uzh.ch`, `helen.keller@rwi.uzh.ch`
+**An:** Climate Rights and Remedies Project (CRRP), Universität Zürich
+   - Lead-Kontakt über das [rwi.uzh.ch](https://www.rwi.uzh.ch/) Verzeichnis verifizieren
+   - Wahrscheinliche institutionelle Adressen: `info@climaterights.uzh.ch`, `helen.keller@rwi.uzh.ch`
 
-**Cc:** Helen Keller (Principal Investigator) *— verify*
-**From:** `jh@jonashertner.com`
-**Subject:** A demonstration MCP layer over the Climate Rights Database — for CRRP review
+**Cc:** Helen Keller (Principal Investigator) *— verifizieren*
+**Von:** `jh@jonashertner.com`
+**Betreff:** Demonstrations-MCP-Schicht über die Climate Rights Database — zur Sichtung durch das CRRP
 
 ---
 
-Dear Professor Keller and the CRRP team,
+Sehr geehrte Frau Professor Keller, sehr geehrte Damen und Herren des CRRP,
 
-I am Jonas Hertner, a lawyer, writing on behalf of [regenerative.law](https://regenerative.law). regenerative.law is the legal pillar of [regenerative.eco](https://regenerative.eco), an impact-investing initiative of a Switzerland-based family office. One of regenerative.eco's principal commitments is the promotion of climate litigation as a tool for accountability and transition. Within that commitment, we treat **accessibility of climate-case information** as a problem worth working on directly: not just funding the litigators, but making the global record of what has been argued and decided as widely and easily reachable as possible — both for human users and for the AI systems they increasingly use to do legal research.
+Ich heisse Jonas Hertner, bin Rechtsanwalt und schreibe Ihnen im Auftrag von [regenerative.law](https://regenerative.law). regenerative.law ist die rechtliche Säule von [regenerative.eco](https://regenerative.eco), einer Impact-Investing-Initiative eines in der Schweiz ansässigen Family Office. Zu den zentralen Anliegen von regenerative.eco gehört die Förderung von Klimaklagen als Instrument für Verantwortlichkeit und Transformation. Im Rahmen dieses Anliegens betrachten wir die **Zugänglichkeit von Informationen zu Klimafällen** als ein Thema, das direkter Bearbeitung würdig ist: nicht nur die Litigantinnen und Litiganten finanziell zu unterstützen, sondern den globalen Datenbestand des bereits Vorgebrachten und Entschiedenen so breit und einfach zugänglich zu machen wie möglich — sowohl für menschliche Nutzerinnen und Nutzer als auch für die KI-Systeme, die zunehmend zur juristischen Recherche eingesetzt werden.
 
-It is in that context that we are writing to you. The **Climate Rights Database** fills a niche that the Sabin Center's general litigation database, comprehensive and excellent though it is, does not pretend to cover with the same depth: the human-rights dimension of climate cases analyzed against specific instruments and rights at stake. That perspective is precisely what makes CRD valuable as a complement, and why we want to integrate it properly rather than superficially.
+In diesem Kontext wenden wir uns an Sie. Die **Climate Rights Database** füllt eine Nische, die die allgemeine Litigation Database des Sabin Center — so umfassend und vorzüglich diese auch ist — nicht in derselben Tiefe abzudecken beansprucht: die menschenrechtliche Dimension von Klimafällen, analysiert anhand der jeweils einschlägigen Instrumente und der betroffenen Rechte. Genau diese Perspektive macht die CRD als Ergänzung wertvoll — und ist der Grund, weshalb wir sie sorgfältig und nicht oberflächlich einbinden möchten.
 
-## A suggestion — and a demonstration for your review
+## Eine Anregung — und ein Demonstrator zu Ihrer Begutachtung
 
-We would like to suggest that the data already published on `climaterightsdatabase.com` could be made **even more widely accessible** by exposing it through what is called a Model Context Protocol (MCP) server: a standardized, well-documented endpoint that AI systems (Claude, ChatGPT, Gemini, Copilot, and others) can connect to natively, and that human users can equally consume through any of those clients. MCP is the emerging standard for letting language models read structured external data with proper attribution and source-anchoring.
+Wir möchten anregen, dass die auf `climaterightsdatabase.com` bereits veröffentlichten Daten **noch breiter zugänglich gemacht werden könnten**, indem sie über einen sogenannten Model-Context-Protocol-Server (MCP-Server) bereitgestellt werden: einen standardisierten, gut dokumentierten Endpunkt, an den sich KI-Systeme (Claude, ChatGPT, Gemini, Copilot und weitere) nativ anbinden können und über den menschliche Nutzer mittels jener Clients gleichermassen zugreifen. MCP entwickelt sich zum Standard dafür, dass Sprachmodelle externe strukturierte Daten unter Wahrung von Attribution und Quellenverankerung lesen können.
 
-To demonstrate concretely what this could look like — and to give you something you can test rather than imagine — **we have taken the liberty of building a working demonstration**, deployed at:
+Um konkret zu zeigen, wie das aussehen kann — und um Ihnen etwas in die Hand zu geben, das Sie testen statt sich vorstellen können —, **haben wir uns die Freiheit genommen, einen funktionsfähigen Demonstrator zu bauen**, erreichbar unter:
 
 > `https://mcp.openclimatelaw.org/mcp`
-> (landing page: [openclimatelaw.org](https://openclimatelaw.org))
+> (Landing Page: [openclimatelaw.org](https://openclimatelaw.org))
 
-The demonstration is explicitly framed as a non-public research preview, not a launched service. We are sharing it with you for review, testing, and feedback — not promoting it externally.
+Der Demonstrator ist ausdrücklich als nicht-öffentliche Forschungs-Vorschau und nicht als lancierter Dienst angelegt. Wir teilen ihn mit Ihnen zur Sichtung, zum Testen und für Rückmeldungen — und werben nicht extern dafür.
 
-## What the demonstration does
+## Was der Demonstrator leistet
 
-The MCP exposes nine tools to any compatible client. They fall into four groups:
+Der MCP stellt jedem kompatiblen Client neun Werkzeuge bereit, gegliedert in vier Gruppen:
 
-- **Discovery.** `search_cases` combines full-text, fuzzy/typo-tolerant, and semantic-embedding search across case titles and summaries. `get_case` returns the full record by ID — parties, claim types, documents, citation strings, jurisdiction, and field-level provenance.
-- **Graph navigation.** `find_citations` and `find_cited_by` expose the inter-case citation graph, with each edge tagged by how it was derived. `find_related_cases` surfaces semantic analogues across language and phrasing differences.
-- **Citation safety.** `cite` returns the verbatim `citation_string` of a previously retrieved case — the agent is required by the protocol to call this tool rather than construct a citation from training data. `check_claim_support` verifies that a quoted string appears verbatim in a retrieved summary, document, or citation. `attest_response` scans an LLM's draft for citation-shaped strings and flags any that are not present in the retrieved cases. End-to-end, the AI cannot fabricate a citation, fabricate a quote, or bypass the attestation step.
-- **Aggregates.** `get_statistics` returns structured counts and groupings (by jurisdiction, claim type, year, status, outcome).
+- **Recherche.** `search_cases` kombiniert Volltext-, Unschärfe-/Tippfehler-tolerante und semantische Embedding-Suche über Falltitel und Zusammenfassungen. `get_case` gibt den vollständigen Datensatz nach ID zurück — Parteien, Anspruchsgrundlagen, Dokumente, Zitations-Strings, Jurisdiktion und Provenienz auf Feldebene.
+- **Graph-Navigation.** `find_citations` und `find_cited_by` erschliessen den fallübergreifenden Zitationsgraphen, wobei jede Kante mit der Methode ihrer Ableitung getaggt ist. `find_related_cases` macht semantische Analoga über Sprach- und Formulierungsunterschiede hinweg sichtbar.
+- **Zitiersicherheit.** `cite` gibt die wortgetreue `citation_string` eines zuvor abgerufenen Falls zurück — der Agent ist durch das Protokoll verpflichtet, dieses Werkzeug aufzurufen, statt eine Zitation aus Trainingsdaten zu konstruieren. `check_claim_support` verifiziert, dass eine zitierte Zeichenfolge wortgetreu in einer abgerufenen Zusammenfassung, einem Dokument oder einer Zitation erscheint. `attest_response` durchsucht den Entwurf eines LLM nach zitationsförmigen Zeichenfolgen und markiert solche, die in den abgerufenen Fällen nicht enthalten sind. End-to-end gilt: Die KI kann weder eine Zitation noch ein Zitat erfinden, und sie kann den Attestierungs-Schritt nicht umgehen.
+- **Aggregate.** `get_statistics` liefert strukturierte Zählungen und Gruppierungen (nach Jurisdiktion, Anspruchsart, Jahr, Status, Ausgang).
 
-The corpus today holds 5,046 cases across 67 jurisdictions — 4,831 from the Sabin Center's Climate Litigation Database (full metadata + summaries + court-document text) and **215 from your Climate Rights Database** — with sentence-transformer embeddings on every case for semantic similarity search.
+Der Korpus umfasst heute 5'046 Fälle in 67 Jurisdiktionen — 4'831 aus der Climate Litigation Database des Sabin Center (vollständige Metadaten, Zusammenfassungen und Texte der Gerichtsdokumente) und **215 aus Ihrer Climate Rights Database** — bei semantischer Ähnlichkeitssuche über Sentence-Transformer-Embeddings auf jedem Fall.
 
-## How the demonstration currently treats your data
+## Wie der Demonstrator Ihre Daten gegenwärtig behandelt
 
-This is the part we most want your guidance on. **Our current CRD ingestion is metadata-only and respectful of your unstated licence posture.** Concretely:
+Dies ist der Punkt, zu dem wir Ihre Orientierung am dringendsten benötigen. **Unsere derzeitige CRD-Aufnahme beschränkt sich auf Metadaten und respektiert Ihre nicht ausdrücklich erklärte Lizenzhaltung.** Konkret:
 
-- We currently consume CRD via your WordPress REST API (`/wp-json/wp/v2/posts`).
-- We capture title (decoded from `title.rendered`), jurisdiction (classified from your `categories` taxonomy), filing year, claim/topic taxonomy, and the upstream URL pointing back to `climaterightsdatabase.com/<slug>`.
-- **We do not copy your case summaries** (the `content.rendered` field) into our store. When a user queries our MCP for a CRD-sourced case, the `summary` field returns a redirect message: *"Source: Climate Rights Database. See https://climaterightsdatabase.com/\<slug\> for the case summary."*
-- Every record carries CRD attribution and points users back to your canonical page for substantive content.
+- Wir konsumieren die CRD derzeit über Ihre WordPress-REST-API (`/wp-json/wp/v2/posts`).
+- Erfasst werden Titel (dekodiert aus `title.rendered`), Jurisdiktion (klassifiziert aus Ihrer `categories`-Taxonomie), Verfahrensjahr, Anspruchs-/Themen-Taxonomie sowie der Upstream-URL, der auf `climaterightsdatabase.com/<slug>` zurückverweist.
+- **Wir kopieren Ihre Fallzusammenfassungen** (das Feld `content.rendered`) **nicht in unseren Datenspeicher.** Wenn jemand in unserem MCP eine aus der CRD stammende Fallabfrage stellt, gibt das Feld `summary` einen Verweis-Hinweis zurück: *«Quelle: Climate Rights Database. Siehe https://climaterightsdatabase.com/\<slug\> für die Fallzusammenfassung.»*
+- Jeder Datensatz trägt eine CRD-Attribution und verweist die Nutzer für die inhaltliche Substanz auf Ihre kanonische Seite zurück.
 
-This is the defensible posture absent an explicit redistribution licence on your site, and it is the posture we default to: **your prose belongs to you, and we do not copy it without permission.**
+Dies ist die vertretbare Haltung in Ermangelung einer expliziten Weiterverbreitungs-Lizenz auf Ihrer Website, und es ist die Haltung, zu der wir standardmässig zurückkehren: **Ihre Texte gehören Ihnen, und wir kopieren sie nicht ohne Erlaubnis.**
 
-## What deeper integration would look like with your buy-in
+## Wie eine vertiefte Einbindung mit Ihrer Zustimmung aussähe
 
-If the CRD content is publishable under CC-BY 4.0 (or another open licence), or if you would grant a specific permission for OpenClimateLaw, the following becomes possible:
+Sollten die CRD-Inhalte unter CC-BY 4.0 (oder einer anderen offenen Lizenz) veröffentlichbar sein oder sollten Sie OpenClimateLaw eine spezifische Erlaubnis erteilen, würde Folgendes möglich:
 
-- **Full case-summary text** ingested and queryable through `search_cases` (currently the search index for CRD records is limited to titles — adding summaries would substantially improve discoverability for human-rights claims).
-- **Cross-corpus semantic similarity.** `find_related_cases` would surface CRD cases as analogues for Sabin-side cases and vice versa, building a unified rights-based and general climate-litigation discovery surface.
-- **Citation graph extension.** Our title-matching extractor would surface where CRD cases cite — or are cited by — Sabin-side cases, building a unified graph rather than two disconnected ones.
-- **Citation-safety contract for CRD content.** `check_claim_support` could validate that an LLM's quoted text actually appears in your published case summary. Right now this safeguard only operates against Sabin-sourced text; extending it would close a real gap in AI-assisted research on rights-based climate litigation.
+- **Vollständige Fallzusammenfassungs-Texte** würden über `search_cases` aufgenommen und durchsuchbar (derzeit ist der Suchindex für CRD-Datensätze auf Titel beschränkt — die Aufnahme der Zusammenfassungen würde die Auffindbarkeit menschenrechtlicher Klagen wesentlich verbessern).
+- **Korpus-übergreifende semantische Ähnlichkeit.** `find_related_cases` würde CRD-Fälle als Analoga zu Sabin-Fällen sichtbar machen und umgekehrt — und damit eine vereinheitlichte Recherche-Oberfläche für rechte-basierte und allgemeine Klimaklagen bilden.
+- **Erweiterung des Zitationsgraphen.** Unser Titel-Matching-Extraktor würde sichtbar machen, wo CRD-Fälle Sabin-Fälle zitieren — oder von ihnen zitiert werden —, sodass ein einheitlicher Graph entsteht statt zweier voneinander getrennter.
+- **Zitiersicherheit auch für CRD-Inhalte.** `check_claim_support` könnte validieren, dass ein vom LLM zitierter Text tatsächlich in Ihrer veröffentlichten Fallzusammenfassung erscheint. Gegenwärtig wirkt diese Schutzschicht nur gegenüber Sabin-Texten; eine Ausweitung würde eine reale Lücke in der KI-gestützten Recherche zu menschenrechtlichen Klimaklagen schliessen.
 
-## Two questions
+## Zwei Fragen
 
-**1. What licence governs the CRD content?** If your case summaries are published under CC-BY 4.0 (or CC-BY-NC, CC-BY-SA, etc.), we would be happy to ingest them with full attribution and the licence properly preserved in our records. If you prefer they remain on `climaterightsdatabase.com` and we keep our current redirect-only posture, that is also entirely fine — we would just like to know explicitly so we are not guessing.
+**1. Welcher Lizenz unterliegen die CRD-Inhalte?** Sind Ihre Fallzusammenfassungen unter CC-BY 4.0 (oder CC-BY-NC, CC-BY-SA usw.) publiziert, würden wir sie gerne mit vollständiger Attribution aufnehmen und die Lizenz in unseren Datensätzen ordnungsgemäss bewahren. Bevorzugen Sie, dass sie auf `climaterightsdatabase.com` verbleiben und wir unsere derzeitige Redirect-only-Haltung beibehalten, ist auch das vollkommen in Ordnung — wir möchten es nur ausdrücklich wissen, um nicht raten zu müssen.
 
-**2. Is a bulk export available, or worth building?** A periodic export (CSV / JSON / SQLite — whatever format works for you) would let us preserve structured fields not exposed by the default REST endpoint (rights at stake, deciding bodies, state concerned), give us deterministic provenance, and be friendlier to your infrastructure than continuous polling. If a bulk export does not currently exist on your end and producing one would require nontrivial work, we would be happy to write the export script and run it under your direction.
+**2. Existiert ein Bulk-Export, oder wäre einer es wert, erstellt zu werden?** Ein periodischer Export (CSV / JSON / SQLite — welches Format auch immer für Sie funktioniert) würde uns erlauben, strukturierte Felder zu bewahren, die der Standard-REST-Endpunkt nicht zugänglich macht (betroffene Rechte, entscheidende Instanzen, betroffener Staat), uns deterministische Provenienz verschaffen und Ihrer Infrastruktur freundlicher gegenüberstehen als kontinuierliches Polling. Sollte derzeit kein Bulk-Export auf Ihrer Seite existieren und seine Erstellung nicht-trivialen Aufwand erfordern, würden wir das Export-Skript gerne schreiben und unter Ihrer Anleitung ausführen.
 
-## How we'd like to help
+## Wie wir Sie unterstützen möchten
 
-If, after testing, you find this approach useful, we would simply like to support your work in whatever way is most helpful. We would be honored to underwrite the operating costs of an MCP service like this one — infrastructure, data refresh, ongoing maintenance — so it can run as a free resource for the climate-rights and broader climate-litigation community, under your guidance and with full attribution. We would also be glad to contribute engineering capacity to anything else that serves your mission — co-listing, support for specific research initiatives, coordination with the Sabin Center's parallel database, or any other form that is useful to the Project.
+Sollten Sie diesen Ansatz nach dem Testen als nützlich beurteilen, möchten wir Ihre Arbeit schlicht in der für Sie hilfreichsten Form unterstützen. Es wäre uns eine Ehre, die Betriebskosten eines solchen MCP-Dienstes zu tragen — Infrastruktur, Datenaktualisierung, laufende Pflege —, sodass er als frei zugängliche Ressource für die Gemeinschaft der Klima-Menschenrechte und der breiteren Klimaklagen-Forschung unter Ihrer Anleitung und mit vollständiger Attribution betrieben werden kann. Ebenso gerne würden wir technische Kapazitäten für jedes andere Vorhaben einbringen, das Ihrem Auftrag dient — gemeinsame Listung, Unterstützung spezifischer Forschungsinitiativen, Koordination mit der Parallel-Datenbank des Sabin Center oder jede andere Form, die für das Projekt nützlich ist.
 
-We are not attached to any particular shape. The underlying commitment is straightforward: the work the CRRP does in this field deserves the broadest possible reach, and we would like to help you achieve that on whatever terms you find appropriate.
+Wir sind an keine bestimmte Form gebunden. Das zugrunde liegende Anliegen ist schlicht: Die Arbeit, die das CRRP auf diesem Gebiet leistet, verdient die grösstmögliche Reichweite, und wir möchten Ihnen helfen, diese zu erreichen — zu jenen Bedingungen, die Sie für angemessen halten.
 
-## Veto rights
+## Vetorechte
 
-Because the demonstration currently consumes CRD's REST API at a metadata level, you have full control over what we do with it. If anything in the present ingestion or attribution does not sit well with the CRRP, we will pause, modify, or take it down within hours. The MCP can be turned off entirely at your request — no debate, no negotiation.
+Da der Demonstrator die REST-API der CRD gegenwärtig nur auf Metadaten-Ebene konsumiert, haben Sie die volle Kontrolle darüber, was wir damit tun. Sollte irgendetwas an der gegenwärtigen Aufnahme oder Attribution dem CRRP nicht zusagen, werden wir innert Stunden pausieren, anpassen oder vom Netz nehmen. Der MCP kann auf Ihre Aufforderung hin vollständig abgeschaltet werden — ohne Debatte, ohne Verhandlung.
 
-## Proposed next step
+## Vorgeschlagener nächster Schritt
 
-A brief reply on the two questions above would be very helpful. If a 20-minute video call would be easier, I would be happy to walk through the demonstration and the CRD-specific ingestion code together.
+Eine kurze Rückmeldung zu den beiden obigen Fragen wäre uns sehr hilfreich. Sollte ein 20-minütiger Videocall einfacher sein, würde ich Ihnen den Demonstrator und den CRD-spezifischen Aufnahme-Code gerne gemeinsam vorstellen.
 
-With best regards,
+Mit besten Grüssen,
 
 **Jonas Hertner**
-Lawyer · regenerative.law (part of [regenerative.eco](https://regenerative.eco))
+Rechtsanwalt · regenerative.law (Teil von [regenerative.eco](https://regenerative.eco))
 
 `jh@jonashertner.com`
-[openclimatelaw.org](https://openclimatelaw.org) (research preview) · [opencaselaw.ch](https://opencaselaw.ch) (a related Swiss-law project I also operate)
-[github.com/jonashertner/openclimatelaw](https://github.com/jonashertner/openclimatelaw) (MIT, open source)
+[openclimatelaw.org](https://openclimatelaw.org) (Forschungs-Vorschau) · [opencaselaw.ch](https://opencaselaw.ch) (ein verwandtes Schweizer-Recht-Projekt, das ich ebenfalls betreibe)
+[github.com/jonashertner/openclimatelaw](https://github.com/jonashertner/openclimatelaw) (MIT, Open Source)

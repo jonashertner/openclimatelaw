@@ -1,0 +1,90 @@
+An: Climate Rights and Remedies Project (CRRP), Universität Zürich
+    info@climaterights.uzh.ch     [VERIFIZIEREN — wahrscheinliche institutionelle Adresse]
+Cc: Helen Keller (Principal Investigator) <helen.keller@rwi.uzh.ch>     [ÜBER UZH-VERZEICHNIS VERIFIZIEREN]
+Von: jh@jonashertner.com
+Betreff: Demonstrations-MCP-Schicht über die Climate Rights Database — zur Sichtung durch das CRRP
+
+Sehr geehrte Frau Professor Keller, sehr geehrte Damen und Herren des CRRP,
+
+Ich heisse Jonas Hertner, bin Rechtsanwalt und schreibe Ihnen im Auftrag von regenerative.law. regenerative.law ist die rechtliche Säule von regenerative.eco, einer Impact-Investing-Initiative eines in der Schweiz ansässigen Family Office. Zu den zentralen Anliegen von regenerative.eco gehört die Förderung von Klimaklagen als Instrument für Verantwortlichkeit und Transformation. Im Rahmen dieses Anliegens betrachten wir die Zugänglichkeit von Informationen zu Klimafällen als ein Thema, das direkter Bearbeitung würdig ist: nicht nur die Litigantinnen und Litiganten finanziell zu unterstützen, sondern den globalen Datenbestand des bereits Vorgebrachten und Entschiedenen so breit und einfach zugänglich zu machen wie möglich — sowohl für menschliche Nutzerinnen und Nutzer als auch für die KI-Systeme, die zunehmend zur juristischen Recherche eingesetzt werden.
+
+In diesem Kontext wenden wir uns an Sie. Die Climate Rights Database füllt eine Nische, die die allgemeine Litigation Database des Sabin Center — so umfassend und vorzüglich diese auch ist — nicht in derselben Tiefe abzudecken beansprucht: die menschenrechtliche Dimension von Klimafällen, analysiert anhand der jeweils einschlägigen Instrumente und der betroffenen Rechte. Genau diese Perspektive macht die CRD als Ergänzung wertvoll — und ist der Grund, weshalb wir sie sorgfältig und nicht oberflächlich einbinden möchten.
+
+Eine Anregung — und ein Demonstrator zu Ihrer Begutachtung
+
+Wir möchten anregen, dass die auf climaterightsdatabase.com bereits veröffentlichten Daten noch breiter zugänglich gemacht werden könnten, indem sie über einen sogenannten Model-Context-Protocol-Server (MCP-Server) bereitgestellt werden: einen standardisierten, gut dokumentierten Endpunkt, an den sich KI-Systeme (Claude, ChatGPT, Gemini, Copilot und weitere) nativ anbinden können und über den menschliche Nutzer mittels jener Clients gleichermassen zugreifen. MCP entwickelt sich zum Standard dafür, dass Sprachmodelle externe strukturierte Daten unter Wahrung von Attribution und Quellenverankerung lesen können.
+
+Um konkret zu zeigen, wie das aussehen kann — und um Ihnen etwas in die Hand zu geben, das Sie testen statt sich vorstellen können —, haben wir uns die Freiheit genommen, einen funktionsfähigen Demonstrator zu bauen, erreichbar unter:
+
+    https://mcp.openclimatelaw.org/mcp     (Landing Page: https://openclimatelaw.org)
+
+Der Demonstrator ist ausdrücklich als nicht-öffentliche Forschungs-Vorschau und nicht als lancierter Dienst angelegt. Wir teilen ihn mit Ihnen zur Sichtung, zum Testen und für Rückmeldungen — und werben nicht extern dafür.
+
+Was der Demonstrator leistet
+
+Der MCP stellt jedem kompatiblen Client neun Werkzeuge bereit, gegliedert in vier Gruppen:
+
+  - Recherche. search_cases kombiniert Volltext-, Unschärfe-/Tippfehler-tolerante und semantische Embedding-Suche über Falltitel und Zusammenfassungen. get_case gibt den vollständigen Datensatz nach ID zurück — Parteien, Anspruchsgrundlagen, Dokumente, Zitations-Strings, Jurisdiktion und Provenienz auf Feldebene.
+
+  - Graph-Navigation. find_citations und find_cited_by erschliessen den fallübergreifenden Zitationsgraphen, wobei jede Kante mit der Methode ihrer Ableitung getaggt ist. find_related_cases macht semantische Analoga über Sprach- und Formulierungsunterschiede hinweg sichtbar.
+
+  - Zitiersicherheit. cite gibt die wortgetreue citation_string eines zuvor abgerufenen Falls zurück — der Agent ist durch das Protokoll verpflichtet, dieses Werkzeug aufzurufen, statt eine Zitation aus Trainingsdaten zu konstruieren. check_claim_support verifiziert, dass eine zitierte Zeichenfolge wortgetreu in einer abgerufenen Zusammenfassung, einem Dokument oder einer Zitation erscheint. attest_response durchsucht den Entwurf eines LLM nach zitationsförmigen Zeichenfolgen und markiert solche, die in den abgerufenen Fällen nicht enthalten sind. End-to-end gilt: Die KI kann weder eine Zitation noch ein Zitat erfinden, und sie kann den Attestierungs-Schritt nicht umgehen.
+
+  - Aggregate. get_statistics liefert strukturierte Zählungen und Gruppierungen (nach Jurisdiktion, Anspruchsart, Jahr, Status, Ausgang).
+
+Der Korpus umfasst heute 5'046 Fälle in 67 Jurisdiktionen — 4'831 aus der Climate Litigation Database des Sabin Center (vollständige Metadaten, Zusammenfassungen und Texte der Gerichtsdokumente) und 215 aus Ihrer Climate Rights Database — bei semantischer Ähnlichkeitssuche über Sentence-Transformer-Embeddings auf jedem Fall.
+
+Wie der Demonstrator Ihre Daten gegenwärtig behandelt
+
+Dies ist der Punkt, zu dem wir Ihre Orientierung am dringendsten benötigen. Unsere derzeitige CRD-Aufnahme beschränkt sich auf Metadaten und respektiert Ihre nicht ausdrücklich erklärte Lizenzhaltung. Konkret:
+
+  - Wir konsumieren die CRD derzeit über Ihre WordPress-REST-API (/wp-json/wp/v2/posts).
+
+  - Erfasst werden Titel (dekodiert aus title.rendered), Jurisdiktion (klassifiziert aus Ihrer categories-Taxonomie), Verfahrensjahr, Anspruchs-/Themen-Taxonomie sowie der Upstream-URL, der auf climaterightsdatabase.com/<slug> zurückverweist.
+
+  - Wir kopieren Ihre Fallzusammenfassungen (das Feld content.rendered) nicht in unseren Datenspeicher. Wenn jemand in unserem MCP eine aus der CRD stammende Fallabfrage stellt, gibt das Feld summary einen Verweis-Hinweis zurück: «Quelle: Climate Rights Database. Siehe https://climaterightsdatabase.com/<slug> für die Fallzusammenfassung.»
+
+  - Jeder Datensatz trägt eine CRD-Attribution und verweist die Nutzer für die inhaltliche Substanz auf Ihre kanonische Seite zurück.
+
+Dies ist die vertretbare Haltung in Ermangelung einer expliziten Weiterverbreitungs-Lizenz auf Ihrer Website, und es ist die Haltung, zu der wir standardmässig zurückkehren: Ihre Texte gehören Ihnen, und wir kopieren sie nicht ohne Erlaubnis.
+
+Wie eine vertiefte Einbindung mit Ihrer Zustimmung aussähe
+
+Sollten die CRD-Inhalte unter CC-BY 4.0 (oder einer anderen offenen Lizenz) veröffentlichbar sein oder sollten Sie OpenClimateLaw eine spezifische Erlaubnis erteilen, würde Folgendes möglich:
+
+  - Vollständige Fallzusammenfassungs-Texte würden über search_cases aufgenommen und durchsuchbar (derzeit ist der Suchindex für CRD-Datensätze auf Titel beschränkt — die Aufnahme der Zusammenfassungen würde die Auffindbarkeit menschenrechtlicher Klagen wesentlich verbessern).
+
+  - Korpus-übergreifende semantische Ähnlichkeit. find_related_cases würde CRD-Fälle als Analoga zu Sabin-Fällen sichtbar machen und umgekehrt — und damit eine vereinheitlichte Recherche-Oberfläche für rechte-basierte und allgemeine Klimaklagen bilden.
+
+  - Erweiterung des Zitationsgraphen. Unser Titel-Matching-Extraktor würde sichtbar machen, wo CRD-Fälle Sabin-Fälle zitieren — oder von ihnen zitiert werden —, sodass ein einheitlicher Graph entsteht statt zweier voneinander getrennter.
+
+  - Zitiersicherheit auch für CRD-Inhalte. check_claim_support könnte validieren, dass ein vom LLM zitierter Text tatsächlich in Ihrer veröffentlichten Fallzusammenfassung erscheint. Gegenwärtig wirkt diese Schutzschicht nur gegenüber Sabin-Texten; eine Ausweitung würde eine reale Lücke in der KI-gestützten Recherche zu menschenrechtlichen Klimaklagen schliessen.
+
+Zwei Fragen
+
+1. Welcher Lizenz unterliegen die CRD-Inhalte? Sind Ihre Fallzusammenfassungen unter CC-BY 4.0 (oder CC-BY-NC, CC-BY-SA usw.) publiziert, würden wir sie gerne mit vollständiger Attribution aufnehmen und die Lizenz in unseren Datensätzen ordnungsgemäss bewahren. Bevorzugen Sie, dass sie auf climaterightsdatabase.com verbleiben und wir unsere derzeitige Redirect-only-Haltung beibehalten, ist auch das vollkommen in Ordnung — wir möchten es nur ausdrücklich wissen, um nicht raten zu müssen.
+
+2. Existiert ein Bulk-Export, oder wäre einer es wert, erstellt zu werden? Ein periodischer Export (CSV / JSON / SQLite — welches Format auch immer für Sie funktioniert) würde uns erlauben, strukturierte Felder zu bewahren, die der Standard-REST-Endpunkt nicht zugänglich macht (betroffene Rechte, entscheidende Instanzen, betroffener Staat), uns deterministische Provenienz verschaffen und Ihrer Infrastruktur freundlicher gegenüberstehen als kontinuierliches Polling. Sollte derzeit kein Bulk-Export auf Ihrer Seite existieren und seine Erstellung nicht-trivialen Aufwand erfordern, würden wir das Export-Skript gerne schreiben und unter Ihrer Anleitung ausführen.
+
+Wie wir Sie unterstützen möchten
+
+Sollten Sie diesen Ansatz nach dem Testen als nützlich beurteilen, möchten wir Ihre Arbeit schlicht in der für Sie hilfreichsten Form unterstützen. Es wäre uns eine Ehre, die Betriebskosten eines solchen MCP-Dienstes zu tragen — Infrastruktur, Datenaktualisierung, laufende Pflege —, sodass er als frei zugängliche Ressource für die Gemeinschaft der Klima-Menschenrechte und der breiteren Klimaklagen-Forschung unter Ihrer Anleitung und mit vollständiger Attribution betrieben werden kann. Ebenso gerne würden wir technische Kapazitäten für jedes andere Vorhaben einbringen, das Ihrem Auftrag dient — gemeinsame Listung, Unterstützung spezifischer Forschungsinitiativen, Koordination mit der Parallel-Datenbank des Sabin Center oder jede andere Form, die für das Projekt nützlich ist.
+
+Wir sind an keine bestimmte Form gebunden. Das zugrunde liegende Anliegen ist schlicht: Die Arbeit, die das CRRP auf diesem Gebiet leistet, verdient die grösstmögliche Reichweite, und wir möchten Ihnen helfen, diese zu erreichen — zu jenen Bedingungen, die Sie für angemessen halten.
+
+Vetorechte
+
+Da der Demonstrator die REST-API der CRD gegenwärtig nur auf Metadaten-Ebene konsumiert, haben Sie die volle Kontrolle darüber, was wir damit tun. Sollte irgendetwas an der gegenwärtigen Aufnahme oder Attribution dem CRRP nicht zusagen, werden wir innert Stunden pausieren, anpassen oder vom Netz nehmen. Der MCP kann auf Ihre Aufforderung hin vollständig abgeschaltet werden — ohne Debatte, ohne Verhandlung.
+
+Vorgeschlagener nächster Schritt
+
+Eine kurze Rückmeldung zu den beiden obigen Fragen wäre uns sehr hilfreich. Sollte ein 20-minütiger Videocall einfacher sein, würde ich Ihnen den Demonstrator und den CRD-spezifischen Aufnahme-Code gerne gemeinsam vorstellen.
+
+Mit besten Grüssen,
+
+Jonas Hertner
+Rechtsanwalt · regenerative.law (Teil von regenerative.eco)
+
+jh@jonashertner.com
+https://openclimatelaw.org (Forschungs-Vorschau) · https://opencaselaw.ch (ein verwandtes Schweizer-Recht-Projekt, das ich ebenfalls betreibe)
+https://github.com/jonashertner/openclimatelaw (MIT, Open Source)
