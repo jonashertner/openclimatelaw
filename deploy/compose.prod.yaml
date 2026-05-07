@@ -1,0 +1,77 @@
+name: openclimatelaw
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: openclimate
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRES_DB: openclimate
+    volumes:
+      - openclimate-pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U openclimate -d openclimate"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    # Postgres is intentionally NOT exposed on the host; only reachable from
+    # the compose network (server, migrate). For external admin access, use
+    # `docker compose exec postgres psql ...` over SSH.
+
+  server:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://openclimate:${POSTGRES_PASSWORD}@postgres:5432/openclimate
+      LOG_LEVEL: INFO
+      SERVER_HOST: 0.0.0.0
+      SERVER_PORT: "8000"
+    expose:
+      - "8000"
+    # No published port — Caddy reverse-proxies on the docker network.
+
+  # One-shot migration runner. Use:  docker compose --profile migrate run --rm migrate
+  migrate:
+    profiles: ["migrate"]
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+psycopg://openclimate:${POSTGRES_PASSWORD}@postgres:5432/openclimate
+    command:
+      - uv
+      - run
+      - yoyo
+      - apply
+      - --batch
+      - --database
+      - postgresql+psycopg://openclimate:${POSTGRES_PASSWORD}@postgres:5432/openclimate
+      - migrations
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      - server
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+volumes:
+  openclimate-pg:
+  caddy-data:
+  caddy-config:
