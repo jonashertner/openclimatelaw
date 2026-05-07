@@ -250,12 +250,14 @@ async def scrape_one_case(
 
 
 async def get_known_slugs() -> list[str]:
-    """Read existing Sabin slugs from our DB.
+    """Read existing Sabin family slugs from citation_string.text.
 
-    Slug is the path segment used in climatecasechart.com URLs. We synthesized
-    it during the CPR-API ingest as the document's upstream_url tail. Easier:
-    re-derive from the case_record's primary_source='sabin' rows by extracting
-    the slug from any document.upstream_url already present.
+    During the prior CPR-API ingest we stored each case's family slug inside
+    the citation_string text as a URL of the form
+    "...climatecasechart.com/document/<family-slug>)". Extract those.
+
+    (We don't have a dedicated family_slug column on case_record yet — adding
+    one would be cleaner long-term but for the bootstrap migration this works.)
     """
     from server.db import get_pool
 
@@ -264,14 +266,15 @@ async def get_known_slugs() -> list[str]:
     async with pool.connection() as conn:
         async with conn.cursor() as cur:
             await cur.execute(
-                """
-                SELECT DISTINCT regexp_replace(
-                    upstream_url,
-                    '^https?://(www\\.)?climatecasechart\\.com/document/',
-                    ''
-                ) AS slug
-                FROM document
-                WHERE upstream_url ~ 'climatecasechart\\.com/document/'
+                r"""
+                SELECT DISTINCT (regexp_match(
+                    cs.text,
+                    'climatecasechart\.com/document/([^)\s]+)'
+                ))[1] AS slug
+                FROM citation_string cs
+                JOIN case_record c ON c.id = cs.case_id
+                WHERE c.primary_source = 'sabin'
+                  AND cs.text ~ 'climatecasechart\.com/document/'
                 ORDER BY slug
                 """
             )
