@@ -58,13 +58,13 @@ async def search_cases(
                 WHERE
                     to_tsvector('simple', c.canonical_title || ' ' || coalesce(c.summary, ''))
                         @@ q.tsq
-                    AND (%(jurisdiction)s IS NULL OR c.jurisdiction_code = %(jurisdiction)s)
-                    AND (%(status)s IS NULL OR c.status_code = %(status)s)
+                    AND (%(jurisdiction)s::text IS NULL OR c.jurisdiction_code = %(jurisdiction)s::text)
+                    AND (%(status)s::text IS NULL OR c.status_code = %(status)s::text)
                     AND (
-                        %(claim_type)s IS NULL
+                        %(claim_type)s::text IS NULL
                         OR EXISTS (
                             SELECT 1 FROM case_claim_type cct
-                            WHERE cct.case_id = c.id AND cct.claim_type_code = %(claim_type)s
+                            WHERE cct.case_id = c.id AND cct.claim_type_code = %(claim_type)s::text
                         )
                     )
                 ORDER BY rank DESC, c.canonical_title
