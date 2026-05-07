@@ -17,7 +17,9 @@ COPY pyproject.toml uv.lock .python-version /app/
 RUN uv sync --frozen --no-dev
 
 COPY server /app/server
+COPY ingest /app/ingest
 COPY migrations /app/migrations
+COPY tests/fixtures /app/tests/fixtures
 
 EXPOSE 8000
 CMD ["uv", "run", "--no-dev", "python", "-m", "server.main"]
