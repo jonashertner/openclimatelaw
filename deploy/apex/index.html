@@ -226,7 +226,7 @@
             margin: 0.85rem 0;
             background: var(--bg);
         }
-        .tool-group h4 {
+        .tool-group h3 {
             margin: 0 0 0.4rem;
             font-size: 0.95rem;
             font-weight: 700;
@@ -305,6 +305,7 @@
         .modal-card button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
         @media (prefers-color-scheme: dark) {
             .modal-card button { color: #0d1f17; }
+            a.skip-link:focus { color: #0d1f17; }
         }
     </style>
 </head>
@@ -357,7 +358,7 @@
 <p>regenerative.law — an initiative of <a href="https://regenerative.eco/">regenerative Foundation</a> — supports climate litigation in two complementary ways: by funding cases directly, and by operating shared infrastructure that lowers the cost of doing this work. The tool below is run as a public service — free, unauthenticated, open source, with attribution preserved to the upstream sources we redistribute.</p>
 
 <div class="tool-group">
-    <h4>OpenClimateLaw <span class="badge">research preview</span></h4>
+    <h3>OpenClimateLaw <span class="badge">research preview</span></h3>
     <p class="group-summary">Citation-safe MCP access to the global climate-litigation corpus (Sabin Center for Climate Change Law + Climate Rights Database, University of Zurich). The page you are reading.</p>
     <p class="small muted">5,027 cases · 66 jurisdictions · 81k+ court documents · 14k+ citation edges · MIT licence.</p>
 </div>
@@ -369,16 +370,16 @@
 <p>Nine tools, organized into four groups. Each is callable from any MCP client; combine them for full-fidelity legal research.</p>
 
 <div class="tool-group">
-    <h4>Discovery</h4>
+    <h3>Discovery</h3>
     <p class="group-summary">Find the right case to cite.</p>
     <ul>
-        <li><code>search_cases(query, jurisdiction?, claim_type?, status?, limit?, semantic?)</code> — hybrid full-text + trigram (typo-tolerant) + sentence-transformer cosine ranking. Returns case IDs, titles, summaries, jurisdictions, and verbatim citation strings.</li>
+        <li><code>search_cases(query, jurisdiction?, claim_type?, status?, limit?)</code> — hybrid full-text + trigram (typo-tolerant) + sentence-transformer cosine ranking. Returns case IDs, titles, summaries, jurisdictions, and verbatim citation strings.</li>
         <li><code>get_case(case_id_or_sabin_id)</code> — full record by canonical UUID or Sabin family ID. Includes <code>case_number</code>, <code>core_object</code> (one-sentence holding), <code>principal_laws</code> (statutes the case turns on), parties, claim types, documents (with extracted text where available), citation strings, and field-level provenance.</li>
     </ul>
 </div>
 
 <div class="tool-group">
-    <h4>Graph navigation</h4>
+    <h3>Graph navigation</h3>
     <p class="group-summary">Follow citation edges and find semantic analogues.</p>
     <ul>
         <li><code>find_citations(case_id, limit?)</code> — cases this case cites (forward edges). Each result tagged with <code>source_of_edge</code>: <code>title_match</code> (canonical-title matched by Aho-Corasick), <code>inferred_nlp</code> (formal cite — ECLI / BGE / US reporter — extracted by regex), or <code>sabin_structured</code>.</li>
@@ -388,7 +389,7 @@
 </div>
 
 <div class="tool-group">
-    <h4>Citation safety</h4>
+    <h3>Citation safety</h3>
     <p class="group-summary">The contract that makes AI-assisted legal research trustworthy: cannot fabricate a citation, cannot fabricate a quote, cannot smuggle either past attestation.</p>
     <ul>
         <li><code>cite(case_id, lang, format)</code> — returns the verbatim <code>citation_string</code> of a previously retrieved case. Agents are required not to construct citations from training data; they must call this tool.</li>
@@ -398,7 +399,7 @@
 </div>
 
 <div class="tool-group">
-    <h4>Aggregates</h4>
+    <h3>Aggregates</h3>
     <p class="group-summary">Corpus-wide statistics for dashboards and analysis.</p>
     <ul>
         <li><code>get_statistics(scope, group_by?)</code> — case / document / jurisdiction counts, optionally grouped by jurisdiction, claim type, year, status, or outcome.</li>
@@ -441,15 +442,16 @@
 
 client = anthropic.Anthropic()
 resp = client.beta.messages.create(
-    model="claude-opus-4-7",
+    model="claude-opus-4-8",
     max_tokens=1024,
+    betas=["mcp-client-2025-11-20"],
     mcp_servers=[{
         "type": "url",
         "url": "https://mcp.openclimatelaw.org/mcp",
         "name": "openclimatelaw",
     }],
+    tools=[{"type": "mcp_toolset", "mcp_server_name": "openclimatelaw"}],
     messages=[{"role": "user", "content": "How many climate cases involve Brazil?"}],
-    extra_headers={"anthropic-beta": "mcp-client-2025-04-04"},
 )</code></pre>
 
 <h2 id="chatgpt">Add to ChatGPT &amp; OpenAI</h2>
@@ -496,13 +498,13 @@ resp = client.responses.create(
 }</code></pre>
 
 <h3>Copilot CLI</h3>
-<pre><code>gh copilot mcp add openclimatelaw --type http --url https://mcp.openclimatelaw.org/mcp</code></pre>
-<p class="small muted">(Exact subcommand depends on your Copilot CLI version; consult <code>gh copilot mcp --help</code>.)</p>
+<pre><code>copilot mcp add --transport http openclimatelaw https://mcp.openclimatelaw.org/mcp</code></pre>
+<p class="small muted">(Exact subcommand depends on your Copilot CLI version; consult <code>copilot mcp --help</code>.)</p>
 
 <h2 id="gemini">Add to Google Gemini</h2>
 
 <h3>Gemini CLI</h3>
-<pre><code>gemini mcp add openclimatelaw --transport http --url https://mcp.openclimatelaw.org/mcp</code></pre>
+<pre><code>gemini mcp add --transport http openclimatelaw https://mcp.openclimatelaw.org/mcp</code></pre>
 <p class="small muted">Or edit <code>~/.gemini/settings.json</code> directly with an <code>mcpServers</code> block (same shape as Claude Desktop).</p>
 
 <h3>Google AI Studio / Vertex AI <span class="badge">via tools API</span></h3>
