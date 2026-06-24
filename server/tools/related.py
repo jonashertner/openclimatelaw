@@ -76,11 +76,18 @@ async def find_related_cases(
                         WHERE case_id = c.id AND lang = 'en'
                         ORDER BY format LIMIT 1
                     ) AS citation_string,
-                    1 - (c.embedding <=> (SELECT embedding FROM case_record WHERE id::text = %(target)s)) AS similarity
+                    1 - (
+                        c.embedding <=> (
+                            SELECT embedding FROM case_record WHERE id::text = %(target)s
+                        )
+                    ) AS similarity
                 FROM case_record c
                 WHERE c.id::text != %(target)s
                   AND c.embedding IS NOT NULL
-                  AND (%(jurisdiction)s::text IS NULL OR c.jurisdiction_code = %(jurisdiction)s::text)
+                  AND (
+                      %(jurisdiction)s::text IS NULL
+                      OR c.jurisdiction_code = %(jurisdiction)s::text
+                  )
                   AND (%(status)s::text IS NULL OR c.status_code = %(status)s::text)
                   AND (
                       %(claim_type)s::text IS NULL
@@ -89,7 +96,9 @@ async def find_related_cases(
                           WHERE cct.case_id = c.id AND cct.claim_type_code = %(claim_type)s::text
                       )
                   )
-                ORDER BY c.embedding <=> (SELECT embedding FROM case_record WHERE id::text = %(target)s)
+                ORDER BY c.embedding <=> (
+                    SELECT embedding FROM case_record WHERE id::text = %(target)s
+                )
                 LIMIT %(limit)s
                 """,
                 {

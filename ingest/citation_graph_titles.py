@@ -54,10 +54,11 @@ async def build_title_citation_graph(*, clear_first: bool = True) -> dict[str, i
     async with pool.connection() as conn:
         async with conn.cursor() as cur:
             await cur.execute(
-                f"""
-                SELECT id::text, canonical_title FROM case_record
-                WHERE length(canonical_title) BETWEEN {MIN_TITLE_LENGTH} AND {MAX_TITLE_LENGTH}
                 """
+                SELECT id::text, canonical_title FROM case_record
+                WHERE length(canonical_title) BETWEEN %s AND %s
+                """,
+                (MIN_TITLE_LENGTH, MAX_TITLE_LENGTH),
             )
             title_rows = await cur.fetchall()
 

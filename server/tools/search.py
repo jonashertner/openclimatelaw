@@ -25,7 +25,6 @@ from typing import Any
 
 from server.db import get_pool
 
-
 _QUERY_EMBEDDER = None  # lazily loaded SentenceTransformer
 
 
@@ -131,13 +130,17 @@ async def search_cases(
                                 AND (1 - (c.embedding <=> %(qvec)s::vector)) > 0.4
                             )
                         )
-                        AND (%(jurisdiction)s::text IS NULL OR c.jurisdiction_code = %(jurisdiction)s::text)
+                        AND (
+                            %(jurisdiction)s::text IS NULL
+                            OR c.jurisdiction_code = %(jurisdiction)s::text
+                        )
                         AND (%(status)s::text IS NULL OR c.status_code = %(status)s::text)
                         AND (
                             %(claim_type)s::text IS NULL
                             OR EXISTS (
                                 SELECT 1 FROM case_claim_type cct
-                                WHERE cct.case_id = c.id AND cct.claim_type_code = %(claim_type)s::text
+                                WHERE cct.case_id = c.id
+                                  AND cct.claim_type_code = %(claim_type)s::text
                             )
                         )
                 ) ranked

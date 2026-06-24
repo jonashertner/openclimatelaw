@@ -132,16 +132,17 @@ def _project_upstream_metadata(
     """
     if not upstream_metadata:
         return None, None, []
-    md = upstream_metadata.get("metadata") or {}
+    md: dict[str, Any] = upstream_metadata.get("metadata") or {}
 
-    case_number_list = md.get("case_number") or []
+    case_number_list: list[Any] = md.get("case_number") or []
     case_number = case_number_list[0] if case_number_list else None
 
-    core_object_list = md.get("core_object") or []
+    core_object_list: list[Any] = md.get("core_object") or []
     core_object = core_object_list[0] if core_object_list else None
 
     principal_laws: list[str] = []
-    for label in md.get("concept_preferred_label") or []:
+    labels: list[Any] = md.get("concept_preferred_label") or []
+    for label in labels:
         if isinstance(label, str) and label.startswith("principal_law/"):
             principal_laws.append(label.removeprefix("principal_law/"))
 
