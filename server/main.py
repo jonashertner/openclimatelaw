@@ -283,6 +283,14 @@ if __name__ == "__main__":
 
     settings = get_settings()
     configure_logging(level=settings.log_level, json=True)
+    if settings.prewarm_embedder:
+        import threading
+
+        from server.tools.search import warm_embedder
+
+        # Daemon thread: load the embedding model at startup so the first semantic
+        # search after a (re)start doesn't pay the cold-load latency.
+        threading.Thread(target=warm_embedder, daemon=True).start()
     uvicorn.run(
         "server.main:app",
         host=settings.server_host,

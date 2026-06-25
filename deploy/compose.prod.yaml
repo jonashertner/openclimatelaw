@@ -32,6 +32,7 @@ services:
       LOG_LEVEL: INFO
       SERVER_HOST: 0.0.0.0
       SERVER_PORT: "8000"
+      PREWARM_EMBEDDER: "1"
     expose:
       - "8000"
     volumes:

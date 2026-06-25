@@ -25,12 +25,14 @@ Every result carries the canonical citation_string so the LLM has a verbatim
 citation to use immediately — closing the loop with the R1 contract.
 """
 
+import threading
 from datetime import date as _date
 from typing import Any, LiteralString
 
 from server.db import get_pool
 
 _QUERY_EMBEDDER = None  # lazily loaded SentenceTransformer
+_EMBEDDER_LOCK = threading.Lock()
 
 _VALID_SORTS = ("relevance", "newest", "oldest")
 
@@ -49,13 +51,23 @@ def _embed_query(text: str) -> list[float] | None:
     global _QUERY_EMBEDDER
     try:
         if _QUERY_EMBEDDER is None:
-            from sentence_transformers import SentenceTransformer
+            # Double-checked lock: a startup warm thread and a request may race.
+            with _EMBEDDER_LOCK:
+                if _QUERY_EMBEDDER is None:
+                    from sentence_transformers import SentenceTransformer
 
-            _QUERY_EMBEDDER = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
+                    _QUERY_EMBEDDER = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
         emb = _QUERY_EMBEDDER.encode([text], normalize_embeddings=True)[0]
         return [float(x) for x in emb]
     except Exception:
         return None
+
+
+def warm_embedder() -> bool:
+    """Eagerly load the embedding model so the first real query doesn't pay the
+    cold-load latency. Called at server startup. Returns True if the model loaded."""
+    _embed_query("warmup")
+    return _QUERY_EMBEDDER is not None
 
 
 def _validate_iso_date(name: str, value: str | None) -> None:
