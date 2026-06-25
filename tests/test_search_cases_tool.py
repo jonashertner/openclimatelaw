@@ -46,6 +46,57 @@ def _titles(result: dict[str, Any]) -> list[str]:
     return [r["canonical_title"] for r in result["results"]]
 
 
+# A title-bearing case vs a decoy that only *mentions* the terms densely in its summary.
+# Mirrors the live "Urgenda Netherlands" misrank (the title case ranked #3).
+_RANK_SEED = [
+    # sabin_id, title, summary — the query term "Zephyr" appears once in the TITLE of one
+    # case and once in the SUMMARY of the other. Unweighted, fts_rank ties and the
+    # canonical_title tiebreak puts "Procedural..." first; title-weighting must flip it.
+    (
+        "trank-title",
+        "Zephyr Holdings Climate Appeal",
+        "A routine procedural matter before the court.",
+    ),
+    (
+        "trank-summary",
+        "Procedural Matter Appeal",
+        "This dispute involves Zephyr Holdings and related corporate entities.",
+    ),
+]
+
+
+@pytest.fixture
+async def seeded_ranking() -> AsyncGenerator[None]:
+    pool = await get_pool()
+    async with pool.connection() as conn:
+        async with conn.cursor() as cur:
+            for sid, title, summary in _RANK_SEED:
+                await cur.execute(
+                    """
+                    INSERT INTO case_record
+                        (sabin_id, canonical_title, jurisdiction_code, status_code,
+                         primary_source, summary)
+                    VALUES (%s, %s, 'US', 'decided', 'sabin', %s)
+                    """,
+                    (sid, title, summary),
+                )
+        await conn.commit()
+    yield
+    async with pool.connection() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                "DELETE FROM case_record WHERE sabin_id = ANY(%s)",
+                ([s[0] for s in _RANK_SEED],),
+            )
+        await conn.commit()
+
+
+@pytest.mark.asyncio
+async def test_title_match_outranks_summary_mention(seeded_ranking: None) -> None:
+    result = await search_cases("Zephyr", semantic=False)
+    assert result["results"][0]["canonical_title"] == "Zephyr Holdings Climate Appeal"
+
+
 @pytest.mark.asyncio
 async def test_results_include_filing_and_decision_dates(seeded_cases: None) -> None:
     result = await search_cases("Climate", semantic=False)

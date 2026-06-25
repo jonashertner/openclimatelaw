@@ -104,10 +104,9 @@ _SEARCH_SQL_HEAD: LiteralString = """
                             ORDER BY format LIMIT 1
                         ) AS citation_string,
                         ts_rank(
-                            to_tsvector(
-                                'simple',
-                                c.canonical_title || ' ' || coalesce(c.summary, '')
-                            ),
+                            '{0.1, 0.2, 0.4, 1.0}',
+                            setweight(to_tsvector('simple', c.canonical_title), 'A')
+                            || setweight(to_tsvector('simple', coalesce(c.summary, '')), 'D'),
                             (SELECT tsq FROM q)
                         ) AS fts_rank,
                         similarity(c.canonical_title, (SELECT qstr FROM q)) AS trgm_sim,
@@ -117,10 +116,9 @@ _SEARCH_SQL_HEAD: LiteralString = """
                         END AS vector_sim,
                         GREATEST(
                             ts_rank(
-                                to_tsvector(
-                                    'simple',
-                                    c.canonical_title || ' ' || coalesce(c.summary, '')
-                                ),
+                                '{0.1, 0.2, 0.4, 1.0}',
+                                setweight(to_tsvector('simple', c.canonical_title), 'A')
+                                || setweight(to_tsvector('simple', coalesce(c.summary, '')), 'D'),
                                 (SELECT tsq FROM q)
                             ) * 10.0,
                             similarity(c.canonical_title, (SELECT qstr FROM q)),
@@ -134,9 +132,9 @@ _SEARCH_SQL_HEAD: LiteralString = """
                     WHERE
                         (
                             %(browse)s::boolean
-                            OR to_tsvector(
-                                'simple',
-                                c.canonical_title || ' ' || coalesce(c.summary, '')
+                            OR (
+                                setweight(to_tsvector('simple', c.canonical_title), 'A')
+                                || setweight(to_tsvector('simple', coalesce(c.summary, '')), 'D')
                             ) @@ q.tsq
                             OR similarity(c.canonical_title, q.qstr) > 0.2
                             OR (
