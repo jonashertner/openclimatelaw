@@ -373,7 +373,7 @@
     <h3>Discovery</h3>
     <p class="group-summary">Find the right case to cite.</p>
     <ul>
-        <li><code>search_cases(query, jurisdiction?, claim_type?, status?, limit?)</code> — hybrid full-text + trigram (typo-tolerant) + sentence-transformer cosine ranking. Returns case IDs, titles, summaries, jurisdictions, and verbatim citation strings.</li>
+        <li><code>search_cases(query, jurisdiction?, claim_type?, status?, sort?, decided_after?, decided_before?, filed_after?, filed_before?, limit?, offset?)</code> — hybrid full-text + typo-tolerant fuzzy-title + semantic (embedding) ranking. Each match returns sabin_id, title, jurisdiction, status, <code>filing_date</code>, <code>decision_date</code>, a highlighted <code>match_snippet</code>, and a verbatim citation_string; the response also carries a <code>total</code> match count. <code>sort</code> by <code>relevance</code> (default), <code>newest</code>, or <code>oldest</code>; restrict by inclusive date range (ISO <code>YYYY-MM-DD</code>); pass an empty query to browse the corpus by date; paginate with <code>limit</code> (max 50) + <code>offset</code>.</li>
         <li><code>get_case(case_id_or_sabin_id)</code> — full record by canonical UUID or Sabin family ID. Includes <code>case_number</code>, <code>core_object</code> (one-sentence holding), <code>principal_laws</code> (statutes the case turns on), parties, claim types, documents (with extracted text where available), citation strings, and field-level provenance.</li>
     </ul>
 </div>
@@ -414,6 +414,7 @@
     <li>"Search the climate-litigation corpus for 'Amazon deforestation' filed in Brazil; show the top five with their core_object."</li>
     <li>"Find <em>Urgenda Foundation v. State of the Netherlands</em>, cite it in en/sabin format, and quote one sentence from its summary verbatim — but verify the quote first using check_claim_support."</li>
     <li>"Find youth-plaintiff cases in the United States and summarize their claim types."</li>
+    <li>"Show the newest climate decisions in the United States from 2025 onward — sort by decision date and list each case's decision_date."</li>
     <li>"How many climate cases are filed against governments per jurisdiction? Top 10."</li>
     <li>"Validate this draft: 'In ECLI:NL:HR:2019:2007 the court reasoned, citing Massachusetts v. EPA, 549 U.S. 497 (2007)…' against retrieved cases [<code>urgenda-foundation-v-state-of-the-netherlands</code>]."</li>
 </ul>
