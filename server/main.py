@@ -152,14 +152,23 @@ def build_mcp() -> FastMCP:
     @mcp.tool(
         name="search_cases",
         description=(
-            "Free-text search over case titles and summaries with optional filters. "
-            "Returns ranked matches with sabin_id, title, jurisdiction, status, "
-            "summary excerpt, and a verbatim citation_string ready to use. "
-            "Use this when you don't already have a case_id — for example to find "
-            "'Urgenda Netherlands' or 'youth plaintiffs Montana' or 'fossil fuel "
-            "subsidies Brazil'. Filters: jurisdiction (ISO alpha-2 like 'US' / 'NL' "
-            "or special body code 'ICJ'/'ECTHR'), claim_type (e.g. 'human_rights'), "
-            "status ('decided'/'pending'/etc.). limit max 50."
+            "The primary way to find a climate case when you don't have its id. "
+            "Hybrid search over case titles and summaries: full-text + typo-tolerant "
+            "fuzzy title matching + semantic (embedding) similarity. Find by "
+            "topic, party, or keyword — e.g. 'Urgenda Netherlands', 'youth "
+            "plaintiffs Montana', 'fossil fuel subsidies Brazil'. "
+            "Each result includes sabin_id, title, jurisdiction, status, "
+            "filing_date, decision_date, a highlighted match_snippet, a summary "
+            "excerpt, relevance scores, and a verbatim citation_string ready to use; "
+            "the response also returns the total match count. "
+            "Recency: to get the newest or oldest decisions, set sort='newest' or "
+            "'oldest' (default 'relevance'). Restrict by date with decided_after / "
+            "decided_before / filed_after / filed_before (inclusive, ISO "
+            "'YYYY-MM-DD'). Pass an EMPTY query to browse the corpus by date "
+            "(newest-first) without a keyword. Paginate with limit (max 50) + offset. "
+            "Filters: jurisdiction (ISO alpha-2 like 'US'/'NL', case-insensitive, or "
+            "body code 'ICJ'/'ECTHR'), claim_type (e.g. 'human_rights'), status "
+            "('decided'/'pending'/etc.)."
         ),
     )
     async def search_cases_tool(  # pyright: ignore[reportUnusedFunction]
@@ -168,6 +177,12 @@ def build_mcp() -> FastMCP:
         claim_type: str | None = None,
         status: str | None = None,
         limit: int = 20,
+        offset: int = 0,
+        sort: str = "relevance",
+        decided_after: str | None = None,
+        decided_before: str | None = None,
+        filed_after: str | None = None,
+        filed_before: str | None = None,
     ) -> dict[str, object]:
         return await _search_cases(
             query=query,
@@ -175,6 +190,12 @@ def build_mcp() -> FastMCP:
             claim_type=claim_type,
             status=status,
             limit=limit,
+            offset=offset,
+            sort=sort,
+            decided_after=decided_after,
+            decided_before=decided_before,
+            filed_after=filed_after,
+            filed_before=filed_before,
         )
 
     return mcp

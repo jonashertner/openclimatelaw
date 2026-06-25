@@ -6,26 +6,42 @@ sabin_id (e.g. Sabin.family.9998.0) or canonical UUID. Without knowing those,
 'find Urgenda v. Netherlands' had no way to land on the right record. Now an
 LLM can call search_cases('Urgenda Netherlands') and get back ranked matches.
 
-Hybrid scoring (each row gets the max of the two):
+Hybrid scoring (each row gets the max of the three):
 - FTS rank — Postgres `to_tsvector` + `plainto_tsquery` for tokenized matching.
   Catches topic searches: 'youth plaintiffs', 'Amazon deforestation'.
 - Trigram similarity — pg_trgm `similarity(canonical_title, query)`. Catches
   typos and partial case names: 'klimasenoirinnen' -> KlimaSeniorinnen.
+- Vector similarity — cosine distance on sentence-transformer embeddings, for
+  conceptual matches even when no keyword overlaps.
 
-The final rank is `GREATEST(fts_rank * 10, trigram_sim)` (FTS scaled up so
-strong topic matches still beat weak fuzzy title matches).
+The final rank is `GREATEST(fts_rank * 10, trigram_sim, vector_sim)`.
 
-Filters (jurisdiction, claim_type, status) layer on as additional WHERE.
+Beyond keyword relevance the tool supports faceted filters (jurisdiction,
+claim_type, status), inclusive date ranges (decided_*/filed_*), recency sorting
+('newest'/'oldest'), keyword-less date browsing (empty query), pagination
+(limit + offset with a `total` match count), and highlighted match snippets.
 
-Returns ranked matches with the canonical citation_string so the LLM has a
-verbatim citation to use immediately — closing the loop with the R1 contract.
+Every result carries the canonical citation_string so the LLM has a verbatim
+citation to use immediately — closing the loop with the R1 contract.
 """
 
-from typing import Any
+from datetime import date as _date
+from typing import Any, LiteralString
 
 from server.db import get_pool
 
 _QUERY_EMBEDDER = None  # lazily loaded SentenceTransformer
+
+_VALID_SORTS = ("relevance", "newest", "oldest")
+
+# Allowlisted ORDER BY clauses. Declared LiteralString so the assembled SQL
+# stays a LiteralString (psycopg's typed execute rejects a runtime str) — never
+# interpolate untrusted text here; `sort` is validated against _VALID_SORTS.
+_ORDER_BY: dict[str, LiteralString] = {
+    "relevance": "rank DESC, canonical_title",
+    "newest": "decision_date DESC NULLS LAST, filing_date DESC NULLS LAST, canonical_title",
+    "oldest": "decision_date ASC NULLS LAST, filing_date ASC NULLS LAST, canonical_title",
+}
 
 
 def _embed_query(text: str) -> list[float] | None:
@@ -42,35 +58,20 @@ def _embed_query(text: str) -> list[float] | None:
         return None
 
 
-async def search_cases(
-    query: str,
-    jurisdiction: str | None = None,
-    claim_type: str | None = None,
-    status: str | None = None,
-    limit: int = 20,
-    semantic: bool = True,
-) -> dict[str, Any]:
-    """Hybrid search: FTS + trigram + (optional) vector cosine similarity."""
-    if not query or not query.strip():
-        raise ValueError("query must be non-empty")
-    limit = max(1, min(50, int(limit)))
+def _validate_iso_date(name: str, value: str | None) -> None:
+    """Raise a clear ValueError if `value` is set but not an ISO 'YYYY-MM-DD' date."""
+    if value is None:
+        return
+    try:
+        _date.fromisoformat(value)
+    except ValueError:
+        raise ValueError(f"invalid {name}: {value!r}; expected ISO date 'YYYY-MM-DD'") from None
 
-    # Encode query for vector search; fall back gracefully if model unavailable.
-    qvec_literal: str | None = None
-    if semantic:
-        qvec = _embed_query(query)
-        if qvec is not None:
-            qvec_literal = "[" + ",".join(f"{v:.7f}" for v in qvec) + "]"
 
-    pool = await get_pool()
-    async with pool.connection() as conn:
-        async with conn.cursor() as cur:
-            # Hybrid scoring:
-            #   fts_rank      — Postgres FTS over title || ' ' || summary
-            #   trgm_sim      — pg_trgm similarity on canonical_title (typo-tolerant)
-            #   vector_sim    — (1 - cosine_distance) on case_record.embedding (semantic)
-            #   rank          — GREATEST of the three (with appropriate scaling)
-            sql = """
+# Everything up to (and including) the ORDER BY keyword. The ORDER BY clause and
+# the LIMIT/OFFSET tail are concatenated from LiteralStrings so the whole
+# statement remains a LiteralString for psycopg's typed execute.
+_SEARCH_SQL_HEAD: LiteralString = """
                 WITH q AS (
                     SELECT
                         plainto_tsquery('simple', %(query)s) AS tsq,
@@ -85,7 +86,18 @@ async def search_cases(
                         c.court_id,
                         c.status_code,
                         c.outcome_code,
+                        c.filing_date,
+                        c.decision_date,
                         substring(c.summary FROM 1 FOR 240) AS summary_excerpt,
+                        CASE
+                            WHEN %(browse)s::boolean THEN NULL
+                            ELSE ts_headline(
+                                'simple',
+                                c.canonical_title || ' ' || coalesce(c.summary, ''),
+                                (SELECT tsq FROM q),
+                                'StartSel=<b>, StopSel=</b>, MaxFragments=2, MaxWords=18'
+                            )
+                        END AS match_snippet,
                         (
                             SELECT text FROM citation_string
                             WHERE case_id = c.id AND lang = 'en'
@@ -116,11 +128,13 @@ async def search_cases(
                                  THEN 0
                                  ELSE 1 - (c.embedding <=> %(qvec)s::vector)
                             END
-                        ) AS rank
+                        ) AS rank,
+                        count(*) OVER() AS total_count
                     FROM case_record c, q
                     WHERE
                         (
-                            to_tsvector(
+                            %(browse)s::boolean
+                            OR to_tsvector(
                                 'simple',
                                 c.canonical_title || ' ' || coalesce(c.summary, '')
                             ) @@ q.tsq
@@ -143,19 +157,114 @@ async def search_cases(
                                   AND cct.claim_type_code = %(claim_type)s::text
                             )
                         )
+                        AND (
+                            %(decided_after)s::date IS NULL
+                            OR c.decision_date >= %(decided_after)s::date
+                        )
+                        AND (
+                            %(decided_before)s::date IS NULL
+                            OR c.decision_date <= %(decided_before)s::date
+                        )
+                        AND (
+                            %(filed_after)s::date IS NULL
+                            OR c.filing_date >= %(filed_after)s::date
+                        )
+                        AND (
+                            %(filed_before)s::date IS NULL
+                            OR c.filing_date <= %(filed_before)s::date
+                        )
                 ) ranked
-                ORDER BY rank DESC, canonical_title
-                LIMIT %(limit)s
+                ORDER BY """
+
+_SEARCH_SQL_TAIL: LiteralString = """
+                LIMIT %(limit)s OFFSET %(offset)s
             """
+
+
+async def search_cases(
+    query: str,
+    jurisdiction: str | None = None,
+    claim_type: str | None = None,
+    status: str | None = None,
+    limit: int = 20,
+    offset: int = 0,
+    semantic: bool = True,
+    decided_after: str | None = None,
+    decided_before: str | None = None,
+    filed_after: str | None = None,
+    filed_before: str | None = None,
+    sort: str = "relevance",
+) -> dict[str, Any]:
+    """Hybrid search (FTS + trigram + optional vector) with filters, dates, sort.
+
+    sort: 'relevance' (default) | 'newest' | 'oldest' — newest/oldest order by
+    decision_date, falling back to filing_date. Date bounds (ISO 'YYYY-MM-DD')
+    are inclusive. Pass an empty query to browse the corpus by date; this
+    requires a non-relevance sort or at least one filter. Returns the page of
+    results plus `total` (full match count) for pagination via limit + offset.
+    """
+    if sort not in _VALID_SORTS:
+        raise ValueError(f"invalid sort: {sort!r}; expected one of {list(_VALID_SORTS)}")
+
+    _validate_iso_date("decided_after", decided_after)
+    _validate_iso_date("decided_before", decided_before)
+    _validate_iso_date("filed_after", filed_after)
+    _validate_iso_date("filed_before", filed_before)
+
+    # Jurisdiction codes are stored upper-case ISO alpha-2 / body codes — accept
+    # any casing from callers.
+    if jurisdiction is not None:
+        jurisdiction = jurisdiction.strip().upper() or None
+
+    query = query.strip() if query else ""
+    browse = query == ""
+    has_filter = any(
+        x is not None
+        for x in (
+            jurisdiction,
+            claim_type,
+            status,
+            decided_after,
+            decided_before,
+            filed_after,
+            filed_before,
+        )
+    )
+    if browse and sort == "relevance" and not has_filter:
+        raise ValueError("query must be non-empty unless a sort or filter is provided")
+
+    # No relevance signal without a query — browse newest-first by default.
+    effective_sort = "newest" if (browse and sort == "relevance") else sort
+    limit = max(1, min(50, int(limit)))
+    offset = max(0, int(offset))
+
+    # Encode query for vector search; fall back gracefully if model unavailable.
+    qvec_literal: str | None = None
+    if semantic and not browse:
+        qvec = _embed_query(query)
+        if qvec is not None:
+            qvec_literal = "[" + ",".join(f"{v:.7f}" for v in qvec) + "]"
+
+    sql: LiteralString = _SEARCH_SQL_HEAD + _ORDER_BY[effective_sort] + _SEARCH_SQL_TAIL
+
+    pool = await get_pool()
+    async with pool.connection() as conn:
+        async with conn.cursor() as cur:
             await cur.execute(
                 sql,
                 {
                     "query": query,
                     "qvec": qvec_literal,
+                    "browse": browse,
                     "jurisdiction": jurisdiction,
                     "claim_type": claim_type,
                     "status": status,
+                    "decided_after": decided_after,
+                    "decided_before": decided_before,
+                    "filed_after": filed_after,
+                    "filed_before": filed_before,
                     "limit": limit,
+                    "offset": offset,
                 },
             )
             rows = await cur.fetchall()
@@ -169,15 +278,20 @@ async def search_cases(
             "court_id": r[4],
             "status_code": r[5],
             "outcome_code": r[6],
-            "summary_excerpt": r[7],
-            "citation_string": r[8],
-            "fts_rank": float(r[9]) if r[9] is not None else 0.0,
-            "trigram_sim": float(r[10]) if r[10] is not None else 0.0,
-            "vector_sim": float(r[11]) if r[11] is not None else None,
-            "rank": float(r[12]) if r[12] is not None else 0.0,
+            "filing_date": r[7].isoformat() if r[7] else None,
+            "decision_date": r[8].isoformat() if r[8] else None,
+            "summary_excerpt": r[9],
+            "match_snippet": r[10],
+            "citation_string": r[11],
+            "fts_rank": float(r[12]) if r[12] is not None else 0.0,
+            "trigram_sim": float(r[13]) if r[13] is not None else 0.0,
+            "vector_sim": float(r[14]) if r[14] is not None else None,
+            "rank": float(r[15]) if r[15] is not None else 0.0,
         }
         for r in rows
     ]
+
+    total = int(rows[0][16]) if rows else 0
 
     return {
         "query": query,
@@ -185,7 +299,15 @@ async def search_cases(
             "jurisdiction": jurisdiction,
             "claim_type": claim_type,
             "status": status,
+            "decided_after": decided_after,
+            "decided_before": decided_before,
+            "filed_after": filed_after,
+            "filed_before": filed_before,
         },
+        "sort": effective_sort,
+        "total": total,
         "count": len(results),
+        "limit": limit,
+        "offset": offset,
         "results": results,
     }
