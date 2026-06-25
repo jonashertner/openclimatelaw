@@ -65,7 +65,7 @@ async def test_find_relevant_passage_pinpoints_matching_paragraph(
     case_with_passages: dict[str, str],
 ) -> None:
     r = await find_relevant_passage(
-        case_with_passages["case_id"], "duty of care to reduce emissions"
+        case_with_passages["case_id"], "duty of care to reduce emissions", semantic=False
     )
     assert r["count"] >= 1
     top = r["matches"][0]
@@ -80,10 +80,42 @@ async def test_find_relevant_passage_refuses_when_no_match(
     case_with_passages: dict[str, str],
 ) -> None:
     r = await find_relevant_passage(
-        case_with_passages["case_id"], "trademark patent royalties licensing"
+        case_with_passages["case_id"], "trademark patent royalties licensing", semantic=False
     )
     assert r["count"] == 0
     assert r["no_match"] is True
+
+
+@pytest.mark.asyncio
+async def test_find_relevant_passage_semantic_arm(
+    case_with_passages: dict[str, str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # Give passage 0 a known embedding and mock the query embedder to match it; a claim
+    # with NO lexical overlap must still surface passage 0 via the semantic arm.
+    import server.tools.search as search
+
+    vec = [0.05] * 384
+    lit = "[" + ",".join(f"{x:.7f}" for x in vec) + "]"
+    pool = await get_pool()
+    async with pool.connection() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                "UPDATE document_passage SET embedding = %s::vector "
+                "WHERE case_id = %s::uuid AND para_index = 0",
+                (lit, case_with_passages["case_id"]),
+            )
+        await conn.commit()
+
+    def _fake_embed(_text: str) -> list[float]:
+        return vec
+
+    monkeypatch.setattr(search, "_embed_query", _fake_embed)
+
+    r = await find_relevant_passage(
+        case_with_passages["case_id"], "wholly unrelated lexical tokens zzz qqq", semantic=True
+    )
+    assert r["count"] >= 1
+    assert any(m["para_index"] == 0 and m["semantic_similarity"] >= 0.5 for m in r["matches"])
 
 
 @pytest.mark.asyncio
