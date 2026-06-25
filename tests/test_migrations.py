@@ -167,3 +167,29 @@ async def test_embedding_columns_exist():
             assert ("document", "embedding", "vector") in names
             assert ("statute", "embedding", "vector") in names
     await close_pool()
+
+
+@pytest.mark.asyncio
+async def test_document_passage_table_exists():
+    pool = await get_pool()
+    async with pool.connection() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                """
+                SELECT column_name FROM information_schema.columns
+                WHERE table_name = 'document_passage'
+                  AND column_name IN ('document_id', 'case_id', 'para_index',
+                                      'char_start', 'char_end', 'text', 'embedding')
+                ORDER BY column_name
+                """
+            )
+            cols = [r[0] for r in await cur.fetchall()]
+    assert cols == [
+        "case_id",
+        "char_end",
+        "char_start",
+        "document_id",
+        "embedding",
+        "para_index",
+        "text",
+    ]

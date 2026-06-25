@@ -94,6 +94,38 @@ def build_mcp() -> FastMCP:
     ) -> dict[str, object] | None:
         return await _get_document_text(document_id, offset=offset, max_chars=max_chars)
 
+    from server.tools.passages import find_relevant_passage as _find_relevant_passage
+    from server.tools.passages import get_passage as _get_passage
+
+    @mcp.tool(
+        name="find_relevant_passage",
+        description=(
+            "Pinpoint a claim to the exact passage(s) of a case's decision text. "
+            "Returns ranked matches with verbatim text, char offsets, a highlighted "
+            "snippet, a confidence score, and the case citation_string — or "
+            "{no_match: true} when no passage clearly matches. If no_match, do NOT "
+            "guess a pinpoint; say no passage clearly supports the claim. Use this to "
+            "ground a specific statement in a precise, quotable passage."
+        ),
+    )
+    async def find_relevant_passage_tool(  # pyright: ignore[reportUnusedFunction]
+        case_id_or_sabin_id: str, claim: str, top_k: int = 5
+    ) -> dict[str, object]:
+        return await _find_relevant_passage(case_id_or_sabin_id, claim, top_k=top_k)
+
+    @mcp.tool(
+        name="get_passage",
+        description=(
+            "Return one decision passage verbatim by (document_id, para_index), with "
+            "its neighbouring passage indices and the case citation_string. Pair with "
+            "find_relevant_passage (which gives the indices) to read surrounding context."
+        ),
+    )
+    async def get_passage_tool(  # pyright: ignore[reportUnusedFunction]
+        document_id: str, para_index: int
+    ) -> dict[str, object] | None:
+        return await _get_passage(document_id, para_index)
+
     from server.tools.contracts.attest import attest_response as _attest_response
     from server.tools.contracts.check_support import check_claim_support as _check_claim_support
     from server.tools.contracts.cite import cite as _cite
