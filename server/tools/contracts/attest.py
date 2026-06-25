@@ -11,9 +11,7 @@ _MIN_QUOTE_CHARS = 40
 # don't flag legitimate quotes of non-legal text that carry no authority claim.
 _AUTHORITY_RADIUS = 280
 
-_QUOTE_RE = re.compile(
-    rf'"([^"]{{{_MIN_QUOTE_CHARS},400}})"|“([^”]{{{_MIN_QUOTE_CHARS},400}})”'
-)
+_QUOTE_RE = re.compile(rf'"([^"]{{{_MIN_QUOTE_CHARS},400}})"|“([^”]{{{_MIN_QUOTE_CHARS},400}})”')
 
 _FOLD = {
     0x201C: '"',

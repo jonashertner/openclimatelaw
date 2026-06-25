@@ -6,7 +6,6 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse
 from starlette.routing import Mount, Route
 
-
 CONTRACT = """\
 OpenClimateLaw — climate-litigation research with citation-safe grounding.
 
