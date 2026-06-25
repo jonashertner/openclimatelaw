@@ -109,3 +109,38 @@ async def test_attest_passes_verbatim_quote_from_summary(
     draft = f'In ECLI:NL:HR:2019:2007 the court reasoned: "{chunk}"'
     result = await attest_response(draft, [upserted_urgenda_id])
     assert result["passed"] is True, result["violations"]
+
+
+@pytest.mark.asyncio
+async def test_attest_flags_long_fabricated_quote(upserted_urgenda_id: str) -> None:
+    # A 600+ char fabricated holding must NOT escape the rail via a length ceiling.
+    fake = "The State is hereby ordered to " + "pay sweeping climate reparations forthwith " * 14
+    draft = f'In ECLI:NL:HR:2019:2007 the court held: "{fake}"'
+    result = await attest_response(draft, [upserted_urgenda_id])
+    assert result["passed"] is False
+    assert any(v["category"] == "quote" for v in result["violations"])
+
+
+@pytest.mark.asyncio
+async def test_attest_flags_mixed_delimiter_quote(upserted_urgenda_id: str) -> None:
+    # Opening curly quote, closing straight quote (a common smart-quote artifact).
+    fake = "the State must pay five billion euros in immediate climate reparations to every citizen"
+    draft = f'In ECLI:NL:HR:2019:2007 the court held: “{fake}"'
+    result = await attest_response(draft, [upserted_urgenda_id])
+    assert result["passed"] is False
+    assert any(v["category"] == "quote" for v in result["violations"])
+
+
+@pytest.mark.asyncio
+async def test_attest_passes_verbatim_quote_with_zero_width_char(
+    upserted_urgenda_id: str,
+) -> None:
+    from server.tools.cases import get_case
+
+    case = await get_case(upserted_urgenda_id)
+    assert case is not None
+    chunk = " ".join((case["summary"] or "").split()[3:18])
+    zw = chunk[:10] + "​" + chunk[10:]  # zero-width space artifact
+    draft = f'In ECLI:NL:HR:2019:2007 the court reasoned: "{zw}"'
+    result = await attest_response(draft, [upserted_urgenda_id])
+    assert result["passed"] is True, result["violations"]

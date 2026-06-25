@@ -1,4 +1,5 @@
 import re
+import unicodedata
 from typing import Any
 
 from server.db import get_pool
@@ -11,7 +12,10 @@ _MIN_QUOTE_CHARS = 40
 # don't flag legitimate quotes of non-legal text that carry no authority claim.
 _AUTHORITY_RADIUS = 280
 
-_QUOTE_RE = re.compile(rf'"([^"]{{{_MIN_QUOTE_CHARS},400}})"|“([^”]{{{_MIN_QUOTE_CHARS},400}})”')
+# Single straight-quote pattern, no upper bound (a long fabricated quote must not
+# escape). Curly/guillemet delimiters are folded to straight before matching, so
+# mixed-delimiter pairs are caught too.
+_QUOTE_RE = re.compile(rf'"([^"]{{{_MIN_QUOTE_CHARS},}})"')
 
 _FOLD = {
     0x201C: '"',
@@ -25,17 +29,22 @@ _FOLD = {
     0x201E: '"',
 }
 
+_ZERO_WIDTH = dict.fromkeys([0x200B, 0x200C, 0x200D, 0xFEFF], None)
+
 
 def _normalise(s: str) -> str:
-    """Lowercase, fold smart quotes/dashes, collapse whitespace — for verbatim matching."""
-    return re.sub(r"\s+", " ", s.translate(_FOLD).lower()).strip()
+    """NFKC-fold, drop zero-width chars, fold smart quotes/dashes, collapse whitespace."""
+    s = unicodedata.normalize("NFKC", s.translate(_FOLD)).translate(_ZERO_WIDTH)
+    return re.sub(r"\s+", " ", s.lower()).strip()
 
 
 def _extract_quotes(text: str) -> list[tuple[str, int, int]]:
+    # Fold double-quote delimiters to straight quotes first (1:1 codepoint
+    # substitution preserves offsets), so mixed straight/curly pairs are matched.
+    folded = text.translate(_FOLD)
     out: list[tuple[str, int, int]] = []
-    for m in _QUOTE_RE.finditer(text):
-        inner = m.group(1) if m.group(1) is not None else m.group(2)
-        out.append((inner, m.start(), m.end()))
+    for m in _QUOTE_RE.finditer(folded):
+        out.append((text[m.start() + 1 : m.end() - 1], m.start(), m.end()))
     return out
 
 
