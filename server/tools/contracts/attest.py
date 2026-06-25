@@ -59,7 +59,7 @@ async def attest_response(
     must appear in the citation_strings of `retrieved_ids`.
     Rail 2 (quote, when `audit_quotes`): every quoted span of >=40 chars sitting within
     280 chars of a citation must appear verbatim (normalised) in a retrieved case's
-    summary or document text.
+    summary — the only verbatim source the LLM can retrieve (matches contract R2).
 
     Returns:
         {
@@ -74,7 +74,6 @@ async def attest_response(
     cit_spans = find_citation_spans(draft_text)
     retrieved_citation_texts: set[str] = set()
     summaries: list[str] = []
-    doc_texts: list[str] = []
     if retrieved_ids:
         pool = await get_pool()
         async with pool.connection() as conn:
@@ -96,16 +95,6 @@ async def attest_response(
                         (retrieved_ids, retrieved_ids),
                     )
                     summaries = [r[0] for r in await cur.fetchall()]
-                    await cur.execute(
-                        """
-                        SELECT d.text
-                        FROM document d
-                        JOIN case_record c ON c.id = d.case_id
-                        WHERE (c.id::text = ANY(%s) OR c.sabin_id = ANY(%s)) AND d.text IS NOT NULL
-                        """,
-                        (retrieved_ids, retrieved_ids),
-                    )
-                    doc_texts = [r[0] for r in await cur.fetchall()]
 
     for span in cit_spans:
         if any(span.text in cs for cs in retrieved_citation_texts):
@@ -122,7 +111,7 @@ async def attest_response(
 
     # ---- Rail 2: verbatim quotes ----------------------------------------------------
     if audit_quotes:
-        source_pool = _normalise(" \n ".join(summaries + doc_texts))
+        source_pool = _normalise(" \n ".join(summaries))
         for inner, qs, qe in _extract_quotes(draft_text):
             near = any(
                 s.start <= qe + _AUTHORITY_RADIUS and s.end >= qs - _AUTHORITY_RADIUS
