@@ -73,6 +73,25 @@ def build_mcp() -> FastMCP:
     ) -> dict[str, object] | None:
         return await _get_case(case_id_or_sabin_id)
 
+    from server.tools.documents import get_document_text as _get_document_text
+
+    @mcp.tool(
+        name="get_document_text",
+        description=(
+            "Return a window of a document's verbatim extracted text (a court "
+            "opinion or filing — the full decision text), with its case "
+            "citation_string. Use this to read and quote the actual decision: get a "
+            "document UUID from get_case().documents[].id, retrieve the text here, "
+            "then verify any quote with check_claim_support(source_kind='document_text'). "
+            "Long decisions paginate via offset + max_chars (max 20000); follow "
+            "has_more / next_offset."
+        ),
+    )
+    async def get_document_text_tool(  # pyright: ignore[reportUnusedFunction]
+        document_id: str, offset: int = 0, max_chars: int = 8000
+    ) -> dict[str, object] | None:
+        return await _get_document_text(document_id, offset=offset, max_chars=max_chars)
+
     from server.tools.contracts.attest import attest_response as _attest_response
     from server.tools.contracts.check_support import check_claim_support as _check_claim_support
     from server.tools.contracts.cite import cite as _cite
