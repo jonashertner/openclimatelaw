@@ -42,8 +42,10 @@ def content_hash(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
-_SELECT_DOCS = """
-    SELECT d.id::text, d.case_id::text, d.text
+# Fetch candidate IDs only — never the text. Materialising every document's text
+# at once (the previous fetchall over `d.text`) OOM-kills on the full ~5GB corpus.
+_SELECT_DOC_IDS = """
+    SELECT d.id::text
     FROM document d
     WHERE d.text IS NOT NULL AND length(d.text) > 0
       AND (NOT %(only_missing)s::boolean
@@ -51,6 +53,8 @@ _SELECT_DOCS = """
     ORDER BY d.id
     LIMIT %(limit)s
 """
+
+_SELECT_ONE_DOC = "SELECT case_id::text, text FROM document WHERE id = %s::uuid"
 
 _INSERT_PASSAGE = """
     INSERT INTO document_passage
@@ -65,9 +69,11 @@ async def backfill_passages(
 ) -> dict[str, int]:
     """Split every document's text into `document_passage` rows.
 
+    Streams: fetches candidate document IDs first (lightweight), then processes one
+    document's text at a time — bounded memory, so the full corpus does not OOM.
     Text-only (no embeddings — lexical find_relevant_passage works without them;
-    semantic embeddings are a separate operational enhancement). Idempotent via
-    ON CONFLICT. Returns {documents, passages}.
+    semantic embeddings are a separate enhancement). Idempotent via ON CONFLICT,
+    committing per document so an interrupted run resumes. Returns {documents, passages}.
     """
     from server.db import get_pool
 
@@ -76,9 +82,15 @@ async def backfill_passages(
     total = 0
     async with real_pool.connection() as conn:
         async with conn.cursor() as cur:
-            await cur.execute(_SELECT_DOCS, {"only_missing": only_missing, "limit": limit})
-            rows = await cur.fetchall()
-        for doc_id, case_id, text in rows:
+            await cur.execute(_SELECT_DOC_IDS, {"only_missing": only_missing, "limit": limit})
+            doc_ids = [r[0] for r in await cur.fetchall()]
+        for doc_id in doc_ids:
+            async with conn.cursor() as cur:
+                await cur.execute(_SELECT_ONE_DOC, (doc_id,))
+                row = await cur.fetchone()
+            if row is None or not row[1]:
+                continue
+            case_id, text = row
             parts = split_into_passages(text)
             if not parts:
                 continue
