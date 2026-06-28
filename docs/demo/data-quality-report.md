@@ -11,14 +11,17 @@
 1. **`decision_date` mis-mapping (we have a fix).** Many records carried a *metadata-modification
    timestamp* as the decision date, so recently-touched cases displayed 2026 "decision" dates (e.g.
    filed-status cases showing 2026-04-xx). We re-derive `decision_date` from the **latest `Decision`
-   event** in each proceeding's event timeline, and leave it NULL when there is no decision. Result on
-   our mirror: **2,050 dates corrected (1,721 spurious dates cleared to NULL), 3,056 true decision
-   dates retained.** Happy to share the derivation logic upstream.
+   event** in each proceeding's event timeline (preferring an event whose text names a *judgment* over a
+   later post-judgment item, so e.g. KlimaSeniorinnen reads its 2024-04-09 merits judgment, not the
+   2025-03-06 Committee-of-Ministers execution decision), and leave it NULL when there is no decision.
+   Result on our mirror: **~2,150 dates corrected (1,721 spurious dates cleared to NULL), 3,056 true
+   decision dates retained.** Happy to share the derivation logic upstream.
 
-2. **Cross-source duplicates.** ~595 duplicate-title groups. In particular, every Climate Rights
-   Database record (215) appears to duplicate a Sabin case — coded jurisdiction `XX`, with stub
-   summaries ("See [url]…") — and out-ranks the canonical record in naive search (e.g. *Urgenda*). A
-   stable `import_id`-based dedup key would collapse these; we currently suppress them in our search.
+2. **Cross-source duplicates.** ~595 duplicate-title groups. In particular, the 215 Climate Rights
+   Database records appear to duplicate Sabin cases — 195 of them coded jurisdiction `XX`, with stub
+   summaries ("See [url]…"). In an *unfiltered* query against the raw mirror these out-rank the canonical
+   record (e.g. *Urgenda*); OpenClimateLaw's search already suppresses them, but a stable
+   `import_id`-based dedup key would let you collapse them at the source.
 
 3. **`outcome` unpopulated (100% null) and `parties` empty.** "Who won?" is the first question a
    litigator asks. These are derivable (a confidence-gated classifier over decision text for outcome;
@@ -29,10 +32,11 @@
 
 ## Coverage / freshness
 
-5. **Apex landmarks missing as canonical records.** *Verein KlimaSeniorinnen v. Switzerland* and the
-   *2025 ICJ Advisory Opinion on Obligations of States* surface only as blog-analysis stubs in our
-   mirror, not as primary case records. (May be an artifact of our ingest timing — flagging so it can
-   be checked on the canonical platform.)
+5. **Apex landmarks — present, but with CRD-stub noise alongside.** *Verein KlimaSeniorinnen v.
+   Switzerland* and the *2025 ICJ Advisory Opinion* are present as canonical Sabin records (correct
+   courts, citation_strings, and — after our date fix — correct dates). The duplicate Climate Rights
+   blog-analysis stubs ("Part 1/2/3 of 3") sit alongside them and pollute unfiltered search; collapsing
+   those (item 2) is the cleanup.
 
 6. **`jurisdiction` code `XX`** is used for international/cross-border records (195), which makes the
    documented jurisdiction filter miss them. A normalized code (e.g. `INT`, or court-body codes like
