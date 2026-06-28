@@ -25,6 +25,7 @@ Every result carries the canonical citation_string so the LLM has a verbatim
 citation to use immediately — closing the loop with the R1 contract.
 """
 
+import re
 import threading
 from datetime import date as _date
 from typing import Any, LiteralString
@@ -78,6 +79,45 @@ def _validate_iso_date(name: str, value: str | None) -> None:
         _date.fromisoformat(value)
     except ValueError:
         raise ValueError(f"invalid {name}: {value!r}; expected ISO date 'YYYY-MM-DD'") from None
+
+
+# Leading-party boost: people search a case by its lead party ("Held v. Montana",
+# "Juliana"), but a query token can match the WRONG case (e.g. "Montana" matching
+# Montana-titled cases while the canonical title is "Held v. State"). For short,
+# name-like queries we boost cases whose title's FIRST word equals the query's first
+# distinctive token. Generic leads are skipped so we don't boost every "State v. …".
+_NAME_STOP = {"the", "a", "an", "in", "re", "of", "v", "vs", "and", "for"}
+_GENERIC_LEAD = {
+    "state",
+    "states",
+    "people",
+    "united",
+    "republic",
+    "city",
+    "county",
+    "federal",
+    "national",
+    "commonwealth",
+    "government",
+    "matter",
+    "request",
+}
+
+
+def _name_token(query: str) -> str | None:
+    toks = re.findall(r"[a-z0-9]+", query.lower())
+    has_v = any(t in {"v", "vs"} for t in toks)
+    sig = [t for t in toks if t not in _NAME_STOP]
+    if not sig:
+        return None
+    # Name-like only: an explicit 'v.'/'vs', or a very short (1-2 token) query. This
+    # keeps topic queries ("climate change litigation") from triggering the boost.
+    if not has_v and len(sig) > 2:
+        return None
+    first = sig[0]
+    if len(first) < 3 or first in _GENERIC_LEAD:
+        return None
+    return first
 
 
 # Everything up to (and including) the ORDER BY keyword. The ORDER BY clause and
@@ -138,7 +178,14 @@ _SEARCH_SQL_HEAD: LiteralString = """
                                  THEN 0
                                  ELSE 1 - (c.embedding <=> %(qvec)s::vector)
                             END
-                        ) AS rank,
+                        )
+                        + CASE
+                            WHEN %(name_token)s::text IS NOT NULL
+                             AND lower(regexp_replace(
+                                   split_part(c.canonical_title, ' ', 1), '[^a-zA-Z0-9]', '', 'g'
+                                 )) = %(name_token)s
+                            THEN 10.0 ELSE 0
+                          END AS rank,
                         count(*) OVER() AS total_count
                     FROM case_record c, q
                     WHERE
@@ -269,6 +316,7 @@ async def search_cases(
                 {
                     "query": query,
                     "qvec": qvec_literal,
+                    "name_token": _name_token(query) if not browse else None,
                     "browse": browse,
                     "jurisdiction": jurisdiction,
                     "claim_type": claim_type,

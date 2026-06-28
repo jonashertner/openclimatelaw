@@ -267,3 +267,42 @@ async def test_search_excludes_climate_rights_stubs(seeded_crd_dupe: None) -> No
     ids = [x.get("sabin_id") for x in r["results"]]
     assert "Sabin.zzdupe.0" in ids
     assert "crd:zorgon-climate-coalition" not in ids
+
+
+_NAME_BOOST_SEED = [
+    ("tname-canonical", "Zephyrhold v. State", "US"),  # colloquially "Zephyrhold v. Montana"
+    ("tname-decoy", "Quoxx Task Force v. Montana", "US"),  # decoy sharing the 'Montana' token
+]
+
+
+@pytest.fixture
+async def seeded_name_boost() -> AsyncGenerator[None]:
+    pool = await get_pool()
+    async with pool.connection() as conn:
+        async with conn.cursor() as cur:
+            for sid, title, juris in _NAME_BOOST_SEED:
+                await cur.execute(
+                    "INSERT INTO case_record "
+                    "(sabin_id, canonical_title, jurisdiction_code, status_code, primary_source) "
+                    "VALUES (%s, %s, %s, 'decided', 'sabin')",
+                    (sid, title, juris),
+                )
+        await conn.commit()
+    yield
+    async with pool.connection() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                "DELETE FROM case_record WHERE sabin_id = ANY(%s)",
+                ([s[0] for s in _NAME_BOOST_SEED],),
+            )
+        await conn.commit()
+
+
+@pytest.mark.asyncio
+async def test_search_leading_party_boost(seeded_name_boost: None) -> None:
+    # Searching a case by its leading party must beat a decoy that merely shares a
+    # later token ('Montana'), even though the canonical title says 'State' not 'Montana'.
+    r = await search_cases(query="Zephyrhold v. Montana", limit=5, semantic=False)
+    titles = [x["canonical_title"] for x in r["results"]]
+    assert titles, "expected results"
+    assert titles[0] == "Zephyrhold v. State"
