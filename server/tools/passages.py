@@ -10,6 +10,7 @@ semantic cosine (when embeddings are present) is additive.
 
 import asyncio
 import re
+import uuid
 from typing import Any
 
 from server.db import get_pool
@@ -202,6 +203,10 @@ async def find_relevant_passage(
 
 async def get_passage(document_id: str, para_index: int) -> dict[str, Any] | None:
     """Return one passage verbatim by (document_id, para_index), with neighbours + citation."""
+    try:
+        uuid.UUID(str(document_id))
+    except ValueError, AttributeError, TypeError:
+        return None  # non-UUID id (e.g. a sabin_id) → not found, never a raw DB error
     pool = await get_pool()
     async with pool.connection() as conn:
         async with conn.cursor() as cur:

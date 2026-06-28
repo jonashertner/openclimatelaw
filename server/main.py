@@ -48,7 +48,7 @@ def build_mcp() -> FastMCP:
         name="get_statistics",
         description=(
             "Return structured statistics over the climate-litigation corpus. "
-            "scope: 'all' | 'sabin' | 'cclw'. "
+            "scope: 'all' | 'sabin'. "
             "group_by: 'jurisdiction' | 'claim_type' | 'year' | 'status' | 'outcome' | null. "
             "Returns case_count, document_count, statute_count, jurisdiction_count, "
             "and per-group counts when group_by is set."

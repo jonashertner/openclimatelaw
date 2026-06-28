@@ -49,9 +49,14 @@ async def test_cite_returns_native_format_in_dutch(upserted_urgenda_id: str) -> 
 
 
 @pytest.mark.asyncio
-async def test_cite_returns_none_when_format_not_available(upserted_urgenda_id: str) -> None:
+async def test_cite_falls_back_when_format_not_available(upserted_urgenda_id: str) -> None:
+    # An unsupported format must NOT return a silent null (which could tempt fabrication);
+    # it falls back to the case's best available citation, flagged as a fallback.
     result = await cite(case_id=upserted_urgenda_id, lang="en", format="oscola")
-    assert result is None
+    assert result is not None
+    assert result["fallback"] is True
+    assert result["requested_format"] == "oscola"
+    assert result["citation_string"]
 
 
 @pytest.mark.asyncio

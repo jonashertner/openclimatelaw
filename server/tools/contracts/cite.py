@@ -30,13 +30,38 @@ async def cite(case_id: str, lang: str, format: str) -> dict[str, Any] | None:
                 (case_id, case_id, lang, format),
             )
             row = await cur.fetchone()
-            if row is None:
-                return None
-            citation_text, case_uuid = row
+            if row is not None:
+                citation_text, case_uuid = row
+                return {
+                    "citation_string": citation_text,
+                    "lang": lang,
+                    "format": format,
+                    "case_id": str(case_uuid),
+                }
+            # Fallback: the requested lang/format has no row, but never return a silent
+            # null that might tempt the model to fabricate — give the case's best
+            # available citation (prefer the requested lang, then English, then 'sabin').
+            await cur.execute(
+                """
+                SELECT cs.text, c.id, cs.lang, cs.format
+                FROM citation_string cs
+                JOIN case_record c ON c.id = cs.case_id
+                WHERE c.id::text = %s OR c.sabin_id = %s
+                ORDER BY (cs.lang = %s) DESC, (cs.lang = 'en') DESC, (cs.format = 'sabin') DESC
+                LIMIT 1
+                """,
+                (case_id, case_id, lang),
+            )
+            fb = await cur.fetchone()
 
+    if fb is None:
+        return None
+    fb_text, fb_uuid, fb_lang, fb_format = fb
     return {
-        "citation_string": citation_text,
-        "lang": lang,
-        "format": format,
-        "case_id": str(case_uuid),
+        "citation_string": fb_text,
+        "lang": fb_lang,
+        "format": fb_format,
+        "case_id": str(fb_uuid),
+        "requested_format": format,
+        "fallback": True,
     }

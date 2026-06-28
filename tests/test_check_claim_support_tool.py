@@ -72,6 +72,17 @@ async def test_check_claim_support_fails_when_source_not_found() -> None:
 
 
 @pytest.mark.asyncio
+async def test_check_claim_support_normalizes_whitespace(upserted_urgenda_id: str) -> None:
+    # Same words as a verbatim substring but with PDF-style line breaks / extra spaces and
+    # leading/trailing padding — must still verify (whitespace is collapsed, words preserved).
+    quote = "  the right to family life\n   from the    dangers of\nclimate change  "
+    result = await check_claim_support(
+        quote=quote, source_id=upserted_urgenda_id, source_kind="case_summary"
+    )
+    assert result["supported"] is True
+
+
+@pytest.mark.asyncio
 async def test_check_claim_support_invalid_source_kind_raises() -> None:
     with pytest.raises(ValueError, match="invalid source_kind"):
         await check_claim_support(quote="x", source_id="any", source_kind="bogus_kind")

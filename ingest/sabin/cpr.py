@@ -319,22 +319,42 @@ def _parse_date(value: str | None) -> Any:
     return d
 
 
-def latest_decision_date(events: list[dict[str, Any]] | None) -> date | None:
-    """Date of the latest 'Decision' event in a proceeding's timeline.
+def _event_text(e: dict[str, Any]) -> str:
+    parts = [str(e.get("title") or "")]
+    md = e.get("metadata") or {}
+    desc = md.get("description")
+    if isinstance(desc, list):
+        parts.extend(str(x) for x in desc)
+    elif desc:
+        parts.append(str(desc))
+    return " ".join(parts).lower()
 
-    Sabin's event timeline is the source of truth for judgment dates. The bulk
-    `last_updated_date` is a metadata-modification timestamp (often the ingest
-    time), so mapping decision_date from it surfaces scrape timestamps. Deriving
-    from Decision events fixes that. Returns None when there is no recorded
-    decision (the proceeding is pending/filed) — which is the honest value.
+
+def latest_decision_date(events: list[dict[str, Any]] | None) -> date | None:
+    """Date of the proceeding's decision, from the stored event timeline.
+
+    Mapping decision_date from `last_updated_date` (a metadata-modification
+    timestamp) surfaces scrape times; deriving from 'Decision' events fixes that.
+    Among Decision events we PREFER those whose text names a judgment, so a later
+    post-judgment item (e.g. an ECtHR Committee-of-Ministers execution decision)
+    does not over-shoot the merits date — KlimaSeniorinnen's merits judgment is
+    2024-04-09, not the 2025-03-06 supervision decision. Falls back to the latest
+    Decision event when none is explicitly a judgment. None = no recorded decision.
     """
-    best: date | None = None
+    judgments: list[date] = []
+    decisions: list[date] = []
     for e in events or []:
-        if (e.get("event_type") or "") == "Decision":
-            parsed = _parse_date(e.get("date"))
-            if parsed is not None and (best is None or parsed > best):
-                best = parsed
-    return best
+        if (e.get("event_type") or "") != "Decision":
+            continue
+        parsed = _parse_date(e.get("date"))
+        if parsed is None:
+            continue
+        decisions.append(parsed)
+        text = _event_text(e)
+        if "judgment" in text or "judgement" in text:
+            judgments.append(parsed)
+    pool = judgments or decisions
+    return max(pool) if pool else None
 
 
 async def fetch_families_page(

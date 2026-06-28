@@ -1,9 +1,27 @@
+import re
 from typing import Any, Literal
 
 from server.db import get_pool
 
 SourceKind = Literal["case_summary", "document_text", "citation_string"]
 VALID_SOURCE_KINDS: set[str] = {"case_summary", "document_text", "citation_string"}
+
+# Fold smart quotes/dashes so a quote typed with straight quotes matches PDF text
+# (and vice versa). Whitespace is collapsed separately. Words and case are preserved,
+# so this stays a verbatim check — only PDF line-break/spacing/curly-quote noise is ignored.
+# Codepoints (not literal glyphs) avoid the ambiguous-unicode lint; same intent as attest.
+_FOLD = {
+    0x201C: '"',  # left double quotation mark
+    0x201D: '"',  # right double quotation mark
+    0x2018: "'",  # left single quotation mark
+    0x2019: "'",  # right single quotation mark
+    0x2013: "-",  # en dash
+    0x2014: "-",  # em dash
+}
+
+
+def _normalize(s: str) -> str:
+    return re.sub(r"\s+", " ", s.translate(_FOLD)).strip()
 
 
 async def check_claim_support(quote: str, source_id: str, source_kind: str) -> dict[str, Any]:
@@ -71,10 +89,10 @@ async def check_claim_support(quote: str, source_id: str, source_kind: str) -> d
             "source_kind": source_kind,
         }
 
-    if quote in haystack:
+    if _normalize(quote) in _normalize(haystack):
         return {
             "supported": True,
-            "reason": "verbatim substring match",
+            "reason": "verbatim substring match (whitespace/quote-normalized)",
             "source_id": source_id,
             "source_kind": source_kind,
         }

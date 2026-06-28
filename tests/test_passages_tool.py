@@ -134,3 +134,10 @@ async def test_get_passage_returns_verbatim_with_neighbours(
 async def test_get_passage_not_found() -> None:
     r = await get_passage("00000000-0000-0000-0000-000000000000", 0)
     assert r is None
+
+
+@pytest.mark.asyncio
+async def test_get_passage_non_uuid_returns_none() -> None:
+    # A non-UUID id (e.g. a sabin_id copied in by mistake) must return None, not a raw DB error.
+    assert await get_passage("Sabin.family.2823.0", 0) is None
+    assert await get_passage("not-a-uuid", 0) is None

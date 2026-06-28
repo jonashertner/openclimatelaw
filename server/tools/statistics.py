@@ -2,10 +2,10 @@ from typing import Any, Literal
 
 from server.db import get_pool
 
-Scope = Literal["all", "sabin", "cclw"]
+Scope = Literal["all", "sabin"]
 GroupBy = Literal["jurisdiction", "claim_type", "year", "status", "outcome"]
 
-VALID_SCOPES = {"all", "sabin", "cclw"}
+VALID_SCOPES = {"all", "sabin"}
 VALID_GROUP_BY = {"jurisdiction", "claim_type", "year", "status", "outcome"}
 
 
@@ -16,7 +16,7 @@ async def get_statistics(
     """Return structured statistics over the corpus.
 
     Args:
-        scope: 'all' | 'sabin' | 'cclw'.
+        scope: 'all' | 'sabin'.
         group_by: when provided, returns per-group counts in addition to totals.
 
     Returns:
@@ -35,9 +35,6 @@ async def get_statistics(
             scope_filter = ""
             if scope == "sabin":
                 scope_filter = "WHERE primary_source = 'sabin'"
-            elif scope == "cclw":
-                # CCLW lives in `statute`; cases not affected.
-                scope_filter = "WHERE 1=0"  # no cases for cclw scope
 
             await cur.execute(f"SELECT count(*) FROM case_record {scope_filter}")
             (case_count,) = await cur.fetchone()  # type: ignore[misc]
@@ -51,7 +48,7 @@ async def get_statistics(
             (document_count,) = await cur.fetchone()  # type: ignore[misc]
 
             statute_count = 0
-            if scope in ("all", "cclw"):
+            if scope == "all":
                 await cur.execute("SELECT count(*) FROM statute")
                 (statute_count,) = await cur.fetchone()  # type: ignore[misc]
 
@@ -90,8 +87,6 @@ async def _compute_groups(cur: Any, scope: str, group_by: str) -> list[dict[str,
     scope_filter = ""
     if scope == "sabin":
         scope_filter = "WHERE primary_source = 'sabin'"
-    elif scope == "cclw":
-        return []
 
     if group_by == "jurisdiction":
         await cur.execute(
