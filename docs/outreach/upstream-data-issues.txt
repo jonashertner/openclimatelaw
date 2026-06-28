@@ -1,0 +1,95 @@
+UPSTREAM DATA-QUALITY OBSERVATIONS
+Climate Litigation Database (Sabin Center / Climate Policy Radar)
+Compiled by OpenClimateLaw — 2026-06-28
+
+================================================================================
+READ FIRST — IMPORTANT CAVEAT
+================================================================================
+These observations come from OpenClimateLaw's MIRROR of the Climate Litigation
+Database, ingested BEFORE the 25 September 2025 Sabin + Climate Policy Radar
+relaunch. Our snapshot is ~7 weeks stale (as-of 2026-05-07) and was built against
+the PRIOR climatecasechart.com. We therefore CANNOT tell which of these persist on
+the relaunched, CPR-powered platform.
+
+=> Treat every item below as a candidate to VALIDATE against the current database,
+   not a confirmed live defect. We surface them only because you asked us to flag
+   what we find, and in the spirit of giving back.
+
+Counts are over the 4,812 Sabin-sourced records in our mirror. These are SOURCE-DATA
+observations — distinct from OpenClimateLaw's own ingestion bugs (e.g. our
+decision_date mis-mapping, now fixed on our side; see data-quality-report.md).
+
+
+================================================================================
+LIKELY DATA ISSUES (worth validating)
+================================================================================
+
+[1] FILING DATES ARE YEAR-ONLY, STORED AS JANUARY 1  —  4,492 / 4,812 records (93%).
+    filing_date is recorded at year granularity and defaulted to YYYY-01-01.
+    Anyone who sorts or filters by filing date sees thousands of spurious
+    "1 January" filings, and true within-year ordering is lost.
+    Suggested check: does the platform expose date precision (a year-only flag),
+    rather than a hard 01-01 date?
+
+[2] APPARENT DUPLICATE / MIRROR RECORDS (same case, multiple family records).
+    - Exact-title duplicates: "American Fuel & Petrochemical Manufacturers v.
+      O'Keeffe" appears as BOTH Sabin.family.2153.0 AND Sabin.family.8546.0.
+      (Verify whether these are true duplicates or distinct proceedings.)
+    - Translation mirrors: the same case exists as separate English and
+      translated records — e.g. "Juliana v. United States" (US) and "Juliana Youth
+      v. United States of America (Jóvenes ex Juliana v. Estados Unidos de
+      América)" (coded XA). They compete in search and split citation/influence.
+    Suggested fix: a stable case-identity / dedup key (e.g. CPR import_id) to
+    collapse duplicates and link language variants.
+
+[3] INTERNATIONAL / REGIONAL CASES UNDER A CATCH-ALL JURISDICTION CODE "XA"  —  221 records.
+    ICJ, ITLOS, ECtHR, IACtHR, etc. all share the non-granular jurisdiction_code
+    "XA". (court_id distinguishes the body, but the jurisdiction code does not.)
+    Both KlimaSeniorinnen v. Switzerland and the 2025 ICJ Advisory Opinion are "XA".
+    Effect: you cannot filter international bodies by jurisdiction code alone.
+    Suggested fix: body-specific codes (ICJ / ITLOS / ECTHR / IACTHR / …).
+
+[4] POST-JUDGMENT / EXECUTION ITEMS TYPED AS "Decision" EVENTS.
+    In the event timeline, execution/supervision items carry event_type="Decision",
+    indistinguishable from the merits ruling except via free-text description.
+    Example: KlimaSeniorinnen v. Switzerland (Sabin.family.15540.0) has a 2025-03-06
+    "Decision" event ("Committee of Ministers … supervision of execution") AFTER the
+    2024-04-09 Grand Chamber merits judgment — so a naive "latest Decision" reads the
+    wrong (later) date for the landmark.
+    (Rare in our mirror — 1 case — but the modeling pattern is worth a distinct event
+    category, e.g. "Execution" / "Supervision", so consumers don't conflate them.)
+
+
+================================================================================
+LOWER-CONFIDENCE / POSSIBLY-EDITORIAL-SCOPE
+================================================================================
+
+[5] OUTCOME NOT MACHINE-READABLE — no structured who-won / disposition field in our
+    mirror (0% populated). May be intentional editorial scope; flagged because
+    outcome is the first thing a litigator filters on.
+
+[6] PARTIES NOT EXPOSED AS STRUCTURED FIELDS in the bulk/family record (plaintiff /
+    defendant must be parsed from the title). The per-case detail pages may carry
+    more structure — please validate.
+
+[7] ONE IMPLAUSIBLE FILING DATE: Sabin.family.5916.0 ("Friends of Capital Crescent
+    Trail v. Federal Transit Administration") filed 1970-01-26. Verify — possibly a
+    genuinely old case, possibly a typo.
+
+
+================================================================================
+NOTED AS *NOT* ISSUES (to pre-empt false positives)
+================================================================================
+- 484 records have non-ASCII titles — these are overwhelmingly LEGITIMATE foreign
+  case names (e.g. "Notre Affaire à Tous v. Total", "Brasilcom v. Ministério de
+  Minas e Energia"). Not a defect. Only the duplicate mirrors among them (item 2)
+  are an issue.
+- All Sabin records in our mirror have non-empty summaries (good) and a valid
+  jurisdiction code; no "XX" Sabin records.
+- The "Analysis … Part 1/2/3 of 3" stub records we ingest are from the Climate
+  Rights Database (University of Zurich) — a SEPARATE source, NOT Sabin/CPR.
+
+--------------------------------------------------------------------------------
+We're glad to share the exact queries / record IDs behind any of these, or to
+contribute fixes (a dedup pass, a date-precision flag, an execution-event category).
+================================================================================
