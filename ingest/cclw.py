@@ -100,49 +100,68 @@ def _download(token: str, urls: list[str], dest_dir: Path) -> list[str]:
     return paths
 
 
+def _law(cclw_id: str, meta: tuple[Any, ...], parts: list[str]) -> dict[str, Any]:
+    title, geo, pub, category, langs = meta
+    return {
+        "cclw_id": cclw_id,
+        "title": title,
+        "geo": list(geo) if geo is not None else [],
+        "pub": pub,
+        "category": category,
+        "langs": list(langs) if langs is not None else [],
+        "body": "\n".join(parts),
+    }
+
+
 def _aggregate_laws(parquet_paths: list[str], limit: int | None):
+    """Stream Laws-and-Policies blocks sorted by (family, index) and group them in
+    Python — one law in memory at a time. Avoids a giant string_agg that OOMs the
+    3GB container; DuckDB's sort spills to disk within the memory cap."""
     import duckdb
 
     files = "[" + ",".join("'" + p + "'" for p in parquet_paths) + "]"
     q = f"""
         SELECT "document_metadata.family_import_id" AS cclw_id,
-               any_value("document_metadata.family_title") AS title,
-               any_value("document_metadata.geographies") AS geo,
-               any_value("document_metadata.publication_ts") AS pub,
-               any_value("document_metadata.category") AS category,
-               any_value("document_metadata.languages") AS langs,
-               string_agg("text_block.text", chr(10)
-                          ORDER BY "text_block.index") AS body
+               "document_metadata.family_title" AS title,
+               "document_metadata.geographies" AS geo,
+               "document_metadata.publication_ts" AS pub,
+               "document_metadata.category" AS category,
+               "document_metadata.languages" AS langs,
+               "text_block.text" AS text
         FROM read_parquet({files})
         WHERE "document_metadata.corpus_type_name" = 'Laws and Policies'
           AND "document_metadata.family_import_id" IS NOT NULL
           AND "text_block.text" IS NOT NULL
-        GROUP BY 1
+        ORDER BY "document_metadata.family_import_id", "text_block.index"
     """
-    if limit is not None:
-        q += f" LIMIT {int(limit)}"
     con = duckdb.connect()
-    # Cap memory + spill to disk so a big aggregate never OOMs the (shared) container.
-    # `spill` is a local dir we created (trusted), not user input.
+    # Cap memory + spill to disk so the sort can't OOM the shared 3GB container.
     spill = (os.path.dirname(parquet_paths[0]) if parquet_paths else "/tmp").replace("'", "")
     con.execute("SET memory_limit='1GB'")
+    con.execute("SET threads=2")
     con.execute("SET preserve_insertion_order=false")
     con.execute(f"SET temp_directory='{spill}'")
     cur = con.execute(q)
+
+    cur_id: str | None = None
+    cur_meta: tuple[Any, ...] | None = None
+    parts: list[str] = []
+    emitted = 0
     while True:
-        batch = cur.fetchmany(25)
+        batch = cur.fetchmany(2000)
         if not batch:
             break
-        for cclw_id, title, geo, pub, category, langs, body in batch:
-            yield {
-                "cclw_id": cclw_id,
-                "title": title,
-                "geo": list(geo) if geo is not None else [],
-                "pub": pub,
-                "category": category,
-                "langs": list(langs) if langs is not None else [],
-                "body": body,
-            }
+        for cclw_id, title, geo, pub, category, langs, text in batch:
+            if cclw_id != cur_id:
+                if cur_id is not None and cur_meta is not None:
+                    yield _law(cur_id, cur_meta, parts)
+                    emitted += 1
+                    if limit is not None and emitted >= limit:
+                        return
+                cur_id, cur_meta, parts = cclw_id, (title, geo, pub, category, langs), []
+            parts.append(text)
+    if cur_id is not None and cur_meta is not None and not (limit is not None and emitted >= limit):
+        yield _law(cur_id, cur_meta, parts)
 
 
 def _to_date(value: Any):
