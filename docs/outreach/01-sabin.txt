@@ -20,7 +20,7 @@ We built a working, open-source demonstration of a Model Context Protocol (MCP) 
 
     https://mcp.openclimatelaw.org/mcp     (landing page: https://openclimatelaw.org)
 
-It exposes twelve tools. The ones that matter most here enforce citation safety:
+It exposes thirteen tools — including a legislation->litigation link (find_cases_by_law: every climate case turning on a given law, e.g. the Public Trust Doctrine or the European Convention on Human Rights, built from your principal-law cross-references and a natural bridge to CPR's CCLW corpus). The ones that matter most here enforce citation safety:
   - cite returns only the verbatim citation string of a previously retrieved case — the model is required to call this rather than write a citation from memory.
   - check_claim_support verifies that any quoted text appears verbatim in the retrieved decision text or summary.
   - find_relevant_passage resolves a claim to an exact passage of the decision — and returns "no match" rather than guess when nothing supports it.

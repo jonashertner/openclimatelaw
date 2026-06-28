@@ -37,6 +37,11 @@ Show a normal LLM inventing a plausible cite, then run the same draft through `a
 - `find_related_cases("Sabin.family.2823.0")` (Urgenda) → **verified**: Greenpeace NL, German youth
   constitutional cases (Luca Salis / Leonie Frank), Plan B.Earth v UK — by *embedding similarity*, not
   keywords. "Analogues across jurisdictions a keyword search misses."
+- **Legislation → litigation** (`find_cases_by_law`) — the bridge to CPR's CCLW corpus, live today
+  from Sabin's principal-law cross-references: "which climate cases turn on the *Public Trust
+  Doctrine*?" → **88**; "the *European Convention on Human Rights*?" → **60 across jurisdictions**
+  (IE/NL/AT/…); "the *Clean Air Act*?" → **597**. And `get_case` lists the laws for a single case
+  (Held v. State → Montana Constitution, Montana Environmental Policy Act, Public Trust Doctrine).
 
 ## Beat 4 — Honesty / provenance ~1 min
 - `get_case("Sabin.family.2823.0")` → field-level provenance (`source: sabin`, `retrieved_at`), and a
