@@ -9,21 +9,27 @@ from typing import Any
 
 from server.db import get_pool
 
+# to_tsvector rejects input > ~1MB; cap the (huge) law text to a safe byte budget,
+# matching migration 0014's index so it can be used and never errors at query time.
+_CAPPED = "left(coalesce(s.text, ''), 262000)"
 _TSV = (
     "setweight(to_tsvector('simple', s.short_title), 'A') "
-    "|| setweight(to_tsvector('simple', coalesce(s.text, '')), 'D')"
+    f"|| setweight(to_tsvector('simple', {_CAPPED}), 'D')"
 )
 
 _SEARCH_SQL = f"""
     WITH q AS (SELECT plainto_tsquery('simple', %(query)s) AS tsq)
     SELECT s.id::text, s.cclw_id, s.short_title, s.jurisdiction_code, s.status,
            s.enacted_date,
-           ts_headline('simple', coalesce(s.text, ''), (SELECT tsq FROM q),
+           ts_headline('simple', {_CAPPED}, (SELECT tsq FROM q),
                'StartSel=<b>, StopSel=</b>, MaxFragments=2, MaxWords=18') AS snippet,
            ts_rank('{{0.1, 0.2, 0.4, 1.0}}', {_TSV}, (SELECT tsq FROM q)) AS rank,
            count(*) OVER() AS total
     FROM statute s, q
-    WHERE ({_TSV}) @@ (SELECT tsq FROM q)
+    WHERE (
+            to_tsvector('simple', s.short_title) @@ (SELECT tsq FROM q)
+            OR to_tsvector('simple', {_CAPPED}) @@ (SELECT tsq FROM q)
+          )
       AND (%(jur)s::text IS NULL OR s.jurisdiction_code = %(jur)s::text)
     ORDER BY rank DESC, s.short_title
     LIMIT %(limit)s

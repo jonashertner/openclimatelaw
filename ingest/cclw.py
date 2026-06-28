@@ -210,6 +210,7 @@ async def ingest_cclw(
 
     pool = await get_pool()
     statutes = 0
+    skipped = 0
     async with pool.connection() as conn:
         for law in _aggregate_laws(parquet_paths, limit):
             if not law["title"] or not law["body"]:
@@ -223,35 +224,40 @@ async def ingest_cclw(
                     "corpus": "Laws and Policies",
                 }
             )
-            async with conn.cursor() as cur:
-                await cur.execute(
-                    "INSERT INTO vocabulary_jurisdiction "
-                    "(code, name, kind, source, source_version) "
-                    "VALUES (%s, %s, %s, 'cclw', 'cclw-2026') "
-                    "ON CONFLICT (code) DO NOTHING",
-                    (code, name, kind),
-                )
-                await cur.execute(
-                    _UPSERT,
-                    {
-                        "cclw_id": law["cclw_id"],
-                        "jur": code,
-                        "short": law["title"][:1000],
-                        "long": None,
-                        "enacted": _to_date(law["pub"]),
-                        "status": (law["category"] or "Unknown")[:100],
-                        "text": text,
-                        "lang": (law["langs"][0] if law["langs"] else "en"),
-                        "hash": hashlib.sha256(text.encode("utf-8")).hexdigest(),
-                        "prov": prov,
-                    },
-                )
-            await conn.commit()
-            statutes += 1
-            if statutes % 100 == 0:
-                log.info("progress", statutes=statutes)
-    log.info("cclw_complete", statutes=statutes)
-    return {"statutes": statutes}
+            try:
+                async with conn.cursor() as cur:
+                    await cur.execute(
+                        "INSERT INTO vocabulary_jurisdiction "
+                        "(code, name, kind, source, source_version) "
+                        "VALUES (%s, %s, %s, 'cclw', 'cclw-2026') "
+                        "ON CONFLICT (code) DO NOTHING",
+                        (code, name, kind),
+                    )
+                    await cur.execute(
+                        _UPSERT,
+                        {
+                            "cclw_id": law["cclw_id"],
+                            "jur": code,
+                            "short": law["title"][:1000],
+                            "long": None,
+                            "enacted": _to_date(law["pub"]),
+                            "status": (law["category"] or "Unknown")[:100],
+                            "text": text,
+                            "lang": (law["langs"][0] if law["langs"] else "en"),
+                            "hash": hashlib.sha256(text.encode("utf-8")).hexdigest(),
+                            "prov": prov,
+                        },
+                    )
+                await conn.commit()
+                statutes += 1
+                if statutes % 100 == 0:
+                    log.info("progress", statutes=statutes)
+            except Exception as e:
+                await conn.rollback()
+                skipped += 1
+                log.warning("skip_law", cclw_id=law["cclw_id"], error=repr(e)[:140])
+    log.info("cclw_complete", statutes=statutes, skipped=skipped)
+    return {"statutes": statutes, "skipped": skipped}
 
 
 def main() -> int:
