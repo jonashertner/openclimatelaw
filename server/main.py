@@ -248,6 +248,41 @@ def build_mcp() -> FastMCP:
     ) -> dict[str, object]:
         return await _find_cases_by_law(law=law, limit=limit)
 
+    from server.tools.statutes import get_statute as _get_statute
+    from server.tools.statutes import search_statutes as _search_statutes
+
+    @mcp.tool(
+        name="search_statutes",
+        description=(
+            "Search the CCLW legislation layer — climate laws & policies (Climate Change "
+            "Laws of the World, by the Sabin Center's partner Climate Policy Radar). "
+            "Title-weighted full-text over each law's title + verbatim text. Returns "
+            "cclw_id, short_title, jurisdiction, status, enacted_date, a highlighted "
+            "match_snippet, and the total count. Filter by jurisdiction (ISO alpha-2). "
+            "Pair with get_statute for the full law text, and find_cases_by_law to see "
+            "the litigation that turns on a law."
+        ),
+    )
+    async def search_statutes_tool(  # pyright: ignore[reportUnusedFunction]
+        query: str, jurisdiction: str | None = None, limit: int = 20
+    ) -> dict[str, object]:
+        return await _search_statutes(query=query, jurisdiction=jurisdiction, limit=limit)
+
+    @mcp.tool(
+        name="get_statute",
+        description=(
+            "Return one CCLW law/policy by cclw_id (or UUID): jurisdiction, status, "
+            "enacted_date, and a paginated window of its verbatim text (offset + "
+            "max_chars, max 20000). Quote from this text and verify with "
+            "check_claim_support(source_kind='document_text' is for cases; for statute "
+            "text quote verbatim from the returned window)."
+        ),
+    )
+    async def get_statute_tool(  # pyright: ignore[reportUnusedFunction]
+        cclw_id_or_id: str, offset: int = 0, max_chars: int = 8000
+    ) -> dict[str, object] | None:
+        return await _get_statute(cclw_id_or_id, offset=offset, max_chars=max_chars)
+
     from server.tools.search import search_cases as _search_cases
 
     @mcp.tool(
