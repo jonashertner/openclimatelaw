@@ -142,7 +142,11 @@ _SEARCH_SQL_HEAD: LiteralString = """
                         count(*) OVER() AS total_count
                     FROM case_record c, q
                     WHERE
-                        (
+                        -- Climate Rights DB records are stub duplicates / blog-analysis
+                        -- of Sabin cases (jurisdiction 'XX', "See [url]" summaries); exclude
+                        -- them so the canonical Sabin record wins. They remain reachable by id.
+                        c.primary_source IS DISTINCT FROM 'climate_rights'
+                        AND (
                             %(browse)s::boolean
                             OR (
                                 setweight(to_tsvector('simple', c.canonical_title), 'A')

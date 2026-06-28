@@ -224,3 +224,46 @@ async def test_tool_schema_exposes_date_and_sort_params() -> None:
         props = search.inputSchema["properties"]
         for p in ("decided_after", "decided_before", "filed_after", "filed_before", "sort"):
             assert p in props, f"missing param {p}"
+
+
+_CRD_DUPE = [
+    ("Sabin.zzdupe.0", "Zorgon Climate Coalition v. State", "US", "sabin"),
+    (
+        "crd:zorgon-climate-coalition",
+        "Zorgon Climate Coalition v. the State",
+        "US",
+        "climate_rights",
+    ),
+]
+
+
+@pytest.fixture
+async def seeded_crd_dupe() -> AsyncGenerator[None]:
+    pool = await get_pool()
+    async with pool.connection() as conn:
+        async with conn.cursor() as cur:
+            for sid, title, juris, src in _CRD_DUPE:
+                await cur.execute(
+                    "INSERT INTO case_record "
+                    "(sabin_id, canonical_title, jurisdiction_code, status_code, primary_source) "
+                    "VALUES (%s, %s, %s, 'decided', %s)",
+                    (sid, title, juris, src),
+                )
+        await conn.commit()
+    yield
+    async with pool.connection() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                "DELETE FROM case_record WHERE sabin_id = ANY(%s)",
+                ([s[0] for s in _CRD_DUPE],),
+            )
+        await conn.commit()
+
+
+@pytest.mark.asyncio
+async def test_search_excludes_climate_rights_stubs(seeded_crd_dupe: None) -> None:
+    # The canonical Sabin record must win; the Climate Rights DB stub must not appear.
+    r = await search_cases(query="Zorgon Climate Coalition", limit=10, semantic=False)
+    ids = [x.get("sabin_id") for x in r["results"]]
+    assert "Sabin.zzdupe.0" in ids
+    assert "crd:zorgon-climate-coalition" not in ids

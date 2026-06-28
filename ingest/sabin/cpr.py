@@ -32,7 +32,7 @@ import asyncio
 import re
 import unicodedata
 from collections.abc import AsyncIterator
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from typing import Any
 
 import httpx
@@ -209,7 +209,6 @@ def parse_family_record(
 
     summary = family.get("summary")
     published_date = family.get("published_date")
-    last_updated = family.get("last_updated_date")
 
     # Preserve full upstream payload for fields we don't yet model as columns:
     # case_number, core_object, principal_law refs, events timeline, full
@@ -245,7 +244,9 @@ def parse_family_record(
         "jurisdiction_code": juris_code,
         "court_id": court_id,
         "filing_date": _parse_date(published_date),
-        "decision_date": _parse_date(last_updated),
+        # decision_date from the Decision-event timeline, NOT last_updated_date
+        # (a metadata-modification timestamp that surfaces scrape times).
+        "decision_date": latest_decision_date(family.get("events")),
         "status_code": status_code,
         "outcome_code": None,
         "summary": summary,
@@ -316,6 +317,24 @@ def _parse_date(value: str | None) -> Any:
     if d.year < 1900:
         return None
     return d
+
+
+def latest_decision_date(events: list[dict[str, Any]] | None) -> date | None:
+    """Date of the latest 'Decision' event in a proceeding's timeline.
+
+    Sabin's event timeline is the source of truth for judgment dates. The bulk
+    `last_updated_date` is a metadata-modification timestamp (often the ingest
+    time), so mapping decision_date from it surfaces scrape timestamps. Deriving
+    from Decision events fixes that. Returns None when there is no recorded
+    decision (the proceeding is pending/filed) — which is the honest value.
+    """
+    best: date | None = None
+    for e in events or []:
+        if (e.get("event_type") or "") == "Decision":
+            parsed = _parse_date(e.get("date"))
+            if parsed is not None and (best is None or parsed > best):
+                best = parsed
+    return best
 
 
 async def fetch_families_page(
