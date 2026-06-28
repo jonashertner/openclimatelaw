@@ -140,10 +140,20 @@ def _project_upstream_metadata(
     core_object_list: list[Any] = md.get("core_object") or []
     core_object = core_object_list[0] if core_object_list else None
 
-    principal_laws: list[str] = []
     labels: list[Any] = md.get("concept_preferred_label") or []
+    # Jurisdiction nodes leak into the principal_law list (e.g. "principal_law/United
+    # States" alongside "jurisdiction/United States"); drop those so principal_laws are
+    # actual statutes/instruments, not the country/state name.
+    jurisdictions = {
+        lbl.removeprefix("jurisdiction/")
+        for lbl in labels
+        if isinstance(lbl, str) and lbl.startswith("jurisdiction/")
+    }
+    principal_laws: list[str] = []
     for label in labels:
         if isinstance(label, str) and label.startswith("principal_law/"):
-            principal_laws.append(label.removeprefix("principal_law/"))
+            law = label.removeprefix("principal_law/")
+            if law not in jurisdictions:
+                principal_laws.append(law)
 
     return case_number, core_object, principal_laws

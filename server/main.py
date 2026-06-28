@@ -229,6 +229,25 @@ def build_mcp() -> FastMCP:
             limit=limit,
         )
 
+    from server.tools.laws import find_cases_by_law as _find_cases_by_law
+
+    @mcp.tool(
+        name="find_cases_by_law",
+        description=(
+            "The legislation -> litigation reverse link: return climate cases that turn on "
+            "a given law or instrument (case-insensitive substring over each case's principal "
+            "laws). Examples: 'Public Trust Doctrine', 'Clean Air Act', 'European Convention "
+            "on Human Rights', 'National Environmental Policy Act'. Each result includes "
+            "sabin_id, title, jurisdiction, status, decision_date, and a verbatim "
+            "citation_string; the response also returns the total match count. Pair with "
+            "get_case (whose principal_laws field lists the laws for a single case)."
+        ),
+    )
+    async def find_cases_by_law_tool(  # pyright: ignore[reportUnusedFunction]
+        law: str, limit: int = 20
+    ) -> dict[str, object]:
+        return await _find_cases_by_law(law=law, limit=limit)
+
     from server.tools.search import search_cases as _search_cases
 
     @mcp.tool(
