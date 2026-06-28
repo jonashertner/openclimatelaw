@@ -122,6 +122,12 @@ def _aggregate_laws(parquet_paths: list[str], limit: int | None):
     if limit is not None:
         q += f" LIMIT {int(limit)}"
     con = duckdb.connect()
+    # Cap memory + spill to disk so a big aggregate never OOMs the (shared) container.
+    # `spill` is a local dir we created (trusted), not user input.
+    spill = (os.path.dirname(parquet_paths[0]) if parquet_paths else "/tmp").replace("'", "")
+    con.execute("SET memory_limit='1GB'")
+    con.execute("SET preserve_insertion_order=false")
+    con.execute(f"SET temp_directory='{spill}'")
     cur = con.execute(q)
     while True:
         batch = cur.fetchmany(25)
