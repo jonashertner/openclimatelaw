@@ -2,59 +2,50 @@ To: Michael Burger (Executive Director) <mb3331@columbia.edu>     [VERIFY ON COL
 Cc: Maria Antonia Tigre (Director, Global Climate Litigation) <mt2876@columbia.edu>     [VERIFY]
 Bcc: manager@climatecasechart.com
 From: jh@jonashertner.com
-Subject: A demonstration MCP layer over the Climate Litigation Database – for the Sabin Center's review
+Subject: A citation-safe MCP layer for the relaunched Climate Litigation Database — for your review
 
 Dear Michael, dear Maria Antonia,
 
-I am Jonas Hertner, a lawyer, writing on behalf of regenerative.law. regenerative.law is the legal pillar of regenerative.eco, an impact-investing initiative of a Switzerland-based family office. One of regenerative.eco's principal commitments is the promotion of climate litigation as a tool for accountability and transition. Within that commitment, we treat accessibility of climate-case information as a problem worth working on directly: not just funding the litigators, but making the global record of what has been argued and decided as widely and easily reachable as possible – both for human users and for the AI systems they increasingly use to do legal research.
+I am Jonas Hertner, a lawyer writing on behalf of regenerative.law, the legal pillar of regenerative.eco, an impact initiative of a Switzerland-based family office. One of our principal commitments is the promotion of climate litigation as a tool for accountability — and within that, making the global record of what has been argued and decided as reachable as possible, both for human researchers and for the AI systems they increasingly use.
 
-It is in that context that we are writing to you. We place great value on the Climate Litigation Database – both for its substantive completeness and for the editorial care that distinguishes it from anything else in the field. Within the broader landscape of climate-litigation data, no other corpus comes close to it on taxonomy, principal-law cross-referencing, or curation of court documents. It is, in our view, the indispensable foundation.
+First, congratulations on the September 2025 relaunch of the Climate Litigation Database with Climate Policy Radar. Merging the U.S. and Global databases onto a modern, ML-powered platform — with official downloads enriched by the Sabin Center's metadata, labels, and summaries — is exactly the foundation the field needed. This note is about a layer that complements that platform rather than competing with it.
 
-A suggestion – and a demonstration for your review
+The problem we want to help with
 
-We would like to suggest that the data already published on climatecasechart.com could be made even more widely accessible by exposing it through what is called a Model Context Protocol (MCP) server: a standardized, well-documented endpoint tha–t AI systems (Claude, ChatGPT, Gemini, Copilot, Cursor, and others) can connect to natively, and that human users can equally consume through any of those clients. MCP is the emerging standard for letting language models read structured external data with proper attribution and source-anchoring.
+Your database is already being consulted indirectly, every day, through ChatGPT, Claude, and similar tools — and those tools routinely fabricate citations and holdings, attributing invented authority to sources like yours. Recent empirical work (Magesh et al., 2025) found that even retrieval-grounded legal AI hallucinates 17–33% of the time. For an authoritative, hand-curated database, that is a representation risk you do not control.
 
-To demonstrate concretely what this could look like – and to give you something you can test rather than imagine – we have taken the liberty of building a working demonstration, deployed at:
+A demonstration for your review
+
+We built a working, open-source demonstration of a Model Context Protocol (MCP) server — a standardized endpoint that AI clients connect to natively — designed around a single principle: the AI cannot fabricate. It is deployed (as a non-public research preview) at:
 
     https://mcp.openclimatelaw.org/mcp     (landing page: https://openclimatelaw.org)
 
-The demonstration is explicitly framed as a non-public research preview, not a launched service. We are sharing it with you for review, testing, and feedback – not promoting it externally.
+It exposes twelve tools. The ones that matter most here enforce citation safety:
+  - cite returns only the verbatim citation string of a previously retrieved case — the model is required to call this rather than write a citation from memory.
+  - check_claim_support verifies that any quoted text appears verbatim in the retrieved decision text or summary.
+  - find_relevant_passage resolves a claim to an exact passage of the decision — and returns "no match" rather than guess when nothing supports it.
+  - attest_response scans a draft and flags any citation not present in the retrieved cases. A draft that cites something not in your database does not pass.
+Alongside these: hybrid (full-text + semantic) search, full verbatim decision-text retrieval, a cross-jurisdiction "related cases" tool, and corpus statistics.
 
-What the demonstration does
+The net effect: a practitioner who asks an AI assistant to draft a memo on a climate case gets one whose every citation is traceable to your verbatim citation string and whose every quoted passage actually exists in the judgment — or the assistant declines.
 
-The MCP exposes nine tools to any compatible client. They fall into four groups:
+How it sources data — and how we'd like to change it
 
-  - Discovery. search_cases combines full-text, fuzzy, and semantic-embedding search (so a query like "Indigenous communities rising sea levels" retrieves Pabai Pabai and Daniel Billy); get_case returns a full record including parties, claim types, documents, citation strings, and – projected from your concept hierarchy and metadata – the case's case_number, core_object (the one-sentence holding text you maintain), and principal_laws.
+The current preview was built against the prior climatecasechart.com. Going forward we would much rather consume your **official** distribution channel (the CSV / API / Hugging Face downloads from the relaunched platform), cleanly and within whatever terms you set, rather than scraping. We are not asserting any particular license over the litigation corpus — we would ask you and CPR to confirm the terms, and we will operate inside them. Every record carries explicit Sabin Center attribution and links back to the canonical page; the full source is open under the MIT license (github.com/jonashertner/openclimatelaw), so the whole pipeline is auditable.
 
-  - Graph navigation. find_citations and find_cited_by expose the inter-case citation graph (built via canonical-title matching using Aho-Corasick plus formal-cite extraction), with each edge tagged by how it was derived. find_related_cases surfaces semantic analogues across language and phrasing differences (e.g. Urgenda → Klimaatzaak, the Shell appeal, Luca Salis).
+What we can give back
 
-  - Citation safety. cite returns the verbatim citation_string of a previously retrieved case – the agent is required by the protocol to call this tool rather than construct a citation from training data. check_claim_support verifies that a quoted string appears verbatim in a retrieved summary, document, or citation. attest_response scans an LLM's draft for citation-shaped strings and flags any that are not present in the retrieved cases. End-to-end, the AI cannot fabricate a citation, fabricate a quote, or bypass the attestation step. We see this as a precondition rather than a feature – AI-assisted legal research is unsafe in practice without it.
+Not hosting — CPR already runs excellent infrastructure. Two things we think are genuinely useful:
+  1. An open, citation-safe MCP/agent interface to your official data, so the database is represented faithfully inside the LLM tools where it is increasingly consumed.
+  2. A data-quality QA report (attached). In building the mirror we found, for example, that decision dates were in places derived from a metadata timestamp rather than the judgment date (we have a fix that re-derives them from the Decision-event timeline), and that the Climate Rights Database records largely duplicate your cases. These are offered as upstream-ready contributions, not criticisms.
 
-  - Aggregates. get_statistics returns structured counts and groupings (by jurisdiction, claim type, year, status, outcome).
+Your control
 
-The corpus today holds 5,046 cases across 67 jurisdictions – 4,831 from your database plus 215 from the Climate Rights Database at the University of Zurich for complementary rights-based coverage – with 41,000+ court documents (24,000+ with full extracted text) and a citation graph of 14,000+ inter-case edges.
-
-The practical effect is that a practitioner who asks an AI assistant to draft a memo on, say, Held v. Montana receives a memo whose every citation is traceable to your verbatim citation string and whose every quoted passage actually exists in the underlying judgment.
-
-How the demonstration accesses your data
-
-It consumes no third-party API. It fetches each case detail page on www.climatecasechart.com directly, parses the structured family record from the page, and downloads court documents only from wp-content/uploads/ on your domain. We identify ourselves with a contact-bearing User-Agent, throttle to roughly one request per second, run no more than four concurrent PDF downloads, and back off exponentially on rate-limit and server-error responses. Every record carries explicit Sabin Center attribution and points users back to your canonical page for substantive content. We redistribute under the same CC-BY 4.0 licence the Sabin Center applies to the data. The full source code is open under the MIT licence at github.com/jonashertner/openclimatelaw – what we are doing is auditable end-to-end.
-
-How we'd like to help
-
-If, after testing, you find this approach useful, we would simply like to support your work in whatever way is most helpful. We would be honored to underwrite the operating costs of an MCP service like this one – infrastructure, data refresh, ongoing maintenance – so it can run as a free resource for the climate-litigation community, under your guidance and with full attribution. We would also be glad to contribute engineering capacity to anything else that serves your mission: a bulk-export ingestion path that is friendlier to your infrastructure than per-page scraping, a joint HuggingFace dataset under your existing CC-BY 4.0 (along the same lines as ClimatePolicyRadar/all-document-text-data), co-listing, or any other form that is useful to you.
-
-We are not attached to any particular shape. The underlying commitment is straightforward: the work the Sabin Center does in this field deserves the broadest possible reach, and we would like to help you achieve that on whatever terms you find appropriate.
-
-Veto rights
-
-Because the demonstration currently scrapes and indexes data published on climatecasechart.com, you have full control over what we do with it. If anything in the present ingestion or attribution does not sit well with the Sabin Center, we will pause, modify, or take it down within hours. The MCP can be turned off entirely at your request – no debate, no negotiation.
+The preview can be paused, modified, or taken down within hours at your request — no debate. And we would not move to your official data channel without your explicit go-ahead.
 
 Proposed next step
 
-A 30-minute video call would let me walk through the demonstration live, answer technical and institutional questions, and hear what shape of collaboration – if any – would be useful to the Center. Even a brief reply confirming whether this direction is of interest would be very welcome.
-
-I would be grateful for your guidance on how best to honor the Climate Litigation Database in this work.
+A short video call (you, and CPR if useful) to walk through the demonstration live and hear what shape of collaboration — if any — would serve the Center. Even a brief reply on whether this direction is of interest would be very welcome.
 
 With best regards,
 
