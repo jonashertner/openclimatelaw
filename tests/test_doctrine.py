@@ -50,7 +50,7 @@ def test_pack_rejects_string_holdings() -> None:
     # explode into one char-holding per character (the City of Hoboken bug: 2,789 holdings).
     import json
 
-    d = {
+    d: dict[str, object] = {
         "disposition": {"outcome": "na", "posture": "x", "quote": "y"},
         "holdings": "a string, not a list",
         "legal_bases": [],
@@ -63,7 +63,7 @@ def test_pack_rejects_string_holdings() -> None:
 def test_pack_caps_holdings() -> None:
     import json
 
-    d = {
+    d: dict[str, object] = {
         "disposition": {"outcome": "na", "posture": "x", "quote": "y"},
         "holdings": [{"point": f"h{i}", "quote": ""} for i in range(50)],
         "legal_bases": [],
