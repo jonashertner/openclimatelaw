@@ -93,6 +93,26 @@ async def get_case(case_id_or_sabin_id: str) -> dict[str, Any] | None:
                 {"lang": r[0], "format": r[1], "text": r[2]} for r in await cur.fetchall()
             ]
 
+            await cur.execute(
+                """
+                SELECT s.cclw_id, s.short_title, s.jurisdiction_code, cs.relationship
+                FROM case_statute cs
+                JOIN statute s ON s.id = cs.statute_id
+                WHERE cs.case_id = %s
+                ORDER BY s.short_title
+                """,
+                (str(_id),),
+            )
+            linked_statutes = [
+                {
+                    "cclw_id": r[0],
+                    "short_title": r[1],
+                    "jurisdiction_code": r[2],
+                    "relationship": r[3],
+                }
+                for r in await cur.fetchall()
+            ]
+
     case_number, core_object, principal_laws = _project_upstream_metadata(upstream_metadata)
 
     return {
@@ -113,6 +133,7 @@ async def get_case(case_id_or_sabin_id: str) -> dict[str, Any] | None:
         "case_number": case_number,
         "core_object": core_object,
         "principal_laws": principal_laws,
+        "linked_statutes": linked_statutes,
         "parties": parties,
         "claim_types": claim_types,
         "documents": documents,
