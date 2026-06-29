@@ -330,16 +330,32 @@ def _event_text(e: dict[str, Any]) -> str:
     return " ".join(parts).lower()
 
 
+# Clearly-PROCEDURAL 'Decision' events that are not a merits/final disposition, so they
+# must not become the decision_date (a case whose only "decisions" are procedural is not
+# decided on the merits — e.g. a motion to remand granted, a discovery protective order).
+# Dispositive rulings (dismissal, summary judgment, judgment, affirmed/reversed) do NOT
+# match these patterns and are kept.
+_PROCEDURAL_EVENT = re.compile(
+    r"remand|protective order|discovery|scheduling order|case management|"
+    r"pretrial conference|briefing schedule|extension of time|"
+    r"leave to (?:file|amend|intervene|appeal|proceed)|pro hac vice|"
+    r"consolidat|motion to stay|stayed pending|recus",
+    re.IGNORECASE,
+)
+
+
 def latest_decision_date(events: list[dict[str, Any]] | None) -> date | None:
     """Date of the proceeding's decision, from the stored event timeline.
 
     Mapping decision_date from `last_updated_date` (a metadata-modification
     timestamp) surfaces scrape times; deriving from 'Decision' events fixes that.
-    Among Decision events we PREFER those whose text names a judgment, so a later
+    Clearly-procedural Decision events (remand, protective order, discovery, …) are
+    EXCLUDED, so a docket motion ruling can't masquerade as the decision date. Among
+    the remaining events we PREFER those whose text names a judgment, so a later
     post-judgment item (e.g. an ECtHR Committee-of-Ministers execution decision)
     does not over-shoot the merits date — KlimaSeniorinnen's merits judgment is
     2024-04-09, not the 2025-03-06 supervision decision. Falls back to the latest
-    Decision event when none is explicitly a judgment. None = no recorded decision.
+    non-procedural Decision event; None when none is a real (merits) disposition.
     """
     judgments: list[date] = []
     decisions: list[date] = []
@@ -349,8 +365,10 @@ def latest_decision_date(events: list[dict[str, Any]] | None) -> date | None:
         parsed = _parse_date(e.get("date"))
         if parsed is None:
             continue
-        decisions.append(parsed)
         text = _event_text(e)
+        if _PROCEDURAL_EVENT.search(text):
+            continue
+        decisions.append(parsed)
         if "judgment" in text or "judgement" in text:
             judgments.append(parsed)
     pool = judgments or decisions
