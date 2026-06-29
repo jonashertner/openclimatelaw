@@ -54,6 +54,54 @@
 
 ---
 
+## Opening talk-track (first ~3 min — verbatim, adapt names)
+
+> Delivery: warm, unhurried, lawyerly restraint. **Pause after the control/veto line and let it
+> land** — it's what disarms any "who is this using our data" reflex. Aim to finish *under* 3:00.
+
+*[0:00 — thanks]*
+"Thank you all for making the time — I know it's a busy stretch with London Climate Action Week, so
+I really appreciate both the Sabin and CPR teams being here today."
+
+*[0:15 — who & why]*
+"A quick word on who I am, for context. I'm a lawyer, here on behalf of regenerative.law — the legal
+arm of an impact initiative backed by a Swiss family office. One of our central commitments is
+climate litigation: not only helping fund it, but making the *record* of what's been argued and
+decided as reachable as possible — for the lawyers doing the work, and for the AI tools they
+increasingly use to do it. This is purely nonprofit."
+
+*[0:50 — deference + control, up front]*
+"I want to be clear where we're coming from. In our view, the Sabin database is the indispensable
+foundation in this field — the taxonomy, the principal-law cross-referencing, the curation of
+documents; nothing else comes close. And CPR's Climate Change Laws of the World is its natural
+counterpart on legislation. We have no interest in building something *beside* your work — only in
+amplifying it. So before I show anything: everything you'll see is your data, attributed to you and
+linking back to your pages; it's fully open-source and auditable; and **you hold the veto — if you
+ever want it switched off, it's off, no discussion.**"  *(pause)*
+
+*[1:35 — the problem]*
+"The problem we're trying to help with is simple. Practitioners are already pointing Claude, ChatGPT,
+and the rest at climate-law questions — and these models fabricate citations and holdings, even when
+grounded in real sources. A Stanford study put the rate at 17 to 33 percent. When that happens over
+*your* data, it's your name on a citation that doesn't exist — and a lawyer might file it."
+
+*[2:05 — what we built]*
+"So instead of describing a solution, we built one you can test. It's a citation-safe layer over your
+corpus — an 'MCP server' — where the AI literally *cannot* cite a case that isn't in your database,
+or quote a passage that isn't in the actual judgment. It's a non-public research preview; we're
+sharing it only with you."
+
+*[2:35 — honest CPR / CCLW note]*
+"One honest note, especially for the CPR team: to show how litigation connects to legislation, we've
+also indexed your open CCLW corpus — under the same terms: full attribution, your control, your veto.
+I'll show that, and I'd genuinely value your guidance on it."
+
+*[2:55 — hand-off]*
+"I'll keep the demo to about ten minutes, then I'd really like to hear your reactions and where you'd
+want this to go — this is your call as much as ours. Shall I share my screen?"
+
+---
+
 ## Opening frame (60s)
 
 - LLMs are already answering climate-law questions against *your* data — and **fabricating citations
