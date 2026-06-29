@@ -4,10 +4,10 @@
     <meta charset="utf-8">
     <title>OpenClimateLaw — research preview · MCP for climate litigation</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Research preview of an MCP server providing AI agents with citation-safe access to the Sabin Center's Climate Litigation Database and the Climate Rights Database. Pending partnership confirmations.">
+    <meta name="description" content="Research preview of an MCP server giving AI agents citation-safe access to the Sabin Center's Climate Litigation Database, the Climate Rights Database, and the world's climate laws (Climate Change Laws of the World, by Climate Policy Radar). Pending partnership confirmations.">
     <meta name="robots" content="noindex, nofollow">
     <meta property="og:title" content="OpenClimateLaw — research preview">
-    <meta property="og:description" content="Citation-safe MCP access to climate litigation. Research preview, not a public service.">
+    <meta property="og:description" content="Citation-safe MCP access to climate litigation and legislation. Research preview, not a public service.">
     <meta property="og:type" content="website">
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230a6b4d'/%3E%3Cpath d='M9 22l3-12h2l-2.5 10h6.5l-.5 2H9z' fill='%23fff'/%3E%3C/svg%3E">
     <style>
@@ -337,13 +337,13 @@
     <span class="preview-tag" aria-label="Status: research preview">Research preview</span>
 </div>
 
-<p class="tagline">A citation-safe Model Context Protocol layer over climate-litigation databases. Built so AI agents (Claude, ChatGPT, Gemini, Copilot, Cursor and others) can quote and cite climate cases without fabricating either.</p>
+<p class="tagline">A citation-safe Model Context Protocol layer over the world's climate <em>litigation</em> and <em>legislation</em>. Built so AI agents (Claude, ChatGPT, Gemini, Copilot, Cursor and others) can quote and cite climate cases and laws without fabricating either.</p>
 
 <div class="stats" aria-label="Corpus size">
-    <div class="stat"><span class="stat-num">5,027</span><span class="stat-label">cases</span></div>
-    <div class="stat"><span class="stat-num">66</span><span class="stat-label">jurisdictions</span></div>
+    <div class="stat"><span class="stat-num">5,027</span><span class="stat-label">litigation cases</span></div>
+    <div class="stat"><span class="stat-num">5,347</span><span class="stat-label">climate laws &amp; policies</span></div>
     <div class="stat"><span class="stat-num">81k+</span><span class="stat-label">court documents</span></div>
-    <div class="stat"><span class="stat-num">14k+</span><span class="stat-label">citation edges</span></div>
+    <div class="stat"><span class="stat-num">~5M</span><span class="stat-label">pinpoint passages</span></div>
 </div>
 
 <div class="url-banner">
@@ -359,22 +359,42 @@
 
 <div class="tool-group">
     <h3>OpenClimateLaw <span class="badge">research preview</span></h3>
-    <p class="group-summary">Citation-safe MCP access to the global climate-litigation corpus (Sabin Center for Climate Change Law + Climate Rights Database, University of Zurich). The page you are reading.</p>
-    <p class="small muted">5,027 cases · 66 jurisdictions · 81k+ court documents · 14k+ citation edges · MIT licence.</p>
+    <p class="group-summary">Citation-safe MCP access to the global climate-litigation corpus (Sabin Center for Climate Change Law + Climate Rights Database, University of Zurich) <strong>and the world's climate legislation</strong> (Climate Change Laws of the World, by Climate Policy Radar). The page you are reading.</p>
+    <p class="small muted">5,027 litigation cases (66 jurisdictions) · 5,347 climate laws (200 jurisdictions) · 81k+ court documents · ~5M pinpoint passages · 14k+ citation edges · MIT licence.</p>
 </div>
 
 <p class="small muted">More tools are in development. If you operate a public-interest organisation in the climate-litigation space and would benefit from infrastructure we don't yet provide, please <a href="mailto:jh@jonashertner.com">write to us</a>.</p>
 
 <h2 id="capabilities">What it does</h2>
 
-<p>Nine tools, organized into four groups. Each is callable from any MCP client; combine them for full-fidelity legal research.</p>
+<p>Fifteen tools, organized into six groups. Each is callable from any MCP client; combine them for full-fidelity legal research.</p>
 
 <div class="tool-group">
     <h3>Discovery</h3>
     <p class="group-summary">Find the right case to cite.</p>
     <ul>
         <li><code>search_cases(query, jurisdiction?, claim_type?, status?, sort?, decided_after?, decided_before?, filed_after?, filed_before?, limit?, offset?)</code> — hybrid full-text + typo-tolerant fuzzy-title + semantic (embedding) ranking. Each match returns sabin_id, title, jurisdiction, status, <code>filing_date</code>, <code>decision_date</code>, a highlighted <code>match_snippet</code>, and a verbatim citation_string; the response also carries a <code>total</code> match count. <code>sort</code> by <code>relevance</code> (default), <code>newest</code>, or <code>oldest</code>; restrict by inclusive date range (ISO <code>YYYY-MM-DD</code>); pass an empty query to browse the corpus by date; paginate with <code>limit</code> (max 50) + <code>offset</code>.</li>
-        <li><code>get_case(case_id_or_sabin_id)</code> — full record by canonical UUID or Sabin family ID. Includes <code>case_number</code>, <code>core_object</code> (one-sentence holding), <code>principal_laws</code> (statutes the case turns on), parties, claim types, documents (with extracted text where available), citation strings, and field-level provenance.</li>
+        <li><code>get_case(case_id_or_sabin_id)</code> — full record by canonical UUID or Sabin family ID. Includes <code>case_number</code>, <code>core_object</code> (one-sentence holding), <code>principal_laws</code>, <code>linked_statutes</code> (the actual CCLW laws the case references — each resolvable to full text via <code>get_statute</code>), <code>outcome_code</code> (LLM-classified, confidence-gated, backed by a verbatim quote in provenance), parties (plaintiff / defendant), claim types, documents (with extracted text where available), citation strings, and field-level provenance.</li>
+        <li><code>find_cases_by_law(law, limit?)</code> — every case that turns on a given law, from Sabin's principal-law tags. e.g. the Public Trust Doctrine → 88; the European Convention on Human Rights → 60 across jurisdictions; the Clean Air Act → 597.</li>
+    </ul>
+</div>
+
+<div class="tool-group">
+    <h3>Verbatim retrieval &amp; pinpoint</h3>
+    <p class="group-summary">Read and quote the actual text — never paraphrase a holding.</p>
+    <ul>
+        <li><code>get_document_text(document_id, offset?, max_chars?)</code> — the verbatim text of a court document, paginated (100k+ char rulings supported).</li>
+        <li><code>find_relevant_passage(case_id, claim, top_k?)</code> — locate the passage(s) supporting a claim by hybrid lexical + semantic match over ~5M indexed passages. Returns verbatim text + a confidence, and refuses (<code>no_match</code>) rather than guess a pinpoint.</li>
+        <li><code>get_passage(document_id, ...)</code> — retrieve a specific passage window verbatim.</li>
+    </ul>
+</div>
+
+<div class="tool-group">
+    <h3>Legislation</h3>
+    <p class="group-summary">The world's climate laws — Climate Change Laws of the World (Climate Policy Radar).</p>
+    <ul>
+        <li><code>search_statutes(query, jurisdiction?, limit?)</code> — title-weighted full-text search over 5,347 climate laws &amp; policies across ~200 jurisdictions, with full multilingual text. e.g. "renewable energy targets" → 1,765 laws (China's 14th Five-Year Plan, the EU 2020 Climate &amp; Energy Package, …).</li>
+        <li><code>get_statute(cclw_id, offset?, max_chars?)</code> — one law's record + a paginated window of its verbatim text.</li>
     </ul>
 </div>
 
@@ -414,6 +434,8 @@
     <li>"Search the climate-litigation corpus for 'Amazon deforestation' filed in Brazil; show the top five with their core_object."</li>
     <li>"Find <em>Urgenda Foundation v. State of the Netherlands</em>, cite it in en/sabin format, and quote one sentence from its summary verbatim — but verify the quote first using check_claim_support."</li>
     <li>"Find youth-plaintiff cases in the United States and summarize their claim types."</li>
+    <li>"Search the climate-legislation corpus for the UK Climate Change Act 2008 (search_statutes), then quote its emissions-target language verbatim from get_statute."</li>
+    <li>"Get <em>Friends of the Earth and Others v. Secretary of State</em> (GB): show its parties and the CCLW laws it references (linked_statutes), then pull the full text of the Climate Change Act 2008."</li>
     <li>"Show the newest climate decisions in the United States from 2025 onward — sort by decision date and list each case's decision_date."</li>
     <li>"How many climate cases are filed against governments per jurisdiction? Top 10."</li>
     <li>"Validate this draft: 'In ECLI:NL:HR:2019:2007 the court reasoned, citing Massachusetts v. EPA, 549 U.S. 497 (2007)…' against retrieved cases [<code>urgenda-foundation-v-state-of-the-netherlands</code>]."</li>
@@ -553,11 +575,15 @@ asyncio.run(run())</code></pre>
 </p>
 
 <p class="small">
+    The legislation layer is the <a href="https://climatepolicyradar.org/">Climate Policy Radar</a> <strong>Climate Change Laws of the World</strong> corpus, published as open data (CC-BY) on Hugging Face — 5,347 laws &amp; policies across ~200 jurisdictions, with full multilingual text. Cases are cross-linked to the laws they reference by exact title + jurisdiction (145 high-confidence links so far; broader linking is on the roadmap). Parties are parsed from case captions (92% of cases); outcomes are LLM-classified under a confidence gate (below).
+</p>
+
+<p class="small">
     Per CC-BY 4.0, every <code>citation_string</code> returned by this MCP carries upstream attribution. The MCP server itself is open source under the MIT licence at <a href="https://github.com/jonashertner/openclimatelaw">github.com/jonashertner/openclimatelaw</a>.
 </p>
 
 <p class="small muted">
-    Embeddings: <code>sentence-transformers/all-MiniLM-L6-v2</code> (384-dim) stored as pgvector with HNSW indexing. Citation graph: Aho-Corasick canonical-title matching plus formal-cite regex extraction. Roadmap: bulk-export ingestion path with the data sources, statute layer drawing on the ClimatePolicyRadar / CCLW HuggingFace dataset.
+    Embeddings: <code>sentence-transformers/all-MiniLM-L6-v2</code> (384-dim) stored as pgvector with HNSW indexing. Citation graph: Aho-Corasick canonical-title matching plus formal-cite regex extraction. Outcomes: classified by <code>claude-sonnet-4-6</code>, confidence-gated and verified against a verbatim quote from the case summary — 1,300 decided cases carry an outcome; the rest are left blank rather than guessed. Roadmap: bulk-export ingestion path with the data sources; broader case↔law linking via Climate Policy Radar's own concept IDs.
 </p>
 
 <h2 id="status">Source &amp; status</h2>
