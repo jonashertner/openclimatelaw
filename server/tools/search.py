@@ -37,6 +37,17 @@ _EMBEDDER_LOCK = threading.Lock()
 
 _VALID_SORTS = ("relevance", "newest", "oldest")
 _VALID_STATUSES = ("decided", "filed", "settled")
+# International-court body codes -> court_id (those cases carry jurisdiction_code 'XA',
+# so a jurisdiction_code filter misses them). Only bodies actually in the corpus resolve.
+_BODY_COURT: dict[str, str] = {
+    "ECTHR": "european-court-of-human-rights",
+    "ECHR": "european-court-of-human-rights",
+    "ECJ": "european-court-of-justice",
+    "CJEU": "european-court-of-justice",
+    "ICJ": "international-court-of-justice",
+    "ITLOS": "international-tribunal-for-the-law-of-the-sea",
+    "IACTHR": "inter-american-court-of-human-rights",
+}
 
 # Allowlisted ORDER BY clauses. Declared LiteralString so the assembled SQL
 # stays a LiteralString (psycopg's typed execute rejects a runtime str) — never
@@ -210,6 +221,10 @@ _SEARCH_SQL_HEAD: LiteralString = """
                             %(jurisdiction)s::text IS NULL
                             OR c.jurisdiction_code = %(jurisdiction)s::text
                         )
+                        AND (
+                            %(court_id)s::text IS NULL
+                            OR c.court_id = %(court_id)s::text
+                        )
                         AND (%(status)s::text IS NULL OR c.status_code = %(status)s::text)
                         AND (
                             %(claim_type_like)s::text IS NULL
@@ -289,9 +304,14 @@ async def search_cases(
     _validate_iso_date("filed_before", filed_before)
 
     # Jurisdiction codes are stored upper-case ISO alpha-2 / body codes — accept
-    # any casing from callers.
+    # any casing from callers. International-court body codes (ECTHR, ICJ, …) are not
+    # jurisdiction_codes (those cases sit under XA); map them to the underlying court_id.
+    court_id = None
     if jurisdiction is not None:
         jurisdiction = jurisdiction.strip().upper() or None
+        if jurisdiction in _BODY_COURT:
+            court_id = _BODY_COURT[jurisdiction]
+            jurisdiction = None
 
     query = query.strip() if query else ""
     browse = query == ""
@@ -299,6 +319,7 @@ async def search_cases(
         x is not None
         for x in (
             jurisdiction,
+            court_id,
             claim_type,
             status,
             decided_after,
@@ -335,6 +356,7 @@ async def search_cases(
                     "name_token": _name_token(query) if not browse else None,
                     "browse": browse,
                     "jurisdiction": jurisdiction,
+                    "court_id": court_id,
                     "claim_type_like": claim_type_like,
                     "status": status,
                     "decided_after": decided_after,

@@ -74,14 +74,20 @@ _TOOL = {
 }
 
 _PROMPT = (
-    "Classify the OUTCOME of this climate-litigation case from its summary — who ultimately "
-    "prevailed on the merits. Consider the plaintiff's goal: if the plaintiff sought stronger "
-    "climate action / relief and the court granted it, that is plaintiff_won; if the court "
-    "rejected the plaintiff's climate claim, that is defendant_won; mixed if partial. Use "
-    "settled_favorable/settled_unfavorable only if settled; na for purely procedural/advisory/"
-    "no-merits dispositions; unknown if the summary does not clearly state the result. The "
-    "supporting_quote MUST be copied verbatim from the summary. Use high confidence only when the "
-    "summary explicitly states who prevailed.\n\nSUMMARY:\n"
+    "Classify the OUTCOME of this climate-litigation case from its summary. Classify the LATEST, "
+    "OPERATIVE disposition — the most recent court's ruling described — NOT an earlier instance "
+    "that was later appealed, reversed, or vacated. If a higher court REVERSED or VACATED a lower "
+    "court's order, the outcome reflects the higher court's ruling, not the overturned one. If the "
+    "matter is still PENDING on appeal or otherwise NOT FINAL, use 'na' unless the latest ruling "
+    "clearly resolved the merits. Consider the plaintiff's goal: if the plaintiff sought "
+    "stronger climate action / relief and the latest ruling granted it, that is plaintiff_won; "
+    "if the latest ruling rejected the plaintiff's climate claim, that is defendant_won; mixed "
+    "if the latest ruling is genuinely split (e.g. a duty affirmed but the requested remedy "
+    "refused). Use settled_favorable/settled_unfavorable only if settled; na for procedural/"
+    "advisory/no-merits or non-final dispositions; unknown if the summary does not clearly state "
+    "the result. The supporting_quote MUST be copied verbatim from the summary AND must come "
+    "from that latest disposition. Use high confidence only when the summary explicitly states "
+    "who prevailed at that latest stage.\n\nSUMMARY:\n"
 )
 
 
@@ -97,12 +103,15 @@ def _key() -> str:
 
 
 def classify_outcome(client: Any, summary: str) -> dict[str, Any]:
+    # Send the FULL summary — no truncation. Summaries top out ~17k chars (well within
+    # the model's context), and the latest, operative disposition is often at the END, so
+    # any head-truncation risked coding an overturned lower-court result (e.g. Shell).
     resp = client.messages.create(
         model=MODEL,
         max_tokens=400,
         tools=[_TOOL],
         tool_choice={"type": "tool", "name": "record_outcome"},
-        messages=[{"role": "user", "content": _PROMPT + summary[:6000]}],
+        messages=[{"role": "user", "content": _PROMPT + summary}],
     )
     for block in resp.content:
         if block.type == "tool_use":
