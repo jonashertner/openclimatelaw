@@ -264,11 +264,15 @@ async def backfill_doctrine(
             )
             targets = [r[0] for r in await cur.fetchall()]
         else:
-            where = "status_code = 'decided' AND summary IS NOT NULL AND length(summary) > 0"
+            where = "c.status_code = 'decided' AND c.summary IS NOT NULL AND length(c.summary) > 0"
             if not reclassify:
-                where += " AND id NOT IN (SELECT case_id FROM case_doctrine)"
+                where += " AND c.id NOT IN (SELECT case_id FROM case_doctrine)"
+            # Prioritise the most-documented (most-litigated) decided cases — the citation
+            # graph is too thin to rank by influence, so document count is the best proxy.
             await cur.execute(
-                f"SELECT id::text FROM case_record WHERE {where} ORDER BY id LIMIT %s",
+                f"SELECT c.id::text FROM case_record c WHERE {where} "  # noqa: S608
+                "ORDER BY (SELECT count(*) FROM document d WHERE d.case_id = c.id) DESC, c.id "
+                "LIMIT %s",
                 (limit,),
             )
             targets = [r[0] for r in await cur.fetchall()]
