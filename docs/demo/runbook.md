@@ -1,13 +1,40 @@
 # Demo Runbook — Sabin Center + Climate Policy Radar
 
-> **Audience:** the two organisations that **jointly relaunched** the Climate Litigation Database
-> (25 Sept 2025, CPR-powered). They are **partners, not prospects.** Frame OpenClimateLaw as the
-> **citation-safe MCP / agent layer on top of their official data** — never a competing database.
+> **The call:** **Mon 30 June 2026, 10–11am ET**, Zoom, 1 hour. This is the **first substantive
+> call** — they are *exploring*, not approving. Per the correspondence they are "playing around with
+> it" and wanted to bring CPR in. So the goal is **not** to dazzle with every feature: it is to show
+> it **works, is citation-safe, and is respectful of their data**, then *invite their reaction,
+> approval-in-principle, and guidance.* Their hour — keep the demo to **~10–12 min**, leave the rest
+> for their questions and direction.
 >
-> **All beats below were dry-run on prod and verified on 2026-06-29.** Re-run them the morning of
-> (IDs can shift — see "duplicate records" under DO NOT DEMO). Corpus as-of: **2026-05-07**.
+> **Tone (from the May-7 proposal — live up to it):** humble, nonprofit, "under your guidance,"
+> full attribution, **and they hold the veto** ("can be turned off entirely at your request — no
+> debate, no negotiation"). Lead with what we *offer*, not what we *want*.
 >
-> **Shape:** ~16 min of beats + Q&A. Endpoint: `https://mcp.openclimatelaw.org/mcp`.
+> **All beats were dry-run on prod and verified 2026-06-29** (`uv run python scripts/demo_dryrun.py`
+> → ALL PASS). Re-run the morning of. Corpus as-of **2026-05-07**. Endpoint
+> `https://mcp.openclimatelaw.org/mcp`.
+
+## Attendees & what each cares about
+
+| Person | Org / role | Cares about → tailor to |
+|---|---|---|
+| **Maria Antonia Tigre** | Sabin — Director, Global Climate Litigation (owns the litigation DB) | Global South / **Brazil**, and **international advisory opinions** (her published specialty). Show a Brazil case; **proactively own the ICJ/ITLOS/IACtHR gap** (see Beat 3.5). |
+| **Mike Burger** | Sabin — Executive Director (senior) | Institutional value, attribution, **control + veto**, that this serves the Center's mission. Lead the offers to him. |
+| **Margaret Barry** | Sabin Center | Operations / the database itself; data quality. |
+| **Michal Nachmany** | CPR — CEO / founder | The **legislation layer (CPR's CCLW data)** + the litigation↔legislation bridge; CPR's strategic interest. |
+| **Kyra Appleby · Dominyka Zemaityte** | CPR | CCLW data, concept mapping, the joint value. |
+
+## Two things to get right before a word of demo
+
+1. **We have grown past the May-7 letter.** The letter described "nine tools, litigation only,
+   5,046 cases." Today it's **16 tools, 5,027 cases, 81,345 documents, and a 5,347-law legislation
+   layer.** Frame as *"we kept building since we wrote"* — evidence of commitment, not scope-creep.
+2. **The legislation layer is CPR's own CCLW data** (`ClimatePolicyRadar/all-document-text-data`,
+   CC-BY). On a call **with CPR present**, name this openly and early: *"to show the
+   litigation↔legislation bridge we also ingested your open CCLW corpus — same attribution, same
+   control, same veto, and we'd love your guidance on it."* Do **not** let them discover it
+   mid-demo; extend them exactly the courtesy the letter extends to Sabin.
 
 ---
 
@@ -97,6 +124,20 @@ verbatim statute text.
 
 ---
 
+## Beat 3.5 — Own the gaps (especially for Maria) · ~1 min
+
+Maria Antonia Tigre's published specialty is **advisory opinions in international law** — she may well
+test for them. **Get ahead of it before she does:**
+- *"Our Global-South and national coverage is real"* — `search_cases(jurisdiction="BR")` surfaces
+  Brazil's PSB v. Brazil (the Climate Fund ADPF); `jurisdiction="ZA"` surfaces #CancelCoal — the cases
+  she works on are here, with `outcome` and `principal_laws`.
+- *"But the **2024–25 international advisory opinions — ICJ, ITLOS, IACtHR OC-32/25 — are not yet in.**
+  They live in your separate international/multilateral stream, not the litigation feed we mirrored.
+  They'd be our **first priority** to add, and we'd want to do it with your guidance."*
+
+Turning the one gap she's most likely to find into proof we're careful and collaborative is worth more
+than any beat that lands.
+
 ## Beat 4 — Cross-jurisdiction discovery · ~2 min
 
 - `find_related_cases("Sabin.family.2823.0")` (Urgenda) → **Greenpeace Netherlands, Luca Salis &
@@ -132,20 +173,27 @@ verbatim statute text.
 
 ---
 
-## Beat 7 — The asks · ~2 min
+## Beat 7 — What we offer, and the one ask · ~2–3 min
 
-- **Sabin:**
-  1. Bless a **citation-safe MCP layer over your *official* data**; confirm the litigation-corpus
-     **licence / attribution** terms.
-  2. An **official data feed** (API or bulk export) so we ingest from the source, not a mirror —
-     this is the path to freshness.
-  3. Include the **international / multilateral tracker** (the **ICJ AO, ITLOS AO, IACtHR OC-32/25**
-     are the most-queried 2024–25 items and are currently absent from the litigation stream).
-- **CPR:**
-  1. Share your **case ↔ law concept mapping** — it makes `linked_statutes` comprehensive instead of
-     the high-precision-but-partial title match we have now (145 links).
-  2. Let us adopt your **`import_id` as the dedup key** and your **concept annotations**.
-  3. Treat OpenClimateLaw as the **agent-distribution layer for your open CCLW corpus.**
+Lead with what we *give*, not what we want. (Mike Burger is the right person for this part.)
+
+**What we offer (the May-7 commitments, restated):**
+- **We underwrite the running costs** — infrastructure, data refresh, maintenance — so this runs as a
+  **free resource for the climate-litigation community, under your guidance, with full attribution.**
+- **Engineering capacity for your mission**, in whatever shape helps: a **bulk-export ingestion path**
+  friendlier than per-page scraping; a **HuggingFace dataset under your CC-BY 4.0** (the shape of CPR's
+  `all-document-text-data`); co-listing; or anything else useful.
+- **You hold the veto.** Attribution on every record, links back to your canonical pages, MIT-licensed
+  and auditable end to end. Off anytime, no negotiation.
+
+**The one ask:** *your reaction, and approval-in-principle to expose your data this way.* Everything
+else follows your lead.
+
+**Where your guidance would help most — framed as collaboration, not requirements:**
+- An **official data feed** so we ingest from the source, not a mirror (the path to freshness).
+- The **international / advisory-opinion stream** (Beat 3.5) — we'd prioritise it.
+- (CPR) Your **case↔law concept mapping**, so the litigation↔legislation links become comprehensive,
+  and adopting your `import_id` as our dedup key + your concept annotations.
 
 ---
 
