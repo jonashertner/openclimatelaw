@@ -2,12 +2,12 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>OpenClimateLaw — for the Sabin Center &amp; Climate Policy Radar</title>
+<title>OpenClimateLaw — Briefing for the Sabin Center &amp; Climate Policy Radar</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
   :root{
     --green:#0a6b4d; --green-d:#073f2d; --ink:#19241f; --muted:#5f6f66;
-    --paper:#faf8f2; --paper2:#f3efe6; --soft:#e9f3ed; --line:#dde6e0;
+    --paper:#faf8f2; --paper2:#f3efe6; --soft:#e9f3ed; --line:#dde6e0; --amber:#8a6d1f;
     --serif:"Charter","Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Times New Roman",serif;
     --sans:ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,"Helvetica Neue",Arial,sans-serif;
   }
@@ -15,101 +15,77 @@
   html,body{height:100%}
   body{font-family:var(--sans);color:var(--ink);background:#0b0b0b;-webkit-font-smoothing:antialiased;overflow:hidden}
   .deck{position:relative;width:100vw;height:100vh}
-
   .slide{position:absolute;inset:0;display:none;flex-direction:column;justify-content:center;
-    padding:11vh 10vw 13vh;background:
-      radial-gradient(120% 80% at 100% 0%, #fffdf7 0%, var(--paper) 42%, var(--paper2) 100%);}
+    padding:10vh 9vw 12vh;background:radial-gradient(120% 80% at 100% 0%, #fffdf7 0%, var(--paper) 42%, var(--paper2) 100%)}
   .slide.active{display:flex}
-  .slide .inner{width:100%;max-width:62rem}
-  .slide.active .inner{animation:rise .5s cubic-bezier(.2,.75,.25,1) both}
-  @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+  .slide .inner{width:100%;max-width:66rem}
+  .slide.active .inner{animation:rise .45s cubic-bezier(.2,.75,.25,1) both}
+  @keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
 
-  .eyebrow{display:inline-flex;align-items:center;gap:.7rem;font-family:var(--sans);
-    font-size:.82rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--green);margin-bottom:1.4rem}
+  .eyebrow{display:inline-flex;align-items:center;gap:.7rem;font-size:.8rem;font-weight:700;
+    letter-spacing:.18em;text-transform:uppercase;color:var(--green);margin-bottom:1.1rem}
   .eyebrow::before{content:"";width:1.7rem;height:2px;background:var(--green);border-radius:2px}
-
-  h1{font-family:var(--serif);font-weight:600;font-size:clamp(3rem,6.2vw,5.1rem);line-height:1.02;
-    letter-spacing:-.02em;max-width:18ch}
-  h2{font-family:var(--serif);font-weight:600;font-size:clamp(2.1rem,4.3vw,3.25rem);line-height:1.1;
-    letter-spacing:-.015em;max-width:21ch;margin-bottom:1.7rem}
+  h1{font-family:var(--serif);font-weight:600;font-size:clamp(2.8rem,5.6vw,4.6rem);line-height:1.03;letter-spacing:-.02em;max-width:19ch}
+  h2{font-family:var(--serif);font-weight:600;font-size:clamp(1.9rem,3.7vw,2.85rem);line-height:1.1;letter-spacing:-.015em;max-width:24ch;margin-bottom:1.3rem}
   h2 em{font-style:italic;color:var(--green)}
-  p,li{font-size:clamp(1.15rem,1.7vw,1.5rem);line-height:1.5;color:#28332d;max-width:44ch}
-  ul{list-style:none;margin-top:.4rem}
-  ul li{position:relative;padding-left:1.6rem;margin:1rem 0}
-  ul li::before{content:"";position:absolute;left:0;top:.62em;width:.5rem;height:.5rem;
-    background:var(--green);border-radius:50%}
-  strong{font-weight:700;color:var(--ink)}
-  .muted{color:var(--muted)}
-  .lead{font-family:var(--serif);font-size:clamp(1.3rem,2.1vw,1.7rem);line-height:1.4;
-    color:var(--muted);max-width:40ch;margin-top:1.4rem}
+  p,li{font-size:clamp(1.05rem,1.55vw,1.4rem);line-height:1.48;color:#28332d;max-width:48ch}
+  ul{list-style:none;margin-top:.3rem}
+  ul li{position:relative;padding-left:1.5rem;margin:.7rem 0}
+  ul li::before{content:"";position:absolute;left:0;top:.62em;width:.46rem;height:.46rem;background:var(--green);border-radius:50%}
+  strong{font-weight:700;color:var(--ink)} .muted{color:var(--muted)} .num{font-variant-numeric:tabular-nums}
+  .lead{font-family:var(--serif);font-size:clamp(1.25rem,2vw,1.6rem);line-height:1.4;color:var(--muted);max-width:42ch;margin-top:1.2rem}
   .lead strong{color:var(--ink)}
 
-  /* dark (emphasis) slides */
   .slide.dark{background:linear-gradient(155deg,var(--green) 0%,var(--green-d) 100%);color:#fff}
-  .slide.dark h1,.slide.dark h2{color:#fff}
-  .slide.dark h2 em{color:#bfe6d5}
+  .slide.dark h1,.slide.dark h2{color:#fff} .slide.dark h2 em{color:#bfe6d5}
   .slide.dark .eyebrow{color:#bfe6d5}.slide.dark .eyebrow::before{background:#bfe6d5}
-  .slide.dark p,.slide.dark li{color:#eef7f2}.slide.dark ul li::before{background:#bfe6d5}
-  .slide.dark strong{color:#fff}
-  .brand-line{font-size:1.15rem;color:#cdeadd;margin-top:2.4rem;line-height:1.8}
+  .slide.dark p,.slide.dark li{color:#eef7f2}.slide.dark ul li::before{background:#bfe6d5}.slide.dark strong{color:#fff}
+  .brand-line{font-size:1.1rem;color:#cdeadd;margin-top:2.2rem;line-height:1.8}
 
-  /* contract cards */
-  .cards{display:flex;gap:1.3rem;margin-top:.4rem;flex-wrap:wrap}
-  .card{flex:1;min-width:14rem;background:#fff;border:1px solid var(--line);border-radius:16px;
-    padding:1.7rem 1.55rem;box-shadow:0 10px 30px -18px rgba(7,63,45,.35)}
-  .badge{display:inline-flex;align-items:center;justify-content:center;width:2.1rem;height:2.1rem;
-    border-radius:50%;background:var(--soft);color:var(--green);font-weight:800;font-size:.95rem;font-family:var(--sans)}
-  .card h3{font-family:var(--serif);font-weight:600;font-size:1.35rem;margin:.8rem 0 .45rem;letter-spacing:-.01em}
-  .card p{font-size:1.02rem;color:var(--muted);line-height:1.45}
-
-  /* two columns */
-  .cols{display:flex;gap:1.6rem;margin-top:.3rem;flex-wrap:wrap}
-  .col{flex:1;min-width:15rem;background:var(--soft);border:1px solid var(--line);border-radius:16px;padding:1.7rem 1.6rem}
-  .col .k{font-size:.82rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--green)}
-  .col .big{font-family:var(--serif);font-size:2.2rem;font-weight:600;letter-spacing:-.02em;margin:.55rem 0 .15rem}
-  .col .sub{font-size:1.02rem;color:var(--muted)}
-
+  /* corpus grid */
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:1.1rem;margin-top:.4rem}
+  .gcard{background:#fff;border:1px solid var(--line);border-radius:14px;padding:1.25rem 1.4rem;box-shadow:0 10px 28px -20px rgba(7,63,45,.4)}
+  .gcard h4{font-size:.76rem;letter-spacing:.11em;text-transform:uppercase;color:var(--green);font-weight:700;margin-bottom:.7rem}
+  .gcard .row{display:flex;justify-content:space-between;gap:1rem;font-size:1.02rem;padding:.22rem 0;color:#33403a}
+  .gcard .row b{font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
   /* stat band */
-  .stats{display:flex;gap:1rem;margin:.6rem 0 1.6rem;flex-wrap:wrap}
-  .stat{flex:1;min-width:8.5rem;background:#fff;border:1px solid var(--line);border-radius:14px;padding:1.5rem 1rem;text-align:center}
-  .stat .num{display:block;font-family:var(--serif);font-size:clamp(2rem,3.6vw,2.9rem);font-weight:600;
-    color:var(--green);letter-spacing:-.02em;font-variant-numeric:tabular-nums}
-  .stat .lab{font-size:.92rem;color:var(--muted);margin-top:.3rem}
-  .demo-cue{display:inline-block;margin-top:2rem;font-size:1.2rem;font-weight:700;color:var(--green);
-    border:1px dashed var(--green);border-radius:999px;padding:.55rem 1.3rem}
+  .stats{display:flex;gap:.9rem;margin:.4rem 0 1.2rem;flex-wrap:wrap}
+  .stat{flex:1;min-width:8rem;background:#fff;border:1px solid var(--line);border-radius:13px;padding:1.2rem .8rem;text-align:center}
+  .stat .n{display:block;font-family:var(--serif);font-size:clamp(1.7rem,3vw,2.5rem);font-weight:600;color:var(--green);letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+  .stat .l{font-size:.86rem;color:var(--muted);margin-top:.25rem;line-height:1.25}
+  /* contract cards */
+  .cards{display:flex;gap:1.1rem;margin-top:.3rem;flex-wrap:wrap}
+  .card{flex:1;min-width:13rem;background:#fff;border:1px solid var(--line);border-radius:15px;padding:1.4rem 1.4rem;box-shadow:0 10px 28px -20px rgba(7,63,45,.4)}
+  .badge{display:inline-flex;align-items:center;justify-content:center;width:1.9rem;height:1.9rem;border-radius:50%;background:var(--soft);color:var(--green);font-weight:800;font-size:.9rem}
+  .card h3{font-family:var(--serif);font-weight:600;font-size:1.22rem;margin:.6rem 0 .35rem}
+  .card p{font-size:.98rem;color:var(--muted);line-height:1.42}
+  /* suggestions table */
+  table.sg{width:100%;border-collapse:collapse;margin-top:.5rem;font-size:clamp(.9rem,1.35vw,1.12rem)}
+  table.sg th{text-align:left;font-size:.74rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700;padding:0 1.1rem .6rem 0;border-bottom:2px solid var(--line)}
+  table.sg td{vertical-align:top;padding:.7rem 1.1rem .7rem 0;border-bottom:1px solid var(--line);line-height:1.36}
+  table.sg td.obs{color:var(--ink);width:48%} table.sg td.obs b{font-weight:700}
+  table.sg td.sug{color:var(--green-d)} table.sg td.sug::before{content:"→ ";color:var(--green);font-weight:700}
+  .caveat{margin-top:1rem;font-size:.92rem;color:var(--muted);border-left:3px solid var(--amber);padding-left:.8rem;max-width:54ch}
+  /* next-steps */
+  ol.steps{counter-reset:s;list-style:none;margin-top:.3rem}
+  ol.steps li{counter-increment:s;position:relative;padding-left:2.7rem;margin:.85rem 0;font-size:clamp(1.02rem,1.5vw,1.35rem);max-width:50ch}
+  ol.steps li::before{content:counter(s);position:absolute;left:0;top:-.1em;width:1.85rem;height:1.85rem;background:var(--green);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.95rem}
+  ol.steps .who{font-size:.78rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--green);margin-left:.5rem}
 
-  /* chrome */
-  .mark{position:absolute;top:4.6vh;left:10vw;display:flex;align-items:center;gap:.6rem;z-index:6;
-    font-size:.92rem;font-weight:700;letter-spacing:-.01em;color:var(--ink);opacity:.9}
-  .slide.dark .mark{color:#fff}
-  .mark svg{width:22px;height:22px;border-radius:5px;display:block}
-  .footer{position:absolute;left:10vw;bottom:4.4vh;font-size:.76rem;color:var(--muted);letter-spacing:.03em}
-  .pageno{position:absolute;right:10vw;bottom:4.4vh;font-size:.76rem;color:var(--muted);font-variant-numeric:tabular-nums}
+  .mark{position:absolute;top:4.4vh;left:9vw;display:flex;align-items:center;gap:.55rem;z-index:6;font-size:.9rem;font-weight:700;letter-spacing:-.01em;color:var(--ink);opacity:.9}
+  .slide.dark .mark{color:#fff} .mark svg{width:21px;height:21px;border-radius:5px;display:block}
+  .footer{position:absolute;left:9vw;bottom:4.2vh;font-size:.74rem;color:var(--muted)}
+  .pageno{position:absolute;right:9vw;bottom:4.2vh;font-size:.74rem;color:var(--muted);font-variant-numeric:tabular-nums}
   .slide.dark .footer,.slide.dark .pageno{color:#a8d6c5}
   .progress{position:fixed;top:0;left:0;height:3px;background:var(--green);width:0;transition:width .25s ease;z-index:60}
-  .hint{position:fixed;right:14px;top:11px;font-size:.7rem;color:#888;z-index:60;font-family:var(--sans)}
-
-  /* speaker notes — hidden until toggled (press N); print honours toggle state */
+  .hint{position:fixed;right:13px;top:11px;font-size:.7rem;color:#888;z-index:60}
   .notes{display:none}
-  body.notes-on .slide.active .notes{
-    display:block;position:fixed;left:0;right:0;bottom:0;max-height:34vh;overflow:auto;z-index:55;
-    background:rgba(12,18,15,.96);color:#e9f1ec;border-top:2px solid var(--green);
-    padding:1.1rem 10vw 1.3rem;font-family:var(--sans);font-size:.98rem;line-height:1.5}
-  .notes b{color:#bfe6d5;font-weight:700}
-  .notes .cue{color:#f0d68a;font-weight:700}
-  .notes::before{content:"SPEAKER NOTES";display:block;font-size:.68rem;letter-spacing:.18em;color:#7fae9b;margin-bottom:.5rem}
-
-  @media (prefers-reduced-motion:reduce){ .slide.active .inner{animation:none} .progress{transition:none} }
-  @media (max-width:820px){ .slide{padding:9vh 7vw 12vh} .mark{left:7vw} .footer{left:7vw} .pageno{right:7vw} }
-
-  @media print{
-    body{overflow:visible;background:#fff}
-    .deck{height:auto}
-    .slide{position:relative;display:flex!important;height:100vh;page-break-after:always;background:var(--paper)}
-    .progress,.hint{display:none}
-    .notes{display:none}
-    body.notes-on .notes{display:block;position:static;max-height:none;background:#0c120f;margin-top:2rem;border-radius:8px;padding:1rem 1.4rem}
-  }
+  body.notes-on .slide.active .notes{display:block;position:fixed;left:0;right:0;bottom:0;max-height:34vh;overflow:auto;z-index:55;background:rgba(12,18,15,.96);color:#e9f1ec;border-top:2px solid var(--green);padding:1rem 9vw 1.2rem;font-size:.95rem;line-height:1.5}
+  .notes b{color:#bfe6d5;font-weight:700} .notes .cue{color:#f0d68a;font-weight:700}
+  .notes::before{content:"SPEAKER NOTES";display:block;font-size:.66rem;letter-spacing:.18em;color:#7fae9b;margin-bottom:.45rem}
+  @media (prefers-reduced-motion:reduce){.slide.active .inner{animation:none}.progress{transition:none}}
+  @media (max-width:860px){.grid{grid-template-columns:1fr}.slide{padding:8vh 6vw 11vh}.mark,.footer{left:6vw}.pageno{right:6vw}}
+  @media print{body{overflow:visible;background:#fff}.deck{height:auto}.slide{position:relative;display:flex!important;height:100vh;page-break-after:always;background:var(--paper)}.progress,.hint{display:none}.notes{display:none}body.notes-on .notes{display:block;position:static;max-height:none;background:#0c120f;margin-top:1.5rem;border-radius:8px;padding:1rem 1.3rem}}
 </style>
 </head>
 <body>
@@ -118,251 +94,243 @@
 <div class="deck" id="deck">
 
   <!-- 1 · Title -->
-  <section class="slide dark active">
-    <div class="inner">
-      <div class="eyebrow">A research preview for your review</div>
-      <h1>OpenClimateLaw</h1>
-      <p style="font-family:var(--serif);font-size:clamp(1.4rem,2.4vw,1.95rem);color:#eef7f2;max-width:30ch;margin-top:1.5rem;line-height:1.35">
-        A <em style="font-style:normal;border-bottom:2px solid #bfe6d5;padding-bottom:1px">citation-safe</em>
-        AI layer over the Climate Litigation Database and Climate Change Laws of the World.</p>
-      <div class="brand-line">regenerative.law &nbsp;·&nbsp; a non-public preview for the Sabin Center
-        &amp; Climate Policy Radar &nbsp;·&nbsp; June&nbsp;2026</div>
-    </div>
-    <aside class="notes"><b>~20s. Warm, unhurried — let people settle.</b> "Thank you all for the time
-      — I know it's a busy stretch with London Climate Action Week, so I appreciate both the Sabin and
-      CPR teams being here." <span class="cue">Tone:</span> this is a preview for *them*, exploratory —
-      not a launch. Greet people by name.</aside>
+  <section class="slide dark active"><div class="inner">
+    <div class="eyebrow">Briefing · non-public research preview</div>
+    <h1>OpenClimateLaw</h1>
+    <p style="font-family:var(--serif);font-size:clamp(1.3rem,2.2vw,1.85rem);color:#eef7f2;max-width:33ch;margin-top:1.4rem;line-height:1.35">
+      A <em style="font-style:normal;border-bottom:2px solid #bfe6d5">citation-safe</em> MCP layer over
+      the Climate Litigation Database and Climate Change Laws of the World.</p>
+    <div class="brand-line">For the Sabin Center &amp; Climate Policy Radar &nbsp;·&nbsp; regenerative.law
+      &nbsp;·&nbsp; June&nbsp;2026 &nbsp;·&nbsp; corpus as-of 2026-05-07</div>
+  </div>
+    <aside class="notes"><b>~20s.</b> "Thanks for the time. This is a short, factual briefing: what we
+      built over your data, what we found in it, and what we suggest — and you hold the veto
+      throughout." <span class="cue">Sets a matter-of-fact, substantive tone; not a sales pitch.</span></aside>
   </section>
 
-  <!-- 2 · Who / why -->
-  <section class="slide">
-    <div class="inner">
-      <div class="eyebrow">Who we are</div>
-      <h2>We help fund climate litigation — and we want your work to reach&nbsp;further.</h2>
-      <ul>
-        <li><strong>regenerative.law</strong> is the legal arm of an impact initiative. Purely nonprofit.</li>
-        <li>We treat the <strong>reachability of the climate-case record</strong> as worth working on
-          directly — for the lawyers doing the work, and the AI they increasingly use.</li>
-        <li>The Sabin database is the <strong>indispensable foundation</strong>; CPR's CCLW its
-          legislative counterpart. We want to <strong>amplify your work, not build beside it.</strong></li>
-      </ul>
-    </div>
-    <aside class="notes"><b>~30s. Establish nonprofit intent + deference.</b> Land "amplify, not
-      compete" clearly — it frames everything after. Name the Sabin DB as the foundation and CPR's CCLW
-      as its counterpart, so both orgs hear themselves valued. <span class="cue">Don't oversell — quiet
-      confidence.</span></aside>
+  <!-- 2 · Context -->
+  <section class="slide"><div class="inner">
+    <div class="eyebrow">Context</div>
+    <h2>Why this, and why now.</h2>
+    <ul>
+      <li>Practitioners increasingly run legal research through AI assistants — which <strong>fabricate
+        citations and holdings <span class="num">17–33%</span></strong> of the time, even when grounded
+        (Stanford / Magesh et&nbsp;al., 2024).</li>
+      <li><strong>MCP</strong> is the emerging open standard for AI tools to read external data, with
+        attribution — supported across Claude, ChatGPT, Gemini, Copilot.</li>
+      <li>No comparable <strong>citation-safe layer</strong> exists for climate litigation. Your two
+        databases are the authoritative source — so the question is how they reach the AI era intact.</li>
+    </ul>
+  </div>
+    <aside class="notes"><b>~30s. Facts, not alarm.</b> The audience knows hallucination — the point is
+      the *standard* (MCP) and that no safe layer exists for this field yet. Keep it brisk.</aside>
   </section>
 
-  <!-- 3 · Problem -->
-  <section class="slide">
-    <div class="inner">
-      <div class="eyebrow">The problem</div>
-      <h2>AI is already answering climate-law questions over your data — and <em>fabricating</em> it.</h2>
-      <ul>
-        <li>Even RAG-grounded Lexis+ and Westlaw hallucinate <strong>17–33%</strong> of the time
-          (Stanford / Magesh et&nbsp;al.).</li>
-        <li>A fabricated citation or holding over <strong>your</strong> data is <strong>your</strong>
-          reputation.</li>
-        <li>And a practitioner might file something that does not exist.</li>
-      </ul>
+  <!-- 3 · What it is -->
+  <section class="slide"><div class="inner">
+    <div class="eyebrow">What it is</div>
+    <h2>An MCP server — <em>16 tools</em>, and one rule.</h2>
+    <p class="muted" style="margin-bottom:.6rem">Discovery · verbatim retrieval &amp; pinpoint ·
+      legislation · citation-graph · grounding/citation-safety · aggregates.</p>
+    <div class="cards">
+      <div class="card"><span class="badge">1</span><h3>No fabricated citation</h3><p>Every reference is your verbatim citation string — never model-built.</p></div>
+      <div class="card"><span class="badge">2</span><h3>No fabricated quote</h3><p>Every quote is verified against the actual judgment text.</p></div>
+      <div class="card"><span class="badge">3</span><h3>No bluffing</h3><p>It refuses to guess a pinpoint, and says when it can't ground a claim.</p></div>
     </div>
-    <aside class="notes"><b>~25s. The hook — make it about THEIR name.</b> This audience knows
-      hallucination; don't lecture. The sharp point is the *third* one — a real filing. Pause after it,
-      then pivot. <span class="cue">Bridge:</span> "So rather than describe a fix, we built one you can
-      test."</aside>
+    <p class="lead" style="margin-top:1.3rem">Open-source (MIT) — the guarantee is auditable, not asserted.</p>
+  </div>
+    <aside class="notes"><b>~30s.</b> Name the six tool groups once, then the three rails. This is also
+      the moment to <span class="cue">share screen and run the live demo</span> (runbook Beats 1–2);
+      come back to the data slides after.</aside>
   </section>
 
-  <!-- 4 · What we built -->
-  <section class="slide">
-    <div class="inner">
-      <div class="eyebrow">Our response</div>
-      <h2>A citation-safe layer you can test — <em>not imagine</em>.</h2>
-      <ul>
-        <li>An <strong>MCP server</strong> any AI client connects to natively — Claude, ChatGPT,
-          Gemini, Copilot, Cursor.</li>
-        <li>Built on your <strong>published, CC-BY data</strong>; deliberately a non-public research preview.</li>
-      </ul>
-      <span class="demo-cue">→ live demonstration</span>
+  <!-- 4 · Corpus by the numbers -->
+  <section class="slide"><div class="inner">
+    <div class="eyebrow">The corpus — by the numbers</div>
+    <div class="grid">
+      <div class="gcard"><h4>Litigation (Sabin + CRD)</h4>
+        <div class="row"><span>Cases</span><b>5,027</b></div>
+        <div class="row"><span>— Sabin / Climate Rights DB</span><b>4,812 / 215</b></div>
+        <div class="row"><span>Court documents</span><b>81,345</b></div>
+        <div class="row"><span>— with extracted full text</span><b>~79%</b></div>
+        <div class="row"><span>Jurisdictions (US share)</span><b>66 (66%)</b></div></div>
+      <div class="gcard"><h4>Legislation (CPR · CCLW)</h4>
+        <div class="row"><span>Laws &amp; policies</span><b>5,347</b></div>
+        <div class="row"><span>Jurisdictions</span><b>~200</b></div>
+        <div class="row"><span>Full multilingual text</span><b>yes</b></div>
+        <div class="row"><span>Pinpoint passages indexed</span><b>4.98M</b></div>
+        <div class="row"><span>Snapshot (mirror)</span><b>2026-05-07</b></div></div>
     </div>
-    <aside class="notes"><b>Pivot to the live demo — SHARE SCREEN NOW.</b> Run the beats from the
-      runbook: <b>1</b> the fabrication catch (a planted fake US + UK cite → flagged), <b>2</b> grounded
-      verbatim research (search → read → pinpoint → verify → cite), then the bridge (next slide).
-      <span class="cue">Keep it to ~8–10 min;</span> narrate lightly, let the tool speak. Re-run
-      <i>scripts/demo_dryrun.py</i> ~30 min before to confirm IDs.</aside>
+  </div>
+    <aside class="notes"><b>~20s.</b> Don't read every row — point to scale (both halves) + the as-of
+      date. The "~79% with text" and "US 66%" set up the limitations and suggestions slides.</aside>
   </section>
 
-  <!-- 5 · The contract -->
-  <section class="slide">
-    <div class="inner">
-      <div class="eyebrow">The guarantee</div>
-      <h2>Three things the AI <em>cannot</em> do.</h2>
-      <div class="cards">
-        <div class="card"><span class="badge">1</span><h3>Fabricate a citation</h3>
-          <p>Every reference is your <em>verbatim</em> citation string — never constructed by the model.</p></div>
-        <div class="card"><span class="badge">2</span><h3>Fabricate a quote</h3>
-          <p>Every quoted passage is verified to appear in the actual judgment text.</p></div>
-        <div class="card"><span class="badge">3</span><h3>Bluff</h3>
-          <p>When it can't ground an answer it says so — and refuses to guess a pinpoint.</p></div>
-      </div>
-      <p class="lead" style="margin-top:1.6rem">Open-source, so you can verify the guarantee yourself.
-        <strong>Verifiability&nbsp;&gt;&nbsp;veracity.</strong></p>
-    </div>
-    <aside class="notes"><b>~40s. The persuasive core — recap what the demo just proved.</b> These three
-      rails are the whole pitch; let the slide breathe. The line that lands with lawyers:
-      <i>"an unverifiable answer can't be checked; a verifiable one always can."</i>
-      <span class="cue">For Mike Burger:</span> "open-source" means it's not trust-us — it's verify-us.</aside>
+  <!-- 5 · What we built on top -->
+  <section class="slide"><div class="inner">
+    <div class="eyebrow">What we built on top — and the numbers</div>
+    <h2>Structure your databases don't yet carry.</h2>
+    <ul>
+      <li><strong>Anti-fabrication contract</strong> — global citation formats (US, ECLI, UK, AU/NZ,
+        Canada, Ireland, South Africa, India, CJEU), verbatim quote-checking, and an LLM grounding judge
+        for fabricated holdings.</li>
+      <li><strong>Legislation layer + bridge</strong> — 5,347 CCLW laws ingested; <strong>145</strong>
+        case↔law links by exact title + jurisdiction.</li>
+      <li><strong>Structured outcomes</strong> — <strong>1,606</strong> of 3,742 decided cases
+        (<span class="num">43%</span>), confidence-gated, anchored to the latest disposition,
+        quote-verified <span class="muted">(0% upstream)</span>.</li>
+      <li><strong>Structured parties</strong> — <strong>92%</strong> of cases, plaintiff/defendant
+        <span class="muted">(0% upstream)</span>.</li>
+    </ul>
+  </div>
+    <aside class="notes"><b>~40s. The "improvements" slide.</b> Emphasise these are <i>derived by us and
+      labelled as ours</i> (provenance), never presented as theirs. Each is also a patch we could
+      contribute upstream. <span class="cue">For Maria/Michal:</span> outcomes + the bridge are the
+      research-grade additions.</aside>
   </section>
 
-  <!-- 6 · Both halves -->
-  <section class="slide">
-    <div class="inner">
-      <div class="eyebrow">What's new since we wrote</div>
-      <h2>Now both halves of the field — <em>bridged</em>.</h2>
-      <div class="cols">
-        <div class="col"><div class="k">Litigation · Sabin</div>
-          <div class="big">5,027 cases</div><div class="sub">81,345 court documents</div></div>
-        <div class="col"><div class="k">Legislation · CPR</div>
-          <div class="big">5,347 laws</div><div class="sub">~200 jurisdictions (CCLW)</div></div>
-      </div>
-      <p class="lead">A case → the law it invokes → the <strong>verbatim statute</strong>.
-        <span class="muted">e.g. <em>Friends of the Earth v. Secretary of State</em> → the UK Climate
-        Change Act 2008.</span></p>
+  <!-- 6 · The bridge -->
+  <section class="slide"><div class="inner">
+    <div class="eyebrow">Litigation ↔ legislation</div>
+    <h2>A case → the law it invokes → the <em>verbatim statute</em>.</h2>
+    <div class="stats">
+      <div class="stat"><span class="n">1,765</span><span class="l">laws for "renewable energy targets"</span></div>
+      <div class="stat"><span class="n">60</span><span class="l">cases on the ECHR</span></div>
+      <div class="stat"><span class="n">88</span><span class="l">on the Public Trust Doctrine</span></div>
+      <div class="stat"><span class="n">597</span><span class="l">on the Clean Air Act</span></div>
     </div>
-    <aside class="notes"><b>The CPR moment — and an honest disclosure. ~40s.</b> Say it plainly:
-      <i>"since our May note, to show the bridge we also indexed your open CCLW corpus — same
-      attribution, same control, same veto, and we'd genuinely value CPR's guidance on it."</i> Don't
-      let them discover it mid-demo. <span class="cue">If time:</span> show Friends of the Earth →
-      Climate Change Act 2008 live.</aside>
+    <p><em>Friends of the Earth v. Secretary of State</em> → linked to the UK <strong>Climate Change Act
+      2008</strong> → full statutory text, all citation-safe.</p>
+  </div>
+    <aside class="notes"><b>~30s. The joint value + the honest disclosure.</b> Say plainly: "to build
+      this we also indexed CPR's open CCLW corpus — same attribution, control, veto; we'd value your
+      guidance." Show the Friends of the Earth → CCA 2008 path live if time.</aside>
   </section>
 
-  <!-- 7 · Scale -->
-  <section class="slide">
-    <div class="inner">
-      <div class="eyebrow">At a glance</div>
-      <div class="stats">
-        <div class="stat"><span class="num">5,027</span><span class="lab">litigation cases</span></div>
-        <div class="stat"><span class="num">5,347</span><span class="lab">climate laws</span></div>
-        <div class="stat"><span class="num">81k+</span><span class="lab">court documents</span></div>
-        <div class="stat"><span class="num">16</span><span class="lab">tools</span></div>
-      </div>
-      <p>Every record <strong>attributed to you</strong> and linking back to your canonical page.
-        The code is <strong>open-source (MIT)</strong> and auditable end to end.</p>
-    </div>
-    <aside class="notes"><b>~15s — quick, confident.</b> Don't dwell on numbers; the point is
-      attribution + openness, not size. Move briskly to the control slide (the reassurance).</aside>
+  <!-- 7 · Suggestions — Sabin -->
+  <section class="slide"><div class="inner">
+    <div class="eyebrow">Observations &amp; suggestions — Litigation DB (Sabin)</div>
+    <table class="sg"><thead><tr><th>What we observed (and its effect)</th><th>Suggested fix</th></tr></thead><tbody>
+      <tr><td class="obs"><b>decision_date</b> conflates merits, procedural &amp; execution events — a procedural "order" becomes the decision date</td><td class="sug">type events (merits / procedural / execution); a finality flag</td></tr>
+      <tr><td class="obs"><b>status_code</b> disagrees with metadata.status — a case at a higher court reads "decided"</td><td class="sug">one reconciled status vocabulary</td></tr>
+      <tr><td class="obs"><b>filing_date</b> year-only, stored as Jan 1 (<span class="num">~93%</span>) — within-year order lost</td><td class="sug">a date-precision flag</td></tr>
+      <tr><td class="obs"><b>Duplicates</b> — Held ×4, Juliana ×5, Mass. v. EPA ×2 — split search &amp; influence</td><td class="sug">a stable dedup key (CPR import_id)</td></tr>
+      <tr><td class="obs"><b>claim_type</b> mixes leaked metadata keys + overlaps at several granularities</td><td class="sug">a controlled, hierarchical vocabulary</td></tr>
+    </tbody></table>
+    <p class="caveat">From our pre-relaunch mirror — candidates to validate on the live platform, not
+      confirmed defects. Full list + the doc-category &amp; principal_laws items are in the data-quality report.</p>
+  </div>
+    <aside class="notes"><b>Lead with one or two verbally (decision_date/status); offer the rest in
+      writing.</b> <span class="cue">Framing is everything here:</span> "things we noticed building on
+      your data — offered to help, with the validate-first caveat." Not a critique.</aside>
   </section>
 
-  <!-- 8 · Control -->
-  <section class="slide dark">
-    <div class="inner">
-      <div class="eyebrow">Your control</div>
-      <h2>You hold the veto.</h2>
-      <ul>
-        <li>It is <strong>your data</strong> — attributed, CC-BY 4.0, linking back to you.</li>
-        <li>Open-source and <strong>auditable end to end</strong>.</li>
-        <li>Switched off anytime — <strong>no debate, no negotiation</strong>.</li>
-        <li>It stays a non-public preview until you are comfortable otherwise.</li>
-      </ul>
-    </div>
-    <aside class="notes"><b>Slow down — this is the slide that disarms.</b> "No debate, no negotiation"
-      is their own assurance from the May letter; deliver it and <span class="cue">pause</span>. This
-      removes the "who is using our data" reflex before you ask for anything. Mike Burger's slide.</aside>
+  <!-- 8 · Suggestions — CPR -->
+  <section class="slide"><div class="inner">
+    <div class="eyebrow">Observations &amp; suggestions — Legislation (CPR · CCLW)</div>
+    <table class="sg"><thead><tr><th>What we observed (and its effect)</th><th>Suggested fix</th></tr></thead><tbody>
+      <tr><td class="obs"><b>"Laws and Policies" is mostly non-statutory</b> — statutes mixed with policies, plans, NDCs; no way to filter</td><td class="sug">an instrument-type field (statute / regulation / policy / strategy)</td></tr>
+      <tr><td class="obs"><b>General litigated statutes are absent</b> — Clean Air Act, NEPA, ESA, APA — so the bridge can't connect US cases</td><td class="sug">note the scope, or extend coverage</td></tr>
+      <tr><td class="obs"><b>Multilingual statutes interleave all languages</b> in one document (e.g. SA Act → 11 languages)</td><td class="sug">per-language segmentation</td></tr>
+      <tr><td class="obs"><b>The case↔law concept mapping isn't published</b> — our bridge is partial (145 links)</td><td class="sug">share the concept mapping + import_ids</td></tr>
+    </tbody></table>
+    <p class="caveat">CCLW is open under CC-BY 4.0; we ingest the published HuggingFace dataset. Same
+      validate-first caveat applies.</p>
+  </div>
+    <aside class="notes"><b>For CPR (Michal, Kyra).</b> #2 (missing general statutes) and #4 (the concept
+      mapping) are the high-leverage ones — #4 is what would make the litigation↔legislation bridge
+      comprehensive. <span class="cue">Invite, don't demand.</span></aside>
   </section>
 
-  <!-- 9 · Offer -->
-  <section class="slide">
-    <div class="inner">
-      <div class="eyebrow">What we offer</div>
-      <h2>We would <em>support</em> it — not charge for it.</h2>
-      <ul>
-        <li><strong>Underwrite the running costs</strong> — infrastructure, data refresh, maintenance —
-          so it runs as a <strong>free resource for the community, under your guidance</strong>.</li>
-        <li><strong>Engineering capacity</strong>: a bulk-export ingestion path, a HuggingFace dataset
-          under your CC-BY&nbsp;4.0, co-listing — whatever helps your mission.</li>
-        <li>Purely nonprofit. No product, no fee, no upsell.</li>
-      </ul>
-    </div>
-    <aside class="notes"><b>~40s. Lead with what you GIVE — the heart of the call.</b> This is the part
-      that makes a "yes" easy: it costs them nothing and they keep control. <span class="cue">Address
-      Mike Burger</span> (sustainability/institutional). If he asks "what's the catch" — there isn't
-      one; the return is mission impact.</aside>
+  <!-- 9 · Known limitations -->
+  <section class="slide"><div class="inner">
+    <div class="eyebrow">Known limitations — ours, stated plainly</div>
+    <h2>What it does <em>not</em> do well yet.</h2>
+    <ul>
+      <li><strong>Semantic pinpoint at scale</strong> — only <span class="num">~3,000</span> of 4.98M
+        passages are embedded (0.06%); lexical pinpoint works corpus-wide, semantic is limited (an
+        infrastructure step).</li>
+      <li><strong>Freshness</strong> — the snapshot is a pre-relaunch mirror (2026-05-07); an official
+        feed would fix this.</li>
+      <li><strong>Citation graph</strong> — heuristic, thin for flagship cases; not yet a feature.</li>
+      <li><strong>International advisory opinions</strong> — the ICJ AO is present (52 docs) but hard to
+        discover; ITLOS and the latest IACtHR are thin.</li>
+    </ul>
+  </div>
+    <aside class="notes"><b>Stating our own gaps builds credibility with a careful audience.</b> Don't
+      apologise — just be accurate. <span class="cue">For Maria:</span> the ICJ AO IS in the corpus —
+      it's discoverability, not absence. Each limitation maps to a "where your guidance helps" item.</aside>
   </section>
 
-  <!-- 10 · Guidance -->
-  <section class="slide">
-    <div class="inner">
-      <div class="eyebrow">Where your guidance would help</div>
-      <h2>Collaboration, not conditions.</h2>
-      <ul>
-        <li>An <strong>official data feed</strong> — so we ingest from the source, not a mirror
-          (freshness, and gentler on your infrastructure).</li>
-        <li>The <strong>international / advisory-opinion stream</strong> — the ICJ opinion is already in;
-          help us surface it well, and add ITLOS and the latest IACtHR.</li>
-        <li><span class="muted">(CPR)</span> Your <strong>case ↔ law concept mapping</strong> — to make
-          the litigation↔legislation links comprehensive.</li>
-      </ul>
-    </div>
-    <aside class="notes"><b>Frame as "where your steer helps," never demands. ~40s.</b>
-      <span class="cue">For Maria Tigre (AO specialist):</span> be precise — the ICJ AO <i>is</i> in the
-      corpus (52 docs); the issue is discoverability, and ITLOS / newest IACtHR are thin. "We'd
-      prioritise the international stream with your guidance." Trim any item they react coolly to.</aside>
+  <!-- 10 · What we offer -->
+  <section class="slide"><div class="inner">
+    <div class="eyebrow">What we offer</div>
+    <h2>Support, not a product.</h2>
+    <ul>
+      <li><strong>Underwrite the running costs</strong> (infrastructure, refresh, maintenance) — a free
+        resource for the community, under your guidance, fully attributed.</li>
+      <li><strong>Contribute engineering</strong> — a bulk-export ingestion path, an OCR-text fallback,
+        the decision_date / dedup / party-parsing patches, a HuggingFace dataset under your CC-BY 4.0.</li>
+      <li><strong>Your control throughout</strong> — your data, attributed, MIT open-source, and the
+        veto: off anytime, no negotiation.</li>
+    </ul>
+  </div>
+    <aside class="notes"><b>~35s. Lead with what they get.</b> The patches make this concrete — we're
+      not just asking, we're offering fixes. <span class="cue">Mike Burger:</span> nonprofit,
+      sustainable, no cost to them, full control.</aside>
   </section>
 
-  <!-- 11 · The ask -->
-  <section class="slide">
-    <div class="inner">
-      <div class="eyebrow">The only ask</div>
-      <h2>Your reaction — and, if useful, <em>approval-in-principle</em>.</h2>
-      <p class="lead">Everything else follows your lead. <strong>Including doing nothing</strong>, if
-        that is your preference.</p>
-    </div>
-    <aside class="notes"><b>One soft ask, then STOP talking.</b> Most of the hour should be their
-      reactions and questions. "Including doing nothing" lowers the stakes — for a first call, that's
-      what earns the second. <span class="cue">Hand the floor over</span> and listen.</aside>
+  <!-- 11 · Next steps -->
+  <section class="slide"><div class="inner">
+    <div class="eyebrow">Proposed next steps</div>
+    <h2>Concrete, and at your pace.</h2>
+    <ol class="steps">
+      <li>You <strong>test the preview</strong> and validate the observations against the live platform.<span class="who">you</span></li>
+      <li>We share the <strong>data-quality report</strong> + the patches (decision_date, dedup, OCR, parties).<span class="who">us</span></li>
+      <li>Decide on an <strong>official data feed / bulk export</strong> for freshness.<span class="who">together</span></li>
+      <li>CPR shares the <strong>case↔law concept mapping + import_ids</strong>.<span class="who">CPR</span></li>
+      <li><strong>Approval-in-principle</strong> to expose the data this way — or not.<span class="who">you</span></li>
+    </ol>
+  </div>
+    <aside class="notes"><b>The actionable close.</b> Make clear none of this is committal — it's a menu,
+      at their pace, "including doing nothing." Then <span class="cue">stop and hand them the floor</span>
+      for reactions and questions (most of the hour).</aside>
   </section>
 
   <!-- 12 · Close -->
-  <section class="slide dark">
-    <div class="inner">
-      <div class="eyebrow">With gratitude for the work you do</div>
-      <h1>Thank you.</h1>
-      <div class="brand-line">
-        mcp.openclimatelaw.org &nbsp;·&nbsp; openclimatelaw.org &nbsp;·&nbsp;
-        github.com/jonashertner/openclimatelaw<br>
-        Jonas Hertner, Attorney &nbsp;·&nbsp; jh@jonashertner.com
-      </div>
+  <section class="slide dark"><div class="inner">
+    <div class="eyebrow">The only ask: your reaction, and approval-in-principle</div>
+    <h1>Thank you.</h1>
+    <div class="brand-line">
+      mcp.openclimatelaw.org &nbsp;·&nbsp; openclimatelaw.org &nbsp;·&nbsp;
+      github.com/jonashertner/openclimatelaw<br>
+      Jonas Hertner, Attorney &nbsp;·&nbsp; jh@jonashertner.com
     </div>
-    <aside class="notes"><b>Leave the links up while they talk.</b> Send the one-page leave-behind
-      (<i>docs/demo/leave-behind.md</i>) within 24h, adapting the opening line to what actually
-      resonated.</aside>
+  </div>
+    <aside class="notes">Leave links up. Send the one-page leave-behind within 24h, adapted to what
+      resonated. Everything follows their lead — including doing nothing.</aside>
   </section>
 
 </div>
 <script>
 (function(){
-  var slides=[].slice.call(document.querySelectorAll('.slide'));
-  var i=0, prog=document.getElementById('progress'), N=slides.length;
+  var slides=[].slice.call(document.querySelectorAll('.slide')), i=0, N=slides.length, prog=document.getElementById('progress');
   var LOGO='<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><rect width="32" height="32" rx="6" fill="#0a6b4d"/><path d="M9 22l3-12h2l-2.5 10h6.5l-.5 2H9z" fill="#fff"/></svg>';
   slides.forEach(function(s,k){
-    var inner=s.querySelector('.inner')||s;
-    var mark=document.createElement('div'); mark.className='mark'; mark.innerHTML=LOGO+'<span>OpenClimateLaw</span>'; s.insertBefore(mark,s.firstChild);
-    var f=document.createElement('div'); f.className='footer'; f.textContent='Confidential preview · Sabin Center + Climate Policy Radar'; s.appendChild(f);
-    var p=document.createElement('div'); p.className='pageno'; p.textContent=(k+1)+' / '+N; s.appendChild(p);
+    var m=document.createElement('div');m.className='mark';m.innerHTML=LOGO+'<span>OpenClimateLaw</span>';s.insertBefore(m,s.firstChild);
+    var f=document.createElement('div');f.className='footer';f.textContent='Confidential preview · Sabin Center + Climate Policy Radar';s.appendChild(f);
+    var p=document.createElement('div');p.className='pageno';p.textContent=(k+1)+' / '+N;s.appendChild(p);
   });
-  function show(n){ i=Math.max(0,Math.min(N-1,n));
-    slides.forEach(function(s,k){s.classList.toggle('active',k===i)});
-    prog.style.width=(i/(N-1)*100)+'%';
-  }
-  function next(){show(i+1)} function prev(){show(i-1)}
+  function show(n){i=Math.max(0,Math.min(N-1,n));slides.forEach(function(s,k){s.classList.toggle('active',k===i)});prog.style.width=(i/(N-1)*100)+'%';}
   document.addEventListener('keydown',function(e){
-    if(e.key==='ArrowRight'||e.key===' '||e.key==='PageDown'){e.preventDefault();next()}
-    else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();prev()}
+    if(e.key==='ArrowRight'||e.key===' '||e.key==='PageDown'){e.preventDefault();show(i+1)}
+    else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();show(i-1)}
     else if(e.key==='Home'){show(0)} else if(e.key==='End'){show(N-1)}
     else if(e.key==='n'||e.key==='N'){document.body.classList.toggle('notes-on')}
   });
   document.getElementById('deck').addEventListener('click',function(e){
-    if(e.clientY>window.innerHeight*0.66 && document.body.classList.contains('notes-on')) return; // let notes scroll
-    (e.clientX<window.innerWidth*0.28)?prev():next();
+    if(e.clientY>window.innerHeight*0.66 && document.body.classList.contains('notes-on'))return;
+    (e.clientX<window.innerWidth*0.28)?show(i-1):show(i+1);
   });
   show(0);
 })();
