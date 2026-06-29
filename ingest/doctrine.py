@@ -270,7 +270,7 @@ async def backfill_doctrine(
             # Prioritise the most-documented (most-litigated) decided cases — the citation
             # graph is too thin to rank by influence, so document count is the best proxy.
             await cur.execute(
-                f"SELECT c.id::text FROM case_record c WHERE {where} "  # noqa: S608
+                f"SELECT c.id::text FROM case_record c WHERE {where} "
                 "ORDER BY (SELECT count(*) FROM document d WHERE d.case_id = c.id) DESC, c.id "
                 "LIMIT %s",
                 (limit,),
