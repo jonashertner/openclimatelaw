@@ -367,7 +367,7 @@
 
 <h2 id="capabilities">What it does</h2>
 
-<p>Fifteen tools, organized into six groups. Each is callable from any MCP client; combine them for full-fidelity legal research.</p>
+<p>Sixteen tools, organized into six groups. Each is callable from any MCP client; combine them for full-fidelity legal research.</p>
 
 <div class="tool-group">
     <h3>Discovery</h3>
@@ -414,7 +414,8 @@
     <ul>
         <li><code>cite(case_id, lang, format)</code> — returns the verbatim <code>citation_string</code> of a previously retrieved case. Agents are required not to construct citations from training data; they must call this tool.</li>
         <li><code>check_claim_support(quote, source_id, source_kind)</code> — verifies a quoted string appears verbatim in <code>case_summary</code>, <code>document_text</code> (note: takes a document UUID from <code>get_case().documents[].id</code>, not a case ID), or <code>citation_string</code>.</li>
-        <li><code>attest_response(draft_text, retrieved_ids[])</code> — scans an LLM's draft for citation-shaped strings (ECLI, BVerfGE, BGE, US reporter, paragraph references) and flags any not present in the retrieved cases.</li>
+        <li><code>attest_response(draft_text, retrieved_ids[])</code> — scans an LLM's draft for citation-shaped strings (US reporters, ECLI, BVerfGE/BGE, and the UK, Australia/NZ, Canada, Ireland, South Africa, India and CJEU neutral-citation systems) and flags any not present in the retrieved cases, plus any quoted span not found verbatim in a retrieved summary or document.</li>
+        <li><code>verify_grounding(draft_text, retrieved_ids[])</code> — a semantic judge (LLM) that complements the regex rails: it flags fabricated case <em>names</em>, holdings not stated in the retrieved summaries, and unsupported facts — the failure mode pattern-matching cannot catch. Advisory.</li>
     </ul>
 </div>
 
