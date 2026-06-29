@@ -152,30 +152,42 @@ def extract_doctrine(client: Any, source: str) -> dict[str, Any]:
     return {}
 
 
-def pack(d: dict[str, Any], pool_norm: str) -> dict[str, Any]:
-    """Verify each quoted element against the source pool; return a case_doctrine row dict."""
-    total = verified = 0
-    disp = d.get("disposition") or {}
+def _obj(x: Any) -> dict[str, Any]:
+    """Coerce a possibly-malformed tool field to a dict (the model occasionally deviates)."""
+    return x if isinstance(x, dict) else {}
 
-    def check(q: str | None) -> bool:
+
+def pack(d: dict[str, Any], pool_norm: str) -> dict[str, Any]:
+    """Verify each quoted element against the source pool; return a case_doctrine row dict.
+
+    Defensive against the model returning a string where an object is expected (holdings
+    items, disposition, etc.) — those degrade gracefully rather than crash the run.
+    """
+    total = verified = 0
+    disp = _obj(d.get("disposition"))
+
+    def check(q: Any) -> bool:
         nonlocal total, verified
         total += 1
-        ok = _verified(q, pool_norm)
+        ok = _verified(q if isinstance(q, str) else None, pool_norm)
         verified += ok
         return ok
 
     check(disp.get("quote"))
     holdings = []
     for h in d.get("holdings") or []:
+        h = h if isinstance(h, dict) else {"point": str(h), "quote": ""}
         holdings.append(
             {"point": h.get("point"), "quote": h.get("quote"), "verified": check(h.get("quote"))}
         )
-    lt = d.get("legal_test") or {}
+    lt = _obj(d.get("legal_test"))
     if lt.get("test"):
         check(lt.get("quote"))
-    rel = d.get("relief") or {}
+    rel = _obj(d.get("relief"))
     if rel.get("relief"):
         check(rel.get("quote"))
+    bases = d.get("legal_bases")
+    bases = bases if isinstance(bases, list) else ([bases] if bases else [])
     return {
         "disposition_outcome": disp.get("outcome"),
         "disposition_posture": disp.get("posture"),
@@ -183,7 +195,7 @@ def pack(d: dict[str, Any], pool_norm: str) -> dict[str, Any]:
         "holdings": json.dumps(holdings),
         "legal_test": lt.get("test"),
         "legal_test_quote": lt.get("quote"),
-        "legal_bases": json.dumps(list(d.get("legal_bases") or [])),
+        "legal_bases": json.dumps([str(b) for b in bases]),
         "relief": rel.get("relief"),
         "relief_quote": rel.get("quote"),
         "significance": d.get("significance"),
@@ -273,18 +285,18 @@ async def backfill_doctrine(
                 return
             try:
                 d = await asyncio.to_thread(extract_doctrine, client, source)
+                if not d.get("holdings") and not _obj(d.get("disposition")).get("quote"):
+                    counts["skipped"] += 1
+                    return
+                row = pack(d, _norm(source))
+                row.update({"case_id": case_id, "source_kind": source_kind, "model": MODEL})
+                async with pool.connection() as w, w.cursor() as wc:
+                    await wc.execute(_UPSERT, row)
+                    await w.commit()
             except Exception as e:
-                log.warning("extract_error", case_id=case_id, error=repr(e)[:140])
+                log.warning("doctrine_error", case_id=case_id, error=repr(e)[:140])
                 counts["skipped"] += 1
                 return
-            if not d.get("holdings") and not (d.get("disposition") or {}).get("quote"):
-                counts["skipped"] += 1
-                return
-            row = pack(d, _norm(source))
-            row.update({"case_id": case_id, "source_kind": source_kind, "model": MODEL})
-            async with pool.connection() as w, w.cursor() as wc:
-                await wc.execute(_UPSERT, row)
-                await w.commit()
             counts["written"] += 1
             log.info(
                 "doctrine",
