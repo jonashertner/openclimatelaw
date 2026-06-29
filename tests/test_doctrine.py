@@ -58,7 +58,10 @@ async def seeded_doctrine() -> AsyncGenerator[str]:
             row = await cur.fetchone()
             assert row is not None
             cid = row[0]
-            holdings = '[{"point": "duty of care", "quote": "ordered the state to act", "verified": true}]'
+            holdings = (
+                '[{"point": "duty of care", "quote": "ordered the state to act", '
+                '"verified": true}]'
+            )
             await cur.execute(
                 "INSERT INTO case_doctrine (case_id, disposition_outcome, disposition_quote, "
                 "holdings, legal_bases, significance, source_kind, model, quotes_total, "
