@@ -77,6 +77,26 @@ def build_mcp() -> FastMCP:
     ) -> dict[str, object] | None:
         return await _get_case(case_id_or_sabin_id, include_documents=include_documents)
 
+    from server.tools.doctrine import get_case_doctrine as _get_case_doctrine
+
+    @mcp.tool(
+        name="get_case_doctrine",
+        description=(
+            "Return the structured, verifiable DOCTRINE of a case (where one has been "
+            "extracted): disposition + procedural posture, the key holdings (each with a "
+            "verbatim supporting quote and a `verified` flag), the legal test applied, the "
+            "legal bases, the relief, and a one-line significance. Provenance includes the "
+            "model and a quotes_verified/quotes_total score — every quoted element was checked "
+            "verbatim against the source; `significance` is interpretive synthesis. Rely on "
+            "verified quotes; treat unverified ones as paraphrase. Returns {available:false} "
+            "when no record exists yet."
+        ),
+    )
+    async def get_case_doctrine_tool(  # pyright: ignore[reportUnusedFunction]
+        case_id_or_sabin_id: str,
+    ) -> dict[str, object] | None:
+        return await _get_case_doctrine(case_id_or_sabin_id)
+
     from server.tools.documents import get_document_text as _get_document_text
 
     @mcp.tool(
