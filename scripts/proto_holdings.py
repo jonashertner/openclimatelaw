@@ -193,9 +193,8 @@ def render(title: str, citation: str, d: dict[str, Any], summary: str) -> tuple[
         out.append(f"\n  RELIEF: {rel.get('relief')}")
         out.append(f'      {_mark(q, summary)} "{q[:110]}"')
 
-    out.append(
-        f"\n  SIGNIFICANCE: {d.get('significance')}  \033[2m(synthesis — unverified by design)\033[0m"
-    )
+    synth = "\033[2m(synthesis — unverified by design)\033[0m"
+    out.append(f"\n  SIGNIFICANCE: {d.get('significance')}  {synth}")
     out.append(f"\n  → quote verification: {verified}/{checked} verbatim-grounded")
     return "\n".join(out), checked, verified
 
