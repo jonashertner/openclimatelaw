@@ -124,19 +124,26 @@ verbatim statute text.
 
 ---
 
-## Beat 3.5 — Own the gaps (especially for Maria) · ~1 min
+## Beat 3.5 — The international / advisory-opinion stream (especially for Maria) · ~1 min
 
 Maria Antonia Tigre's published specialty is **advisory opinions in international law** — she may well
-test for them. **Get ahead of it before she does:**
-- *"Our Global-South and national coverage is real"* — `search_cases(jurisdiction="BR")` surfaces
-  Brazil's PSB v. Brazil (the Climate Fund ADPF); `jurisdiction="ZA"` surfaces #CancelCoal — the cases
-  she works on are here, with `outcome` and `principal_laws`.
-- *"But the **2024–25 international advisory opinions — ICJ, ITLOS, IACtHR OC-32/25 — are not yet in.**
-  They live in your separate international/multilateral stream, not the litigation feed we mirrored.
-  They'd be our **first priority** to add, and we'd want to do it with your guidance."*
+test for them, so **be precise; an inaccurate "we don't have it" would be worse than any gap.**
+- **The ICJ advisory opinion IS here** — `Sabin.family.18913.0` ("Request for an advisory opinion on
+  the obligations of States…", 23 Jul 2025), **52 documents, 26 with full text.** Its text is
+  retrievable. *(Dry-run `find_relevant_passage` on it the morning of; international judgments can
+  `no_match` — if so, fall back to `get_document_text`.)*
+- **The honest nuance is discoverability, not absence:** it's filed as a "Request for an advisory
+  opinion," and a natural query like *"ICJ advisory opinion on climate change"* surfaces **commentary
+  about it above the record itself.** Frame as: *"we'd love your guidance on how the international /
+  advisory-opinion stream should surface."*
+- **Genuinely thin:** the **ITLOS** opinion and the **newest IACtHR OC (OC-32/25)** appear only as
+  commentary stubs — these we'd **prioritise**, with your direction.
+- **Global-South strength (her other focus):** `search_cases(jurisdiction="BR")` → 358 cases incl.
+  *PSB v. Brazil (Climate Fund ADPF)*; `jurisdiction="ZA"` → *#CancelCoal* — with `outcome` +
+  `principal_laws`.
 
-Turning the one gap she's most likely to find into proof we're careful and collaborative is worth more
-than any beat that lands.
+"We have your most-cited 2025 opinion; help us surface the stream better" lands far better than an
+apology for a gap that isn't really one.
 
 ## Beat 4 — Cross-jurisdiction discovery · ~2 min
 
@@ -224,8 +231,9 @@ else follows your lead.
   fine to mention recency but **don't dwell**, and don't claim "newest *decided*."
 - **Long descriptive name queries** — *"KlimaSeniorinnen Switzerland European Court of Human Rights"*
   surfaces the wrong cases; **use the short canonical name** ("KlimaSeniorinnen").
-- **International advisory opinions** (ICJ / ITLOS / IACtHR) — **absent.** Don't promise them (it's
-  an ask, not a feature).
+- **International advisory opinions** — the **ICJ AO IS in** (`Sabin.family.18913.0`, 52 docs, 26 with
+  text) but **discoverability is poor**; ITLOS / the newest IACtHR OC are thin commentary stubs. Do
+  **not** say "absent" — frame as discoverability + a collaboration ask (Beat 3.5).
 - **Duplicate flagship records** — *Held v. State* and *Massachusetts v. EPA* have multiple family
   IDs; the #1-by-name can be a thinner variant. **Pull flagships by a pinned, dry-run-confirmed ID.**
 
