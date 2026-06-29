@@ -132,6 +132,55 @@ async def test_attest_flags_mixed_delimiter_quote(upserted_urgenda_id: str) -> N
 
 
 @pytest.mark.asyncio
+async def test_attest_flags_fabricated_quote_with_no_nearby_citation(
+    upserted_urgenda_id: str,
+) -> None:
+    # No citation anywhere in the draft — the quote must STILL be audited (decoupled
+    # from citation proximity). This was the false-negative hole the audit found.
+    draft = (
+        'The court declared: "the State must pay five billion euros in immediate '
+        'climate reparations to every citizen of the realm forthwith."'
+    )
+    result = await attest_response(draft, [upserted_urgenda_id])
+    assert result["passed"] is False
+    assert any(v["category"] == "quote" for v in result["violations"])
+
+
+@pytest.mark.asyncio
+async def test_attest_flags_fabricated_uk_neutral_citation(
+    upserted_urgenda_id: str,
+) -> None:
+    draft = "See Plan B Earth v Prime Minister [2099] EWHC 9999 (Admin), binding authority."
+    result = await attest_response(draft, [upserted_urgenda_id])
+    assert result["passed"] is False
+    assert any(v.get("format") == "uk_neutral" for v in result["violations"])
+
+
+@pytest.mark.asyncio
+async def test_attest_passes_quote_from_document_text(
+    upserted_urgenda_id: str,
+) -> None:
+    # A verbatim quote that appears only in the DECISION document (not the summary)
+    # must verify — the quote rail now loads document text, not just summaries.
+    pool = await get_pool()
+    sentence = (
+        "This precise operative sentence appears only in the decision document "
+        "and nowhere in the case summary."
+    )
+    async with pool.connection() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                "INSERT INTO document (case_id, category_code, title, upstream_url, text) "
+                "VALUES (%s::uuid, 'opinion', 'Test Decision', 'https://example.org/d', %s)",
+                (upserted_urgenda_id, f"Preamble text. {sentence} Concluding text."),
+            )
+        await conn.commit()
+    draft = f'In ECLI:NL:HR:2019:2007 the court held: "{sentence}"'
+    result = await attest_response(draft, [upserted_urgenda_id])
+    assert result["passed"] is True, result["violations"]
+
+
+@pytest.mark.asyncio
 async def test_attest_passes_verbatim_quote_with_zero_width_char(
     upserted_urgenda_id: str,
 ) -> None:

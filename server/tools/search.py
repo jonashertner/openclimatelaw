@@ -36,6 +36,7 @@ _QUERY_EMBEDDER = None  # lazily loaded SentenceTransformer
 _EMBEDDER_LOCK = threading.Lock()
 
 _VALID_SORTS = ("relevance", "newest", "oldest")
+_VALID_STATUSES = ("decided", "filed", "settled")
 
 # Allowlisted ORDER BY clauses. Declared LiteralString so the assembled SQL
 # stays a LiteralString (psycopg's typed execute rejects a runtime str) — never
@@ -211,11 +212,11 @@ _SEARCH_SQL_HEAD: LiteralString = """
                         )
                         AND (%(status)s::text IS NULL OR c.status_code = %(status)s::text)
                         AND (
-                            %(claim_type)s::text IS NULL
+                            %(claim_type_like)s::text IS NULL
                             OR EXISTS (
                                 SELECT 1 FROM case_claim_type cct
                                 WHERE cct.case_id = c.id
-                                  AND cct.claim_type_code = %(claim_type)s::text
+                                  AND cct.claim_type_code ILIKE %(claim_type_like)s::text
                             )
                         )
                         AND (
@@ -266,6 +267,21 @@ async def search_cases(
     """
     if sort not in _VALID_SORTS:
         raise ValueError(f"invalid sort: {sort!r}; expected one of {list(_VALID_SORTS)}")
+
+    if status is not None:
+        status = status.strip().lower() or None
+    if status is not None and status not in _VALID_STATUSES:
+        raise ValueError(
+            f"invalid status: {status!r}; expected one of {list(_VALID_STATUSES)} — this is "
+            "case posture, not the result; use outcome_code for plaintiff_won/defendant_won"
+        )
+    # Forgiving claim_type: map natural language to the hyphenated slug via a contains
+    # match, so 'public trust' finds 'public-trust-claims-us' instead of silently zeroing.
+    claim_type_like = (
+        "%" + re.sub(r"[^a-z0-9]+", "%", claim_type.lower()).strip("%") + "%"
+        if claim_type
+        else None
+    )
 
     _validate_iso_date("decided_after", decided_after)
     _validate_iso_date("decided_before", decided_before)
@@ -319,7 +335,7 @@ async def search_cases(
                     "name_token": _name_token(query) if not browse else None,
                     "browse": browse,
                     "jurisdiction": jurisdiction,
-                    "claim_type": claim_type,
+                    "claim_type_like": claim_type_like,
                     "status": status,
                     "decided_after": decided_after,
                     "decided_before": decided_before,

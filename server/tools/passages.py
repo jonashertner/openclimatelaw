@@ -43,6 +43,7 @@ _STOP = {
 }
 _MIN_COVERAGE = 0.4  # refuse to pinpoint below this claim-token coverage (lexical arm)
 _VEC_FLOOR = 0.5  # cosine similarity to accept a semantic pinpoint (SQL prefilter == gate)
+_LEX_FULL = 0.5  # ts_rank at/above which a lexical match counts as full confidence
 
 
 def _tokens(s: str) -> set[str]:
@@ -53,6 +54,21 @@ def _coverage(claim_tokens: set[str], passage: str) -> float:
     if not claim_tokens:
         return 0.0
     return len(claim_tokens & _tokens(passage)) / len(claim_tokens)
+
+
+def _confidence(coverage: float, lexical_rank: float, vec_sim: float) -> float:
+    """Calibrated [0,1] confidence in a pinpoint match.
+
+    Token *coverage* alone is presence, not quality — a single common claim word found
+    in a passage scores coverage 1.0 and used to report confidence 1.0. So: when a
+    semantic match clears the floor, use the (well-scaled) cosine; otherwise confidence
+    is the WEAKER of coverage and a normalised lexical rank, so an incidental token
+    match no longer reads as certainty.
+    """
+    if vec_sim >= _VEC_FLOOR:
+        return round(vec_sim, 3)
+    lex_norm = min(1.0, lexical_rank / _LEX_FULL)
+    return round(min(coverage, lex_norm), 3)
 
 
 async def _resolve_case_id(cur: Any, case_id_or_sabin_id: str) -> str | None:
@@ -172,6 +188,7 @@ async def find_relevant_passage(
     for r in rows:
         coverage = _coverage(claim_tokens, r[4])
         vec_sim = float(r[6]) if r[6] is not None else 0.0
+        lexrank = float(r[5]) if r[5] is not None else 0.0
         if coverage < _MIN_COVERAGE and vec_sim < _VEC_FLOOR:
             continue
         matches.append(
@@ -181,9 +198,9 @@ async def find_relevant_passage(
                 "char_start": r[2],
                 "char_end": r[3],
                 "text": r[4],
-                "lexical_rank": float(r[5]) if r[5] is not None else 0.0,
+                "lexical_rank": lexrank,
                 "semantic_similarity": round(vec_sim, 3),
-                "confidence": round(max(coverage, vec_sim), 3),
+                "confidence": _confidence(coverage, lexrank, vec_sim),
                 "highlighted_snippet": r[7],
                 "citation_string": citation,
             }

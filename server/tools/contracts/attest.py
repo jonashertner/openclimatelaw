@@ -8,9 +8,10 @@ from server.tools.contracts.citation_formats import find_citation_spans
 # A quoted span is "load-bearing" at this length; shorter quotes are too common
 # (defined terms, single words) to audit without false positives.
 _MIN_QUOTE_CHARS = 40
-# A quote is only audited if a citation sits within this many characters — so we
-# don't flag legitimate quotes of non-legal text that carry no authority claim.
-_AUTHORITY_RADIUS = 280
+# Bounds on retrieved document text loaded to verify quotes, per attest call, so a
+# huge docket (hundreds of filings) can't blow up memory/latency.
+_DOC_TEXT_PER_DOC = 1_200_000
+_DOC_TEXT_MAX_DOCS = 25
 
 # Single straight-quote pattern, no upper bound (a long fabricated quote must not
 # escape). Curly/guillemet delimiters are folded to straight before matching, so
@@ -57,9 +58,9 @@ async def attest_response(
 
     Rail 1 (citation): every citation-shaped string (ECLI, BVerfGE, BGE, US reporter)
     must appear in the citation_strings of `retrieved_ids`.
-    Rail 2 (quote, when `audit_quotes`): every quoted span of >=40 chars sitting within
-    280 chars of a citation must appear verbatim (normalised) in a retrieved case's
-    summary — the only verbatim source the LLM can retrieve (matches contract R2).
+    Rail 2 (quote, when `audit_quotes`): every quoted span of >=40 chars must appear
+    verbatim (normalised) in a retrieved case's summary OR its document text — regardless
+    of whether a citation sits nearby (matches contract R2).
 
     Returns:
         {
@@ -74,6 +75,7 @@ async def attest_response(
     cit_spans = find_citation_spans(draft_text)
     retrieved_citation_texts: set[str] = set()
     summaries: list[str] = []
+    doc_texts: list[str] = []
     if retrieved_ids:
         pool = await get_pool()
         async with pool.connection() as conn:
@@ -95,6 +97,17 @@ async def attest_response(
                         (retrieved_ids, retrieved_ids),
                     )
                     summaries = [r[0] for r in await cur.fetchall()]
+                    # Also load (bounded) decision text so legitimate quotes lifted from
+                    # an opinion verify — not just quotes that happen to be in the summary.
+                    await cur.execute(
+                        "SELECT left(d.text, %s) FROM document d "
+                        "JOIN case_record c ON c.id = d.case_id "
+                        "WHERE (c.id::text = ANY(%s) OR c.sabin_id = ANY(%s)) "
+                        "AND d.text IS NOT NULL "
+                        "ORDER BY length(d.text) DESC LIMIT %s",
+                        (_DOC_TEXT_PER_DOC, retrieved_ids, retrieved_ids, _DOC_TEXT_MAX_DOCS),
+                    )
+                    doc_texts = [r[0] for r in await cur.fetchall()]
 
     for span in cit_spans:
         if any(span.text in cs for cs in retrieved_citation_texts):
@@ -111,14 +124,8 @@ async def attest_response(
 
     # ---- Rail 2: verbatim quotes ----------------------------------------------------
     if audit_quotes:
-        source_pool = _normalise(" \n ".join(summaries))
+        source_pool = _normalise(" \n ".join(summaries + doc_texts))
         for inner, qs, qe in _extract_quotes(draft_text):
-            near = any(
-                s.start <= qe + _AUTHORITY_RADIUS and s.end >= qs - _AUTHORITY_RADIUS
-                for s in cit_spans
-            )
-            if not near:
-                continue
             if source_pool and _normalise(inner) in source_pool:
                 continue
             violations.append(
@@ -126,7 +133,7 @@ async def attest_response(
                     "category": "quote",
                     "text": inner,
                     "span": [qs, qe],
-                    "reason": "quote not found verbatim in any retrieved source",
+                    "reason": "quote not found verbatim in any retrieved summary or document text",
                 }
             )
 
