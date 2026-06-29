@@ -89,7 +89,78 @@ NOTED AS *NOT* ISSUES (to pre-empt false positives)
 - The "Analysis … Part 1/2/3 of 3" stub records we ingest are from the Climate
   Rights Database (University of Zurich) — a SEPARATE source, NOT Sabin/CPR.
 
+================================================================================
+2026-06-29 UPDATE — further observations (Sabin) + a Climate Policy Radar / CCLW section
+================================================================================
+Same caveat as above: pre-relaunch mirror, validate before acting. The polished,
+shareable version of all of this lives in docs/demo/data-quality-report.md.
+
+ADDITIONAL SABIN (litigation) observations:
+
+[8]  STATUS_CODE DISAGREES WITH metadata.status. Cases at a higher court read
+     status_code="decided" while upstream metadata.status says "Pending"
+     (Milieudefensie v. Shell, at the Hoge Raad) or "Dismissed" (Lliuya v. RWE).
+     => one reconciled status vocabulary + a finality flag.
+
+[9]  PROCEDURAL RULINGS TYPED AS "Decision" (broader than item [4]). Motions to
+     remand, protective orders, discovery rulings — and bare "order" events with
+     EMPTY descriptions — carry event_type="Decision", indistinguishable from a
+     merits judgment. So decision_date can be a procedural docket date (e.g.
+     Shoalwater Bay v. Exxon shows 2026-04-29 from a procedural order, merits
+     unresolved). => type events merits / procedural / execution.
+
+[10] DOCUMENT category_code OFTEN INACCURATE. Briefs, motions, notices — and a
+     "Plaintiffs' Proposed Findings of Fact" (a party submission) — tagged
+     "opinion"; many docs titled only "order" with no description. A consumer can
+     mistake a party brief for the court's ruling. => distinguish court
+     opinions/orders from party filings.
+
+[11] claim_type TAXONOMY POLLUTED. Leaked metadata keys (year, keywords, blog,
+     uncategorized, deciding-body, rights-at-stake, state-concerned, country names)
+     mixed with real claim types; plus overlaps at multiple granularities
+     (public-trust-claims-us vs public-trust-global vs public-trust-doctrine).
+     => a controlled, hierarchical claim-type vocabulary.
+
+[12] principal_laws MISSES SUMMARY-STATED BASES + LEAKS JURISDICTIONS. Asmania v.
+     Holcim names Art. 28 ZGB / Art. 41 OR in its summary but has no principal_laws;
+     "principal_law/United States" appears beside "jurisdiction/United States".
+     => tighten concept extraction; keep jurisdictions out of principal-law.
+
+NOTE on items [5]-[6] above (outcome / parties): we have since DERIVED both as a
+demonstration — outcomes via a confidence-gated, quote-verified LLM classifier
+anchored to the latest disposition; parties by caption parsing — labeled as OURS
+(provenance), never as yours. A structured upstream field would still be valuable.
+
+
+CLIMATE POLICY RADAR — Climate Change Laws of the World (CCLW) observations
+(from ingesting the open ClimatePolicyRadar/all-document-text-data "Laws and
+Policies" corpus, 5,347 laws / ~200 jurisdictions, and bridging it to litigation):
+
+[C1] "LAWS AND POLICIES" IS PREDOMINANTLY NON-STATUTORY. Statutes/regulations are
+     mixed with policies, plans, strategies, NDCs; the instrument type isn't exposed
+     so a consumer can't filter "actual statutes". => an instrument-type field
+     (statute / regulation / policy / strategy).
+
+[C2] GENERAL STATUTES THAT CLIMATE LITIGATION TURNS ON ARE LARGELY ABSENT. The US
+     Clean Air Act, NEPA, ESA, APA are not in CCLW (which focuses on climate-specific
+     framework laws), so a case<->law bridge can't connect US cases to the laws they
+     invoke. => note the scope, or extend coverage.
+
+[C3] MULTILINGUAL STATUTES INTERLEAVE ALL LANGUAGES IN ONE DOCUMENT. e.g. the South
+     Africa Climate Change Act 2024 interleaves all 11 official languages; reading by
+     offset lands in the wrong language. => per-language segmentation / a language
+     field per segment.
+
+[C4] THE CASE<->LAW CONCEPT MAPPING ISN'T PUBLISHED. CPR's internal annotations
+     linking cases to the laws they cite would make the litigation<->legislation
+     bridge comprehensive (we match by exact title + jurisdiction today — high
+     precision, partial: ~145 links). => share the concept mapping + import_ids.
+
+[C5] NON-ISO GEOGRAPHY CODES (XKX Kosovo, EUR EU-wide, XAA) need special handling.
+     => document the code set.
+
 --------------------------------------------------------------------------------
 We're glad to share the exact queries / record IDs behind any of these, or to
-contribute fixes (a dedup pass, a date-precision flag, an execution-event category).
+contribute fixes (a dedup pass, a date-precision flag, an event-type category, an
+OCR-text fallback, party parsing).
 ================================================================================
