@@ -3,8 +3,14 @@ from typing import Any
 from server.db import get_pool
 
 
-async def get_case(case_id_or_sabin_id: str) -> dict[str, Any] | None:
-    """Return a case record by canonical UUID or by Sabin ID, or None if not found."""
+async def get_case(
+    case_id_or_sabin_id: str, include_documents: bool = True
+) -> dict[str, Any] | None:
+    """Return a case record by canonical UUID or by Sabin ID, or None if not found.
+
+    Pass include_documents=False to omit the (often large) documents array and return
+    only document_count — much lighter for an LLM that just needs the record + holding.
+    """
 
     pool = await get_pool()
     async with pool.connection() as conn:
@@ -62,27 +68,34 @@ async def get_case(case_id_or_sabin_id: str) -> dict[str, Any] | None:
             )
             claim_types = [r[0] for r in await cur.fetchall()]
 
-            await cur.execute(
-                """
-                SELECT id, category_code, title, filed_date, filed_by, upstream_url, storage_url
-                FROM document
-                WHERE case_id = %s
-                ORDER BY filed_date NULLS LAST, title
-                """,
-                (str(_id),),
-            )
-            documents = [
-                {
-                    "id": str(r[0]),
-                    "category_code": r[1],
-                    "title": r[2],
-                    "filed_date": r[3].isoformat() if r[3] else None,
-                    "filed_by": r[4],
-                    "upstream_url": r[5],
-                    "storage_url": r[6],
-                }
-                for r in await cur.fetchall()
-            ]
+            if include_documents:
+                await cur.execute(
+                    """
+                    SELECT id, category_code, title, filed_date, filed_by, upstream_url, storage_url
+                    FROM document
+                    WHERE case_id = %s
+                    ORDER BY filed_date NULLS LAST, title
+                    """,
+                    (str(_id),),
+                )
+                documents = [
+                    {
+                        "id": str(r[0]),
+                        "category_code": r[1],
+                        "title": r[2],
+                        "filed_date": r[3].isoformat() if r[3] else None,
+                        "filed_by": r[4],
+                        "upstream_url": r[5],
+                        "storage_url": r[6],
+                    }
+                    for r in await cur.fetchall()
+                ]
+                document_count = len(documents)
+            else:
+                await cur.execute("SELECT count(*) FROM document WHERE case_id = %s", (str(_id),))
+                row = await cur.fetchone()
+                document_count = int(row[0]) if row else 0
+                documents = []
 
             await cur.execute(
                 "SELECT lang, format, text FROM citation_string"
@@ -136,6 +149,7 @@ async def get_case(case_id_or_sabin_id: str) -> dict[str, Any] | None:
         "linked_statutes": linked_statutes,
         "parties": parties,
         "claim_types": claim_types,
+        "document_count": document_count,
         "documents": documents,
         "citation_strings": citation_strings,
         "upstream_metadata": upstream_metadata,

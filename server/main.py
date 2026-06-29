@@ -65,15 +65,17 @@ def build_mcp() -> FastMCP:
     @mcp.tool(
         name="get_case",
         description=(
-            "Return a full case record by canonical UUID or by Sabin ID. "
-            "Includes parties, claim types, documents (with upstream URLs), "
-            "citation strings, and field-level provenance. Returns null when no case matches."
+            "Return a full case record by canonical UUID or by Sabin ID. Includes "
+            "outcome_code, parties, claim types, linked_statutes, documents (with upstream "
+            "URLs), citation strings, and field-level provenance. Returns null when no case "
+            "matches. Pass include_documents=false to omit the (often large) documents array "
+            "and get only document_count — much lighter when you just need the record."
         ),
     )
     async def get_case_tool(  # pyright: ignore[reportUnusedFunction]
-        case_id_or_sabin_id: str,
+        case_id_or_sabin_id: str, include_documents: bool = True
     ) -> dict[str, object] | None:
-        return await _get_case(case_id_or_sabin_id)
+        return await _get_case(case_id_or_sabin_id, include_documents=include_documents)
 
     from server.tools.documents import get_document_text as _get_document_text
 

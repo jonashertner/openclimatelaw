@@ -369,27 +369,35 @@ async def search_cases(
             )
             rows = await cur.fetchall()
 
-    results = [
-        {
-            "id": r[0],
-            "sabin_id": r[1],
-            "canonical_title": r[2],
-            "jurisdiction_code": r[3],
-            "court_id": r[4],
-            "status_code": r[5],
-            "outcome_code": r[6],
-            "filing_date": r[7].isoformat() if r[7] else None,
-            "decision_date": r[8].isoformat() if r[8] else None,
-            "summary_excerpt": r[9],
-            "match_snippet": r[10],
-            "citation_string": r[11],
-            "fts_rank": float(r[12]) if r[12] is not None else 0.0,
-            "trigram_sim": float(r[13]) if r[13] is not None else 0.0,
-            "vector_sim": float(r[14]) if r[14] is not None else None,
-            "rank": float(r[15]) if r[15] is not None else 0.0,
-        }
-        for r in rows
-    ]
+    results = []
+    for r in rows:
+        trigram = float(r[13]) if r[13] is not None else 0.0
+        vector = float(r[14]) if r[14] is not None else None
+        results.append(
+            {
+                "id": r[0],
+                "sabin_id": r[1],
+                "canonical_title": r[2],
+                "jurisdiction_code": r[3],
+                "court_id": r[4],
+                "status_code": r[5],
+                "outcome_code": r[6],
+                "filing_date": r[7].isoformat() if r[7] else None,
+                "decision_date": r[8].isoformat() if r[8] else None,
+                "summary_excerpt": r[9],
+                "match_snippet": r[10],
+                "citation_string": r[11],
+                "fts_rank": float(r[12]) if r[12] is not None else 0.0,
+                "trigram_sim": trigram,
+                "vector_sim": vector,
+                "rank": float(r[15]) if r[15] is not None else 0.0,
+                # A real title/party match or a strong semantic match — distinguishes a
+                # genuine hit from a keyword-presence FTS match (which can score high yet
+                # be off-topic). When no result is high_confidence, the query likely has
+                # no good match in the corpus.
+                "high_confidence": trigram >= 0.4 or (vector is not None and vector >= 0.5),
+            }
+        )
 
     total = int(rows[0][16]) if rows else 0
 

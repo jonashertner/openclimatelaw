@@ -100,12 +100,20 @@ async def _compute_groups(cur: Any, scope: str, group_by: str) -> list[dict[str,
         )
         return [{"key": r[0], "count": r[1]} for r in await cur.fetchall()]
     if group_by == "claim_type":
+        # Non-claim metadata keys leaked into case_claim_type from the upstream concept
+        # namespace; exclude them so the dimension is analytically usable.
+        deny = (
+            "cct.claim_type_code NOT IN ('year', 'keywords', 'blog', 'uncategorized', "
+            "'deciding-body', 'rights-at-stake', 'state-concerned', 'jurisdiction', "
+            "'principal-law', 'geography', 'case-categories', 'at-issue')"
+        )
+        where = f"{scope_filter} AND {deny}" if scope_filter else f"WHERE {deny}"
         await cur.execute(
             f"""
             SELECT cct.claim_type_code, count(*) as n
             FROM case_claim_type cct
             JOIN case_record c ON c.id = cct.case_id
-            {scope_filter}
+            {where}
             GROUP BY cct.claim_type_code
             ORDER BY n DESC, cct.claim_type_code
             """
