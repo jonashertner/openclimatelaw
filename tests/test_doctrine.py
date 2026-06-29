@@ -45,6 +45,34 @@ def test_pack_counts_verification() -> None:
     assert holdings[1]["verified"] is False
 
 
+def test_pack_rejects_string_holdings() -> None:
+    # the model occasionally returns `holdings` as a string; iterating it must NOT
+    # explode into one char-holding per character (the City of Hoboken bug: 2,789 holdings).
+    import json
+
+    d = {
+        "disposition": {"outcome": "na", "posture": "x", "quote": "y"},
+        "holdings": "a string, not a list",
+        "legal_bases": [],
+        "significance": "s",
+    }
+    row = pack(d, _POOL)
+    assert json.loads(row["holdings"]) == []
+
+
+def test_pack_caps_holdings() -> None:
+    import json
+
+    d = {
+        "disposition": {"outcome": "na", "posture": "x", "quote": "y"},
+        "holdings": [{"point": f"h{i}", "quote": ""} for i in range(50)],
+        "legal_bases": [],
+        "significance": "s",
+    }
+    row = pack(d, _POOL)
+    assert len(json.loads(row["holdings"])) <= 8
+
+
 @pytest.fixture
 async def seeded_doctrine() -> AsyncGenerator[str]:
     pool = await get_pool()

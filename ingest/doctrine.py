@@ -30,6 +30,7 @@ log = structlog.get_logger("ingest.doctrine")
 MODEL = "claude-sonnet-4-6"
 _DOC_PER = 80_000  # cap per document
 _DOC_DOCS = 3  # number of (longest) text documents to include
+_MAX_HOLDINGS = 8  # guard against degenerate over-extraction (the prompt asks for 2-4)
 _FOLD = {0x201C: '"', 0x201D: '"', 0x2018: "'", 0x2019: "'", 0x2013: "-", 0x2014: "-"}
 
 
@@ -175,7 +176,11 @@ def pack(d: dict[str, Any], pool_norm: str) -> dict[str, Any]:
 
     check(disp.get("quote"))
     holdings = []
-    for h in d.get("holdings") or []:
+    # Guard: the model occasionally returns `holdings` as a string — iterating that
+    # would yield one char-"holding" per character. Only iterate a real list, capped.
+    raw_holdings = d.get("holdings")
+    raw_holdings = raw_holdings if isinstance(raw_holdings, list) else []
+    for h in raw_holdings[:_MAX_HOLDINGS]:
         h = h if isinstance(h, dict) else {"point": str(h), "quote": ""}
         holdings.append(
             {"point": h.get("point"), "quote": h.get("quote"), "verified": check(h.get("quote"))}
