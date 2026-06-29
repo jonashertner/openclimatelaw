@@ -130,61 +130,57 @@ async def backfill_outcomes(
 
     client = anthropic.Anthropic(api_key=_key())
     pool = await get_pool()
-    async with pool.connection() as conn:
-        async with conn.cursor() as cur:
-            await cur.execute(
-                "SELECT id::text, summary FROM case_record "
-                "WHERE status_code = 'decided' AND outcome_code IS NULL "
-                "AND summary IS NOT NULL AND length(summary) > 0 ORDER BY id LIMIT %s",
-                (limit,),
+    async with pool.connection() as conn, conn.cursor() as cur:
+        await cur.execute(
+            "SELECT id::text, summary FROM case_record "
+            "WHERE status_code = 'decided' AND outcome_code IS NULL "
+            "AND summary IS NOT NULL AND length(summary) > 0 ORDER BY id LIMIT %s",
+            (limit,),
+        )
+        rows = await cur.fetchall()
+
+    sem = asyncio.Semaphore(max(1, concurrency))
+    counters = {"written": 0, "skipped": 0}
+
+    async def process(case_id: str, summary: str) -> None:
+        async with sem:
+            try:
+                verdict = await asyncio.to_thread(classify_outcome, client, summary)
+            except Exception as e:
+                log.warning("classify_error", case_id=case_id, error=repr(e)[:120])
+                counters["skipped"] += 1
+                return
+        if not accept(verdict, summary):
+            counters["skipped"] += 1
+            return
+        if dry_run:
+            counters["written"] += 1
+            return
+        prov = json.dumps(
+            {
+                "source": "llm",
+                "model": MODEL,
+                "confidence": verdict.get("confidence"),
+                "supporting_quote": (verdict.get("supporting_quote") or "")[:500],
+            }
+        )
+        # Write each verdict immediately on a short-lived connection, so progress
+        # persists incrementally and the run is resumable after any interruption.
+        async with pool.connection() as wconn, wconn.cursor() as wcur:
+            await wcur.execute(
+                "UPDATE case_record SET outcome_code = %s, "
+                "provenance = provenance || jsonb_build_object('outcome_code', %s::jsonb) "
+                "WHERE id::text = %s",
+                (verdict["outcome_code"], prov, case_id),
             )
-            rows = await cur.fetchall()
+            await wconn.commit()
+        counters["written"] += 1
+        if counters["written"] % 50 == 0:
+            log.info("progress", **counters)
 
-        sem = asyncio.Semaphore(max(1, concurrency))
-
-        async def classify_one(
-            case_id: str, summary: str
-        ) -> tuple[str, str, dict[str, Any] | None]:
-            async with sem:
-                try:
-                    return (
-                        case_id,
-                        summary,
-                        await asyncio.to_thread(classify_outcome, client, summary),
-                    )
-                except Exception as e:
-                    log.warning("classify_error", case_id=case_id, error=repr(e)[:120])
-                    return case_id, summary, None
-
-        verdicts = await asyncio.gather(*[classify_one(cid, s) for cid, s in rows])
-
-        written = skipped = 0
-        for case_id, summary, verdict in verdicts:
-            if verdict is None or not accept(verdict, summary):
-                skipped += 1
-                continue
-            if dry_run:
-                written += 1
-                continue
-            prov = json.dumps(
-                {
-                    "source": "llm",
-                    "model": MODEL,
-                    "confidence": verdict.get("confidence"),
-                    "supporting_quote": (verdict.get("supporting_quote") or "")[:500],
-                }
-            )
-            async with conn.cursor() as cur:
-                await cur.execute(
-                    "UPDATE case_record SET outcome_code = %s, "
-                    "provenance = provenance || jsonb_build_object('outcome_code', %s::jsonb) "
-                    "WHERE id::text = %s",
-                    (verdict["outcome_code"], prov, case_id),
-                )
-            await conn.commit()
-            written += 1
-    log.info("outcome_complete", written=written, skipped=skipped, scanned=len(rows))
-    return {"written": written, "skipped": skipped, "scanned": len(rows)}
+    await asyncio.gather(*[process(cid, s) for cid, s in rows])
+    log.info("outcome_complete", scanned=len(rows), **counters)
+    return {"written": counters["written"], "skipped": counters["skipped"], "scanned": len(rows)}
 
 
 def main() -> int:
