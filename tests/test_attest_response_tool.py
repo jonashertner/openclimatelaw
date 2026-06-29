@@ -147,6 +147,32 @@ async def test_attest_flags_fabricated_quote_with_no_nearby_citation(
 
 
 @pytest.mark.asyncio
+async def test_attest_flags_doubled_single_quote_delimiter(
+    upserted_urgenda_id: str,
+) -> None:
+    # Doubled curly-single quotes used as a double-quote delimiter must not bypass the
+    # rail (the false-negative the adversarial review found).
+    fake = "the State must reduce emissions by ninety-five percent within five years"
+    dq = chr(0x2019) * 2  # doubled right-single-quote used as a double-quote delimiter
+    draft = f"The court reasoned that {dq}{fake}{dq} and rejected all objections."
+    result = await attest_response(draft, [upserted_urgenda_id])
+    assert result["passed"] is False
+    assert any(v["category"] == "quote" for v in result["violations"])
+
+
+@pytest.mark.asyncio
+async def test_attest_flags_curly_open_doubled_single_close(
+    upserted_urgenda_id: str,
+) -> None:
+    # Opening curly-double quote, closing doubled curly-single.
+    fake = "the State must reduce emissions by ninety-five percent within five years"
+    draft = f"The court held: {chr(0x201C)}{fake}{chr(0x2019) * 2}"
+    result = await attest_response(draft, [upserted_urgenda_id])
+    assert result["passed"] is False
+    assert any(v["category"] == "quote" for v in result["violations"])
+
+
+@pytest.mark.asyncio
 async def test_attest_flags_fabricated_uk_neutral_citation(
     upserted_urgenda_id: str,
 ) -> None:

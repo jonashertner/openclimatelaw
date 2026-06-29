@@ -170,6 +170,25 @@ def build_mcp() -> FastMCP:
     ) -> dict[str, object]:
         return await _attest_response(draft_text=draft_text, retrieved_ids=retrieved_ids)
 
+    from server.tools.grounding_judge import verify_grounding as _verify_grounding
+
+    @mcp.tool(
+        name="verify_grounding",
+        description=(
+            "Semantic grounding check that complements attest_response: an LLM judge reads "
+            "the draft against the retrieved cases' summaries + citations and flags assertions "
+            "the sources do NOT support — fabricated case NAMES, holdings/outcomes not in the "
+            "summary, and unsupported facts (what the regex citation/quote rails cannot catch). "
+            "Returns {available, supported, unsupported_claims:[{claim, issue, explanation}]}. "
+            "Advisory; pair with attest_response before finalizing. (available=false if the "
+            "server has no LLM key configured.)"
+        ),
+    )
+    async def verify_grounding_tool(  # pyright: ignore[reportUnusedFunction]
+        draft_text: str, retrieved_ids: list[str]
+    ) -> dict[str, object]:
+        return await _verify_grounding(draft_text=draft_text, retrieved_ids=retrieved_ids)
+
     from server.tools.citations import find_citations as _find_citations
     from server.tools.citations import find_cited_by as _find_cited_by
 

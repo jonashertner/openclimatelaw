@@ -40,12 +40,14 @@ def _normalise(s: str) -> str:
 
 
 def _extract_quotes(text: str) -> list[tuple[str, int, int]]:
-    # Fold double-quote delimiters to straight quotes first (1:1 codepoint
-    # substitution preserves offsets), so mixed straight/curly pairs are matched.
-    folded = text.translate(_FOLD)
+    # Fold double-quote delimiters to straight quotes, then collapse a doubled single
+    # quote (two single quotes) -- a frequent smart-quote artifact for a double quote --
+    # to one straight double quote, so doubled-single and curly-mixed delimiters cannot
+    # bypass the rail. Offsets are folded-relative (advisory); the body is what's audited.
+    folded = re.sub(r"'{2}", '"', text.translate(_FOLD))
     out: list[tuple[str, int, int]] = []
     for m in _QUOTE_RE.finditer(folded):
-        out.append((text[m.start() + 1 : m.end() - 1], m.start(), m.end()))
+        out.append((folded[m.start() + 1 : m.end() - 1], m.start(), m.end()))
     return out
 
 
