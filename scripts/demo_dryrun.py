@@ -136,7 +136,7 @@ async def main() -> int:
         vg = await call(
             "verify_grounding",
             {
-                "draft_text": "In Urgenda the court ordered each citizen to receive 5 billion euros.",
+                "draft_text": "In Urgenda the court ordered 5 billion euros paid per citizen.",
                 "retrieved_ids": ["Sabin.family.2823.0"],
             },
         )
