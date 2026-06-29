@@ -59,6 +59,13 @@
   .badge{display:inline-flex;align-items:center;justify-content:center;width:1.9rem;height:1.9rem;border-radius:50%;background:var(--soft);color:var(--green);font-weight:800;font-size:.9rem}
   .card h3{font-family:var(--serif);font-weight:600;font-size:1.22rem;margin:.6rem 0 .35rem}
   .card p{font-size:.98rem;color:var(--muted);line-height:1.42}
+  /* doctrine record card */
+  .dcard{background:#fff;border:1px solid var(--line);border-radius:14px;padding:1.2rem 1.4rem;margin-top:.2rem;box-shadow:0 10px 28px -20px rgba(7,63,45,.4);font-size:clamp(.9rem,1.3vw,1.08rem)}
+  .dhead{font-size:.78rem;font-weight:700;letter-spacing:.07em;color:var(--green);margin-bottom:.7rem;text-transform:uppercase}
+  .drow{display:flex;gap:1.1rem;padding:.42rem 0;border-top:1px solid var(--line);line-height:1.45;color:#28332d}
+  .drow:first-of-type{border-top:none}
+  .dk{flex:0 0 6.5rem;color:var(--muted);font-weight:700;font-size:.82rem;text-transform:uppercase;letter-spacing:.04em;padding-top:.12rem}
+  .ok{color:var(--green);font-weight:800}
   /* suggestions table */
   table.sg{width:100%;border-collapse:collapse;margin-top:.5rem;font-size:clamp(.9rem,1.35vw,1.12rem)}
   table.sg th{text-align:left;font-size:.74rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700;padding:0 1.1rem .6rem 0;border-bottom:2px solid var(--line)}
@@ -187,6 +194,30 @@
       labelled as ours</i> (provenance), never presented as theirs. Each is also a patch we could
       contribute upstream. <span class="cue">For Maria/Michal:</span> outcomes + the bridge are the
       research-grade additions.</aside>
+  </section>
+
+  <!-- 5.5 · The doctrinal assistant -->
+  <section class="slide"><div class="inner">
+    <div class="eyebrow">New capability · the doctrinal assistant</div>
+    <h2>Not just <em>find</em> the case — <em>structure</em> it, verifiably.</h2>
+    <div class="dcard">
+      <div class="dhead">get_case_doctrine · ICJ Advisory Opinion on Climate (23 Jul 2025)</div>
+      <div class="drow"><span class="dk">disposition</span><span>na — International Court of Justice, advisory opinion</span></div>
+      <div class="drow"><span class="dk">holdings</span><span>
+        <span class="ok">✓</span> States bear obligations under multiple concurrent sources of international law<br>
+        <span class="ok">✓</span> Due diligence is the governing standard to prevent significant harm<br>
+        <span class="ok">✓</span> A breach incurs secondary duties — reparation — under international law</span></div>
+      <div class="drow"><span class="dk">legal test</span><span>due diligence</span></div>
+      <div class="drow"><span class="dk">provenance</span><span class="muted">claude-sonnet-4-6 · <strong>7/7 quotes verified verbatim</strong> · summary + decision text</span></div>
+    </div>
+    <p class="lead">Answers the strategic question — <strong>"has this argument worked, where, and
+      why"</strong> — every claim quote-grounded, synthesis flagged as synthesis.</p>
+  </div>
+    <aside class="notes"><b>The standout new capability — show it on a case Maria cares about.</b> This
+      turns unstructured judgments into a queryable body of doctrine: disposition, holdings (each with a
+      <i>verified</i> flag), the legal test, bases, relief. <span class="cue">The discipline:</span>
+      every quote checked verbatim; what can't be verified is flagged, not hidden — "grounded
+      synthesis." Live on the ICJ AO, KlimaSeniorinnen, Urgenda, Shell, Held, …</aside>
   </section>
 
   <!-- 6 · The bridge -->
