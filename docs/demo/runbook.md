@@ -43,9 +43,13 @@ Show a normal LLM inventing a plausible cite, then run the same draft through `a
 - **The CCLW legislation layer is LIVE** (`search_statutes` / `get_statute`) — **5,347 Climate Change
   Laws of the World laws & policies across 200 jurisdictions** ingested from CPR's open data, with full
   multilingual text. e.g. `search_statutes("renewable energy targets")` → 1,765 laws (China's 14th
-  Five-Year Plan, the EU 2020 Climate & Energy Package, …); `get_statute` returns the verbatim law
-  text. This is the joint Sabin (litigation) + CPR (legislation) value, in one grounded tool — the
-  case↔statute cross-link is the next step.
+  Five-Year Plan, the EU 2020 Climate & Energy Package, …); `get_statute` returns the verbatim law text.
+- **The case ↔ legislation link is LIVE** (`get_case.linked_statutes`) — the joint Sabin+CPR payoff in
+  one grounded path. e.g. *Friends of the Earth and Others v. Secretary of State* (GB) → parties
+  (plaintiff/defendant) → linked **Climate Change Act 2008** (`CCLW.family.1755.0`) → `get_statute` for
+  the verbatim Act. 145 high-confidence links (climate-framework cases); **92% of cases now have
+  structured parties** (was 0%). Honest scope: only named climate laws CCLW catalogs link — general
+  statutes (NEPA/Clean Air Act) don't, since CCLW doesn't catalog them.
 
 ## Beat 4 — Honesty / provenance ~1 min
 - `get_case("Sabin.family.2823.0")` → field-level provenance (`source: sabin`, `retrieved_at`), and a
