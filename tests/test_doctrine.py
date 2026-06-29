@@ -58,13 +58,14 @@ async def seeded_doctrine() -> AsyncGenerator[str]:
             row = await cur.fetchone()
             assert row is not None
             cid = row[0]
+            holdings = '[{"point": "duty of care", "quote": "ordered the state to act", "verified": true}]'
             await cur.execute(
                 "INSERT INTO case_doctrine (case_id, disposition_outcome, disposition_quote, "
-                "holdings, legal_bases, significance, source_kind, model, quotes_total, quotes_verified) "
-                "VALUES (%s::uuid, 'plaintiff_won', 'the court ordered the state to act', "
-                """'[{"point": "duty of care", "quote": "ordered the state to act", "verified": true}]'::jsonb, """
-                """'["Article 8 ECHR"]'::jsonb, 'landmark', 'case_summary', 'claude-sonnet-4-6', 1, 1)""",
-                (cid,),
+                "holdings, legal_bases, significance, source_kind, model, quotes_total, "
+                "quotes_verified) VALUES (%s::uuid, 'plaintiff_won', 'the court ordered the "
+                "state to act', %s::jsonb, %s::jsonb, 'landmark', 'case_summary', "
+                "'claude-sonnet-4-6', 1, 1)",
+                (cid, holdings, '["Article 8 ECHR"]'),
             )
         await conn.commit()
     yield cid
