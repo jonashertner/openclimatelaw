@@ -66,6 +66,17 @@
   .drow:first-of-type{border-top:none}
   .dk{flex:0 0 6.5rem;color:var(--muted);font-weight:700;font-size:.82rem;text-transform:uppercase;letter-spacing:.04em;padding-top:.12rem}
   .ok{color:var(--green);font-weight:800}
+  /* console — real tool call → result */
+  .console{background:#0f1714;border:1px solid #21342b;border-radius:12px;padding:1.05rem 1.25rem;
+    margin-top:.7rem;font-family:"SF Mono",Menlo,Monaco,"Cascadia Code",monospace;
+    font-size:clamp(.78rem,1.15vw,1rem);line-height:1.55;color:#cfe6db;white-space:pre-wrap}
+  .console .call{color:#86d6b3}
+  .console .call::before{content:"› ";color:#4e8f76}
+  .console .arrow{color:#4e8f76}
+  .console .flag{color:#ff8f8f;font-weight:700}
+  .console .ok2{color:#86d6b3;font-weight:700}
+  .console .dim{color:#7d9488}
+  .console .lit{color:#e9d9a0}
   /* suggestions table */
   table.sg{width:100%;border-collapse:collapse;margin-top:.5rem;font-size:clamp(.9rem,1.35vw,1.12rem)}
   table.sg th{text-align:left;font-size:.74rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700;padding:0 1.1rem .6rem 0;border-bottom:2px solid var(--line)}
@@ -151,6 +162,25 @@
       come back to the data slides after.</aside>
   </section>
 
+  <!-- 3.5 · The contract, demonstrated -->
+  <section class="slide"><div class="inner">
+    <div class="eyebrow">The contract, demonstrated · real output</div>
+    <h2>Watch it <em>refuse</em> to fabricate.</h2>
+    <div class="console"><span class="call">attest_response(draft, retrieved=[Urgenda])</span>
+  draft: <span class="lit">"…as held in Smith v. Exxon, 999 U.S. 1 (2030) and
+          Plan B v PM [2099] EWHC 9999 (Admin)…"</span>
+  <span class="arrow">⮑</span> passed: <span class="flag">false</span>
+     <span class="flag">✗</span> <span class="lit">999 U.S. 1</span>  <span class="dim">(us_reporter) — not in the retrieved cases</span>
+     <span class="flag">✗</span> <span class="lit">[2099] EWHC 9999 (Admin)</span>  <span class="dim">(uk_neutral) — not in the retrieved cases</span></div>
+    <p class="lead">Two planted fakes — a US reporter and a UK neutral citation — both caught. It reads
+      every major citation system, worldwide.</p>
+  </div>
+    <aside class="notes"><b>This is the headline — show it live if you can.</b> The output is real:
+      <span class="cue">passed: false</span>, both fabricated cites flagged with their format. Line:
+      "it cannot pass a draft that cites something not in your data." Pair with the grounded-retrieval
+      beat (a real verbatim quote that <i>does</i> verify) to show the other half.</aside>
+  </section>
+
   <!-- 4 · Corpus by the numbers -->
   <section class="slide"><div class="inner">
     <div class="eyebrow">The corpus — by the numbers</div>
@@ -230,8 +260,8 @@
       <div class="stat"><span class="n">88</span><span class="l">on the Public Trust Doctrine</span></div>
       <div class="stat"><span class="n">597</span><span class="l">on the Clean Air Act</span></div>
     </div>
-    <p><em>Friends of the Earth v. Secretary of State</em> → linked to the UK <strong>Climate Change Act
-      2008</strong> → full statutory text, all citation-safe.</p>
+    <div class="console"><span class="call">get_case("Friends of the Earth v. Secretary of State").linked_statutes</span>
+  <span class="arrow">⮑</span> <span class="ok2">Climate Change Act 2008</span>  <span class="dim">(CCLW.family.1755.0)</span>  →  get_statute  →  <span class="dim">verbatim Act text, citation-safe</span></div>
   </div>
     <aside class="notes"><b>~30s. The joint value + the honest disclosure.</b> Say plainly: "to build
       this we also indexed CPR's open CCLW corpus — same attribution, control, veto; we'd value your
