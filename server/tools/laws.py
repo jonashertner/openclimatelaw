@@ -21,6 +21,7 @@ _FIND_BY_LAW_SQL = """
             SELECT text FROM citation_string
             WHERE case_id = c.id AND lang = 'en' ORDER BY format LIMIT 1
         ) AS citation_string,
+        EXISTS (SELECT 1 FROM case_doctrine cd WHERE cd.case_id = c.id) AS has_doctrine,
         count(*) OVER() AS total
     FROM case_record c
     WHERE c.primary_source IS DISTINCT FROM 'climate_rights'
@@ -47,7 +48,7 @@ async def find_cases_by_law(law: str, limit: int = 20) -> dict[str, Any]:
         async with conn.cursor() as cur:
             await cur.execute(_FIND_BY_LAW_SQL, {"law": law, "limit": limit})
             rows = await cur.fetchall()
-    total = rows[0][7] if rows else 0
+    total = rows[0][8] if rows else 0
     results = [
         {
             "id": r[0],
@@ -57,6 +58,7 @@ async def find_cases_by_law(law: str, limit: int = 20) -> dict[str, Any]:
             "status_code": r[4],
             "decision_date": r[5].isoformat() if r[5] else None,
             "citation_string": r[6],
+            "has_doctrine": bool(r[7]),
         }
         for r in rows
     ]

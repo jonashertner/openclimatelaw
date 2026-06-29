@@ -1,10 +1,12 @@
+# pyright: reportPrivateUsage=false
 from collections.abc import AsyncGenerator
 
 import pytest
 
-from ingest.doctrine import _verified, pack  # pyright: ignore[reportPrivateUsage]
+from ingest.doctrine import _unverified, _verified, _verified_frac, pack
 from server.db import get_pool
 from server.tools.doctrine import get_case_doctrine
+from server.tools.search import search_cases
 
 _POOL = (
     "the court held the state has a duty of care to reduce emissions by at least 25% by "
@@ -71,6 +73,33 @@ def test_pack_caps_holdings() -> None:
     }
     row = pack(d, _POOL)
     assert len(json.loads(row["holdings"])) <= 8
+
+
+def test_unverified_and_frac() -> None:
+    d: dict[str, object] = {
+        "disposition": {
+            "outcome": "x",
+            "posture": "y",
+            "quote": "duty of care to reduce emissions",
+        },
+        "holdings": [
+            {"point": "a", "quote": "dismissed the state's appeal"},  # verifies
+            {"point": "b", "quote": "a paraphrase that is not in the source"},  # does not
+        ],
+        "legal_bases": [],
+        "significance": "s",
+    }
+    assert _unverified(d, _POOL) == ["a paraphrase that is not in the source"]
+    assert _verified_frac(d, _POOL) == 2 / 3
+
+
+@pytest.mark.asyncio
+async def test_search_exposes_has_doctrine(seeded_doctrine: str) -> None:
+    # the seeded case 'Doctrine Test v. State' has a doctrine row → has_doctrine True
+    r = await search_cases("Doctrine Test", limit=10)
+    hit = next((x for x in r["results"] if x["sabin_id"] == "tdoc-1"), None)
+    assert hit is not None
+    assert hit["has_doctrine"] is True
 
 
 @pytest.fixture

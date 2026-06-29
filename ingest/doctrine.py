@@ -139,13 +139,30 @@ _PROMPT = (
 )
 
 
-def extract_doctrine(client: Any, source: str) -> dict[str, Any]:
+_REPAIR_PROMPT = (
+    "You previously extracted a doctrinal record, but these quotes were NOT found verbatim "
+    "in the SOURCE — they were paraphrased:\n{bad}\n\n"
+    "Redo the FULL extraction. This time every 'quote' field MUST be an EXACT substring of the "
+    "SOURCE — copied character for character, including punctuation. If you cannot find an exact "
+    "supporting substring for a holding or field, OMIT that field rather than paraphrase. Keep the "
+    "same disposition / holdings / legal_test / legal_bases / relief structure.\n\n"
+    "SOURCE:\n"
+)
+
+
+def extract_doctrine(
+    client: Any, source: str, repair_bad: list[str] | None = None
+) -> dict[str, Any]:
+    if repair_bad:
+        content = _REPAIR_PROMPT.format(bad="\n".join(f"- {b}" for b in repair_bad[:12])) + source
+    else:
+        content = _PROMPT + source
     resp = client.messages.create(
         model=MODEL,
         max_tokens=2000,
         tools=[_TOOL],
         tool_choice={"type": "tool", "name": "record_doctrine"},
-        messages=[{"role": "user", "content": _PROMPT + source}],
+        messages=[{"role": "user", "content": content}],
     )
     for b in resp.content:
         if b.type == "tool_use":
@@ -156,6 +173,36 @@ def extract_doctrine(client: Any, source: str) -> dict[str, Any]:
 def _obj(x: Any) -> dict[str, Any]:
     """Coerce a possibly-malformed tool field to a dict (the model occasionally deviates)."""
     return x if isinstance(x, dict) else {}
+
+
+def _quotes_of(d: dict[str, Any]) -> list[str]:
+    """Every non-empty quote string present in a doctrine dict (after the holdings cap)."""
+    quotes: list[str] = []
+    disp = _obj(d.get("disposition"))
+    if isinstance(disp.get("quote"), str) and disp["quote"]:
+        quotes.append(disp["quote"])
+    raw = d.get("holdings")
+    raw = raw if isinstance(raw, list) else []
+    for h in raw[:_MAX_HOLDINGS]:
+        h = h if isinstance(h, dict) else {}
+        if isinstance(h.get("quote"), str) and h["quote"]:
+            quotes.append(h["quote"])
+    lt = _obj(d.get("legal_test"))
+    if lt.get("test") and isinstance(lt.get("quote"), str) and lt["quote"]:
+        quotes.append(lt["quote"])
+    rel = _obj(d.get("relief"))
+    if rel.get("relief") and isinstance(rel.get("quote"), str) and rel["quote"]:
+        quotes.append(rel["quote"])
+    return quotes
+
+
+def _unverified(d: dict[str, Any], pool_norm: str) -> list[str]:
+    return [q for q in _quotes_of(d) if not _verified(q, pool_norm)]
+
+
+def _verified_frac(d: dict[str, Any], pool_norm: str) -> float:
+    qs = _quotes_of(d)
+    return sum(_verified(q, pool_norm) for q in qs) / len(qs) if qs else 0.0
 
 
 def pack(d: dict[str, Any], pool_norm: str) -> dict[str, Any]:
@@ -297,7 +344,17 @@ async def backfill_doctrine(
                 if not d.get("holdings") and not _obj(d.get("disposition")).get("quote"):
                     counts["skipped"] += 1
                     return
-                row = pack(d, _norm(source))
+                pool_norm = _norm(source)
+                # Repair pass: if any quote isn't verbatim, re-prompt with the failures and
+                # keep whichever attempt grounds a larger fraction of its quotes.
+                bad = _unverified(d, pool_norm)
+                if bad:
+                    d2 = await asyncio.to_thread(extract_doctrine, client, source, bad)
+                    if d2.get("holdings") and _verified_frac(d2, pool_norm) > _verified_frac(
+                        d, pool_norm
+                    ):
+                        d = d2
+                row = pack(d, pool_norm)
                 row.update({"case_id": case_id, "source_kind": source_kind, "model": MODEL})
                 async with pool.connection() as w, w.cursor() as wc:
                     await wc.execute(_UPSERT, row)

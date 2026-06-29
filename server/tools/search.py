@@ -198,6 +198,9 @@ _SEARCH_SQL_HEAD: LiteralString = """
                                  )) = %(name_token)s
                             THEN 10.0 ELSE 0
                           END AS rank,
+                        EXISTS (
+                            SELECT 1 FROM case_doctrine cd WHERE cd.case_id = c.id
+                        ) AS has_doctrine,
                         count(*) OVER() AS total_count
                     FROM case_record c, q
                     WHERE
@@ -387,11 +390,12 @@ async def search_cases(
             "trigram_sim": float(r[13]) if r[13] is not None else 0.0,
             "vector_sim": float(r[14]) if r[14] is not None else None,
             "rank": float(r[15]) if r[15] is not None else 0.0,
+            "has_doctrine": bool(r[16]),
         }
         for r in rows
     ]
 
-    total = int(rows[0][16]) if rows else 0
+    total = int(rows[0][17]) if rows else 0
 
     return {
         "query": query,
