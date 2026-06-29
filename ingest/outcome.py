@@ -131,25 +131,34 @@ def accept(verdict: dict[str, Any], summary: str) -> bool:
 
 
 async def backfill_outcomes(
-    *, limit: int | None = None, dry_run: bool = False, concurrency: int = 6
+    *,
+    limit: int | None = None,
+    dry_run: bool = False,
+    concurrency: int = 6,
+    reclassify: bool = False,
 ) -> dict[str, int]:
+    """Derive outcome_code for decided cases. By default only fills cases that lack one;
+    with reclassify=True it re-derives ALL decided cases in place (overwriting a stale
+    label, and clearing one that no longer passes the gate) — used to correct labels
+    after a classifier fix."""
     import anthropic
 
     from server.db import get_pool
 
     client = anthropic.Anthropic(api_key=_key())
     pool = await get_pool()
+    where = "status_code = 'decided' AND summary IS NOT NULL AND length(summary) > 0"
+    if not reclassify:
+        where += " AND outcome_code IS NULL"
     async with pool.connection() as conn, conn.cursor() as cur:
         await cur.execute(
-            "SELECT id::text, summary FROM case_record "
-            "WHERE status_code = 'decided' AND outcome_code IS NULL "
-            "AND summary IS NOT NULL AND length(summary) > 0 ORDER BY id LIMIT %s",
+            f"SELECT id::text, summary FROM case_record WHERE {where} ORDER BY id LIMIT %s",
             (limit,),
         )
         rows = await cur.fetchall()
 
     sem = asyncio.Semaphore(max(1, concurrency))
-    counters = {"written": 0, "skipped": 0}
+    counters = {"written": 0, "skipped": 0, "cleared": 0}
 
     async def process(case_id: str, summary: str) -> None:
         async with sem:
@@ -159,11 +168,25 @@ async def backfill_outcomes(
                 log.warning("classify_error", case_id=case_id, error=repr(e)[:120])
                 counters["skipped"] += 1
                 return
-        if not accept(verdict, summary):
-            counters["skipped"] += 1
-            return
+        ok = accept(verdict, summary)
         if dry_run:
-            counters["written"] += 1
+            counters["written" if ok else "skipped"] += 1
+            return
+        if not ok:
+            # In reclassify mode, a case that previously had a label but no longer passes
+            # must have that stale label cleared; otherwise leave it untouched.
+            if reclassify:
+                async with pool.connection() as wconn, wconn.cursor() as wcur:
+                    await wcur.execute(
+                        "UPDATE case_record SET outcome_code = NULL, "
+                        "provenance = provenance - 'outcome_code' "
+                        "WHERE id::text = %s AND outcome_code IS NOT NULL",
+                        (case_id,),
+                    )
+                    if wcur.rowcount:
+                        counters["cleared"] += 1
+                    await wconn.commit()
+            counters["skipped"] += 1
             return
         prov = json.dumps(
             {
@@ -189,7 +212,12 @@ async def backfill_outcomes(
 
     await asyncio.gather(*[process(cid, s) for cid, s in rows])
     log.info("outcome_complete", scanned=len(rows), **counters)
-    return {"written": counters["written"], "skipped": counters["skipped"], "scanned": len(rows)}
+    return {
+        "written": counters["written"],
+        "skipped": counters["skipped"],
+        "cleared": counters["cleared"],
+        "scanned": len(rows),
+    }
 
 
 def main() -> int:
@@ -199,12 +227,17 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Classify case outcomes via Claude.")
     parser.add_argument("--limit", type=int, default=None)
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument(
+        "--reclassify", action="store_true", help="re-derive ALL decided cases in place"
+    )
     args = parser.parse_args()
     configure_logging(level="INFO", json=False)
 
     async def runner() -> dict[str, int]:
         try:
-            return await backfill_outcomes(limit=args.limit, dry_run=args.dry_run)
+            return await backfill_outcomes(
+                limit=args.limit, dry_run=args.dry_run, reclassify=args.reclassify
+            )
         finally:
             await close_pool()
 
