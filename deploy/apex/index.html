@@ -584,7 +584,7 @@ asyncio.run(run())</code></pre>
 </p>
 
 <p class="small muted">
-    Embeddings: <code>sentence-transformers/all-MiniLM-L6-v2</code> (384-dim) stored as pgvector with HNSW indexing. Citation graph: Aho-Corasick canonical-title matching plus formal-cite regex extraction. Outcomes: classified by <code>claude-sonnet-4-6</code>, confidence-gated and verified against a verbatim quote from the case summary — 1,300 decided cases carry an outcome; the rest are left blank rather than guessed. Roadmap: bulk-export ingestion path with the data sources; broader case↔law linking via Climate Policy Radar's own concept IDs.
+    Embeddings: <code>sentence-transformers/all-MiniLM-L6-v2</code> (384-dim) stored as pgvector with HNSW indexing. Citation graph: Aho-Corasick canonical-title matching plus formal-cite regex extraction. Outcomes: classified by <code>claude-sonnet-4-6</code>, confidence-gated and verified against a verbatim quote — anchored to the <em>latest</em> disposition (so an appellate reversal isn't mislabeled by an overturned lower-court order) — 1,606 decided cases carry an outcome; the rest are left blank rather than guessed. Roadmap: bulk-export ingestion path with the data sources; broader case↔law linking via Climate Policy Radar's own concept IDs.
 </p>
 
 <h2 id="status">Source &amp; status</h2>
