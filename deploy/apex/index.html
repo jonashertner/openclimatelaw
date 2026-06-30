@@ -367,7 +367,7 @@
 
 <h2 id="capabilities">What it does</h2>
 
-<p>Sixteen tools, organized into six groups. Each is callable from any MCP client; combine them for full-fidelity legal research.</p>
+<p>Seventeen tools, organized into six groups. Each is callable from any MCP client; combine them for full-fidelity legal research.</p>
 
 <div class="tool-group">
     <h3>Discovery</h3>
@@ -376,6 +376,7 @@
         <li><code>search_cases(query, jurisdiction?, claim_type?, status?, sort?, decided_after?, decided_before?, filed_after?, filed_before?, limit?, offset?)</code> — hybrid full-text + typo-tolerant fuzzy-title + semantic (embedding) ranking. Each match returns sabin_id, title, jurisdiction, status, <code>filing_date</code>, <code>decision_date</code>, a highlighted <code>match_snippet</code>, and a verbatim citation_string; the response also carries a <code>total</code> match count. <code>sort</code> by <code>relevance</code> (default), <code>newest</code>, or <code>oldest</code>; restrict by inclusive date range (ISO <code>YYYY-MM-DD</code>); pass an empty query to browse the corpus by date; paginate with <code>limit</code> (max 50) + <code>offset</code>.</li>
         <li><code>get_case(case_id_or_sabin_id)</code> — full record by canonical UUID or Sabin family ID. Includes <code>case_number</code>, <code>core_object</code> (one-sentence holding), <code>principal_laws</code>, <code>linked_statutes</code> (the actual CCLW laws the case references — each resolvable to full text via <code>get_statute</code>), <code>outcome_code</code> (LLM-classified, confidence-gated, backed by a verbatim quote in provenance), parties (plaintiff / defendant), claim types, documents (with extracted text where available), citation strings, and field-level provenance.</li>
         <li><code>find_cases_by_law(law, limit?)</code> — every case that turns on a given law, from Sabin's principal-law tags. e.g. the Public Trust Doctrine → 88; the European Convention on Human Rights → 60 across jurisdictions; the Clean Air Act → 597.</li>
+        <li><code>get_case_doctrine(case_id_or_sabin_id)</code> — the structured doctrine of a case, where one has been extracted: disposition + procedural posture, the key holdings (each with a verbatim supporting quote and a <code>verified</code> flag), the legal test applied, the legal bases, and the relief. Every quoted element is checked verbatim against the source, and provenance carries a quotes-verified score; the one-line significance is interpretive synthesis. A preview — populated on 108 landmark cases so far (the 2025 ICJ Advisory Opinion, <em>KlimaSeniorinnen</em>, <em>Urgenda</em>, the <em>Shell</em> appeal, …), scalable across the corpus. <code>search_cases</code> and <code>find_cases_by_law</code> results carry a <code>has_doctrine</code> flag so an agent knows where to look.</li>
     </ul>
 </div>
 
@@ -584,7 +585,7 @@ asyncio.run(run())</code></pre>
 </p>
 
 <p class="small muted">
-    Embeddings: <code>sentence-transformers/all-MiniLM-L6-v2</code> (384-dim) stored as pgvector with HNSW indexing. Citation graph: Aho-Corasick canonical-title matching plus formal-cite regex extraction. Outcomes: classified by <code>claude-sonnet-4-6</code>, confidence-gated and verified against a verbatim quote — anchored to the <em>latest</em> disposition (so an appellate reversal isn't mislabeled by an overturned lower-court order) — 1,606 decided cases carry an outcome; the rest are left blank rather than guessed. Roadmap: bulk-export ingestion path with the data sources; broader case↔law linking via Climate Policy Radar's own concept IDs.
+    Embeddings: <code>sentence-transformers/all-MiniLM-L6-v2</code> (384-dim) stored as pgvector with HNSW indexing. Citation graph: Aho-Corasick canonical-title matching plus formal-cite regex extraction. Outcomes: classified by <code>claude-sonnet-4-6</code>, confidence-gated and verified against a verbatim quote — anchored to the <em>latest</em> disposition (so an appellate reversal isn't mislabeled by an overturned lower-court order) — 1,606 decided cases carry an outcome; the rest are left blank rather than guessed. Structured doctrine (disposition, holdings, legal test, bases, relief) is extracted by <code>claude-sonnet-4-6</code> from each case's summary and decision text, with every quoted element verified verbatim against the source and flagged otherwise — a preview on 108 landmark cases so far (72% of holding-quotes verbatim-verified; the ICJ Advisory Opinion and <em>Shell</em>, 100%). Roadmap: bulk-export ingestion path with the data sources; broader case↔law linking via Climate Policy Radar's own concept IDs; scaling the doctrine layer across the decided corpus.
 </p>
 
 <h2 id="status">Source &amp; status</h2>
