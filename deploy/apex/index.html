@@ -242,6 +242,22 @@
             margin: 0.4rem 0 0;
             padding-left: 1.25rem;
         }
+        .tool-group ol {
+            font-size: 0.9em;
+            margin: 0.5rem 0 0;
+            padding-left: 1.35rem;
+        }
+        .tool-group ol li { margin: 0.4rem 0; }
+        .tool-group ol code, .connect-note code {
+            display: inline-block;
+            margin-top: 0.15rem;
+            word-break: break-all;
+            background: var(--code-bg);
+            padding: 0.15em 0.45em;
+            border-radius: 4px;
+        }
+        .connect-note { font-size: 0.85em; color: var(--muted); margin: 0.4rem 0 0; }
+        h2.connect-h { margin-top: 1.5rem; }
 
         /* Modal overlay */
         .modal {
@@ -339,26 +355,51 @@
 
 <p class="tagline">A citation-safe Model Context Protocol layer over the world's climate <em>litigation</em> and <em>legislation</em>. Built so AI agents (Claude, ChatGPT, Gemini, Copilot, Cursor and others) can quote and cite climate cases and laws without fabricating either.</p>
 
+<h2 id="connect" class="connect-h">Connect in a minute</h2>
+<p>No sign-in and no API key. Pick your assistant and follow the steps — then ask it a climate-law question.</p>
+
+<div class="tool-group">
+    <h3>claude.ai <span class="badge">Pro · Max · Team · Enterprise</span></h3>
+    <ol>
+        <li>Open <a href="https://claude.ai">claude.ai</a> → <kbd>Settings</kbd> → <kbd>Connectors</kbd>.</li>
+        <li>Click <kbd>Add custom connector</kbd>.</li>
+        <li>Paste this URL and click <kbd>Add</kbd>:<br><code>https://mcp.openclimatelaw.org/mcp</code></li>
+        <li>Open a new chat, enable <strong>openclimatelaw</strong> from the connector menu, and ask away.</li>
+    </ol>
+</div>
+
+<div class="tool-group">
+    <h3>ChatGPT <span class="badge">Plus · Pro · Team · Enterprise</span></h3>
+    <ol>
+        <li>Open ChatGPT → <kbd>Settings</kbd> → <kbd>Connectors</kbd> (turn on <kbd>Developer mode</kbd> if it asks).</li>
+        <li>Click <kbd>Create</kbd> (or <kbd>Add custom connector</kbd>).</li>
+        <li>Paste this <strong>SSE</strong> URL, set Authentication to <strong>None</strong>, and save:<br><code>https://mcp.openclimatelaw.org/sse</code></li>
+        <li>Enable the connector in a chat (or in Deep Research) and ask away.</li>
+    </ol>
+    <p class="connect-note">ChatGPT needs the <code>/sse</code> endpoint — every other client uses <code>/mcp</code>.</p>
+</div>
+
+<div class="tool-group">
+    <h3>Gemini <span class="badge">Gemini CLI</span></h3>
+    <ol>
+        <li>Install the CLI:<br><code>npm install -g @google/gemini-cli</code></li>
+        <li>Add the server:<br><code>gemini mcp add --transport http openclimatelaw https://mcp.openclimatelaw.org/mcp</code></li>
+        <li>Run <code>gemini</code> and ask a climate-law question — it calls the tools automatically.</li>
+    </ol>
+    <p class="connect-note">The consumer Gemini app has no connector UI yet; the CLI (above), Google AI Studio, and Vertex AI are the MCP paths — <a href="#gemini">details below</a>.</p>
+</div>
+
+<div class="url-banner">
+    <span class="label">Endpoints (no authentication on this preview):</span>
+    <p class="small" style="margin:0.35rem 0 0;"><strong>Streamable HTTP</strong> — claude.ai, Gemini, Cursor, Copilot, the SDKs: <span class="url">https://mcp.openclimatelaw.org/mcp</span></p>
+    <p class="small" style="margin:0.55rem 0 0;"><strong>SSE</strong> — ChatGPT: <span class="url">https://mcp.openclimatelaw.org/sse</span></p>
+</div>
+
 <div class="stats" aria-label="Corpus size">
     <div class="stat"><span class="stat-num">5,027</span><span class="stat-label">litigation cases</span></div>
     <div class="stat"><span class="stat-num">5,347</span><span class="stat-label">climate laws &amp; policies</span></div>
     <div class="stat"><span class="stat-num">81k+</span><span class="stat-label">court documents</span></div>
     <div class="stat"><span class="stat-num">~5M</span><span class="stat-label">pinpoint passages</span></div>
-</div>
-
-<div class="url-banner">
-    <span class="label">MCP endpoint (Streamable HTTP, no authentication on this preview):</span>
-    <span class="url">https://mcp.openclimatelaw.org/mcp</span>
-</div>
-
-<div class="url-banner">
-    <span class="label">Connect in seconds — point any MCP client at that endpoint. The three most common:</span>
-    <p class="small" style="margin:0.6rem 0 0.15rem;"><strong>Claude Code</strong> (CLI)</p>
-    <pre style="margin:0.2rem 0;"><code>claude mcp add openclimatelaw https://mcp.openclimatelaw.org/mcp --transport http</code></pre>
-    <p class="small" style="margin:0.7rem 0 0.15rem;"><strong>ChatGPT</strong> (Plus / Pro / Team / Enterprise) — <kbd>Settings</kbd> → <kbd>Connectors</kbd> → <kbd>Add custom connector</kbd> → paste the URL.</p>
-    <p class="small" style="margin:0.7rem 0 0.15rem;"><strong>Gemini CLI</strong></p>
-    <pre style="margin:0.2rem 0;"><code>gemini mcp add --transport http openclimatelaw https://mcp.openclimatelaw.org/mcp</code></pre>
-    <p class="small muted" style="margin:0.6rem 0 0;">Claude Desktop, Cursor, Copilot, the OpenAI &amp; Anthropic SDKs, Vertex AI and others — <a href="#claude">full per-client guides below</a>.</p>
 </div>
 
 <h2 id="toolkit">Toolkit for climate litigators</h2>
@@ -492,7 +533,7 @@ resp = client.beta.messages.create(
 <h2 id="chatgpt">Add to ChatGPT &amp; OpenAI</h2>
 
 <h3>ChatGPT (Plus / Pro / Team / Enterprise)</h3>
-<p class="small"><kbd>Settings</kbd> → <kbd>Connectors</kbd> → <kbd>Add custom connector</kbd> → paste <code>https://mcp.openclimatelaw.org/mcp</code>. OpenClimateLaw exposes the <code>search</code> and <code>fetch</code> tools ChatGPT's connector requires, so it works as a custom connector out of the box. (Custom connectors are unavailable on the Free plan.)</p>
+<p class="small"><kbd>Settings</kbd> → <kbd>Connectors</kbd> → <kbd>Add custom connector</kbd> → paste the <strong>SSE</strong> endpoint <code>https://mcp.openclimatelaw.org/sse</code>, Authentication <strong>None</strong>. ChatGPT requires an SSE endpoint; OpenClimateLaw also exposes the <code>search</code> and <code>fetch</code> tools ChatGPT's connector needs, so it works out of the box. (Custom connectors are unavailable on the Free plan.)</p>
 
 <h3>OpenAI Agents SDK (Python)</h3>
 <pre><code>from agents import Agent, Runner
@@ -514,7 +555,8 @@ resp = client.responses.create(
     tools=[{
         "type": "mcp",
         "server_label": "openclimatelaw",
-        "server_url": "https://mcp.openclimatelaw.org/mcp",
+        "server_url": "https://mcp.openclimatelaw.org/sse",
+        "require_approval": "never",
     }],
     input="Look up the Urgenda case and quote one sentence verbatim, validated.",
 )</code></pre>
