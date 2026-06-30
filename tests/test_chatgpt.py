@@ -58,8 +58,10 @@ async def test_fetch_contract(seeded_case: str) -> None:
     assert set(r.keys()) == {"id", "title", "text", "url", "metadata"}  # exact ChatGPT contract
     assert r["id"] == "tcg-1"
     assert "emissions" in r["text"]
+    # rich, citable text: structured header + the verbatim summary
+    assert "ChatGPTProbe v. State" in r["text"] and "Summary:" in r["text"]
     assert r["url"].startswith("https://www.climatecasechart.com")
-    assert isinstance(r["metadata"], dict)
+    assert r["metadata"]["type"] == "litigation"
 
 
 @pytest.mark.asyncio
@@ -67,3 +69,31 @@ async def test_fetch_missing_id() -> None:
     r = await fetch("does-not-exist-xyz")
     assert set(r.keys()) == {"id", "title", "text", "url", "metadata"}
     assert r["title"] == "Not found"
+
+
+@pytest.fixture
+async def seeded_statute() -> AsyncGenerator[str]:
+    pool = await get_pool()
+    async with pool.connection() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                "INSERT INTO statute (cclw_id, jurisdiction_code, short_title, status, "
+                "text_lang, text) VALUES ('CCLW.test.1.0', 'GB', 'Test Climate Act', "
+                "'passed', 'en', 'Section 1. Emissions shall be reduced by 2030.')"
+            )
+        await conn.commit()
+    yield "CCLW.test.1.0"
+    async with pool.connection() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute("DELETE FROM statute WHERE cclw_id = 'CCLW.test.1.0'")
+        await conn.commit()
+
+
+@pytest.mark.asyncio
+async def test_fetch_routes_statute_id(seeded_statute: str) -> None:
+    # an id with the CCLW prefix must resolve to the legislation layer, not a case
+    r = await fetch("CCLW.test.1.0")
+    assert set(r.keys()) == {"id", "title", "text", "url", "metadata"}
+    assert r["metadata"]["type"] == "legislation"
+    assert "Emissions shall be reduced" in r["text"]
+    assert r["title"] == "Test Climate Act"
