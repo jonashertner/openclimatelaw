@@ -351,6 +351,16 @@
     <span class="url">https://mcp.openclimatelaw.org/mcp</span>
 </div>
 
+<div class="url-banner">
+    <span class="label">Connect in seconds — point any MCP client at that endpoint. The three most common:</span>
+    <p class="small" style="margin:0.6rem 0 0.15rem;"><strong>Claude Code</strong> (CLI)</p>
+    <pre style="margin:0.2rem 0;"><code>claude mcp add openclimatelaw https://mcp.openclimatelaw.org/mcp --transport http</code></pre>
+    <p class="small" style="margin:0.7rem 0 0.15rem;"><strong>ChatGPT</strong> (Plus / Pro / Team / Enterprise) — <kbd>Settings</kbd> → <kbd>Connectors</kbd> → <kbd>Add custom connector</kbd> → paste the URL.</p>
+    <p class="small" style="margin:0.7rem 0 0.15rem;"><strong>Gemini CLI</strong></p>
+    <pre style="margin:0.2rem 0;"><code>gemini mcp add --transport http openclimatelaw https://mcp.openclimatelaw.org/mcp</code></pre>
+    <p class="small muted" style="margin:0.6rem 0 0;">Claude Desktop, Cursor, Copilot, the OpenAI &amp; Anthropic SDKs, Vertex AI and others — <a href="#claude">full per-client guides below</a>.</p>
+</div>
+
 <h2 id="toolkit">Toolkit for climate litigators</h2>
 
 <p>OpenClimateLaw is part of a broader <a href="https://regenerative.law">regenerative.law</a> commitment to free, open-source legal-research infrastructure for the climate-litigation field. Our intended audience is activist lawyers, university clinics, public-interest organisations, and researchers — practitioners who do this work without budgets for commercial AI research tools.</p>
@@ -367,7 +377,7 @@
 
 <h2 id="capabilities">What it does</h2>
 
-<p>Seventeen tools, organized into six groups. Each is callable from any MCP client; combine them for full-fidelity legal research.</p>
+<p>Seventeen research tools in six groups — plus <code>search</code> and <code>fetch</code>, the two read-only tools ChatGPT's connector calls (19 in total). Each is callable from any MCP client; combine them for full-fidelity legal research.</p>
 
 <div class="tool-group">
     <h3>Discovery</h3>
@@ -482,7 +492,7 @@ resp = client.beta.messages.create(
 <h2 id="chatgpt">Add to ChatGPT &amp; OpenAI</h2>
 
 <h3>ChatGPT (Plus / Pro / Team / Enterprise)</h3>
-<p class="small"><kbd>Settings</kbd> → <kbd>Connectors</kbd> → <kbd>Add custom connector</kbd> → paste <code>https://mcp.openclimatelaw.org/mcp</code>. (Custom connectors are unavailable on the Free plan.)</p>
+<p class="small"><kbd>Settings</kbd> → <kbd>Connectors</kbd> → <kbd>Add custom connector</kbd> → paste <code>https://mcp.openclimatelaw.org/mcp</code>. OpenClimateLaw exposes the <code>search</code> and <code>fetch</code> tools ChatGPT's connector requires, so it works as a custom connector out of the box. (Custom connectors are unavailable on the Free plan.)</p>
 
 <h3>OpenAI Agents SDK (Python)</h3>
 <pre><code>from agents import Agent, Runner
