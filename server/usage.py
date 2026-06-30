@@ -18,6 +18,7 @@ Disable tracking entirely with USAGE_TRACKING=0. Set USAGE_IP_SALT to a secret f
 import hashlib
 import json
 import os
+import secrets
 import time
 from pathlib import Path
 from typing import Any
@@ -49,12 +50,25 @@ def _truncate_args(args: Any) -> dict[str, Any]:
 
 
 def _salt() -> str:
+    """A secret salt for IP hashing. Prefer $USAGE_IP_SALT (set it in .env.production for a
+    salt that's stable across deploys); else a persisted random salt; never a public default
+    (a known salt makes the small IPv4 space trivially brute-forceable)."""
     global _SALT
-    if _SALT is None:
-        _SALT = os.environ.get("USAGE_IP_SALT") or ""
-        if not _SALT:
-            p = Path(os.path.expanduser("~/.usage_salt"))
-            _SALT = p.read_text().strip() if p.exists() else "openclimatelaw-usage-v1"
+    if _SALT is not None:
+        return _SALT
+    _SALT = os.environ.get("USAGE_IP_SALT") or ""
+    if _SALT:
+        return _SALT
+    p = Path(os.path.expanduser("~/.usage_salt"))
+    if p.exists():
+        _SALT = p.read_text().strip()
+    if not _SALT:
+        _SALT = secrets.token_hex(16)
+        try:
+            p.write_text(_SALT)
+            p.chmod(0o600)
+        except Exception:
+            pass  # ephemeral per-process salt is still unguessable
     return _SALT
 
 
@@ -79,8 +93,10 @@ def _http_meta() -> tuple[str | None, str | None]:
         from fastmcp.server.dependencies import get_http_request
 
         req = get_http_request()
+        # The edge proxy (Caddy) APPENDS the real peer to X-Forwarded-For, so the trusted
+        # client IP is the LAST entry — the leftmost entries are client-supplied and spoofable.
         xff = req.headers.get("x-forwarded-for", "")
-        ip = xff.split(",")[0].strip() if xff else (req.client.host if req.client else None)
+        ip = xff.split(",")[-1].strip() if xff else (req.client.host if req.client else None)
         return ip, req.headers.get("user-agent")
     except Exception:
         return None, None

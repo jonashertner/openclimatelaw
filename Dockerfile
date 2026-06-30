@@ -19,6 +19,7 @@ RUN uv sync --frozen --no-dev
 COPY server /app/server
 COPY ingest /app/ingest
 COPY migrations /app/migrations
+COPY scripts /app/scripts
 COPY tests/fixtures /app/tests/fixtures
 
 EXPOSE 8000
