@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>OpenClimateLaw — three slides</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --green:#0a6b4d; --green-d:#073f2d; --ink:#19241f; --muted:#5f6f66;
+    --paper:#faf8f2; --paper2:#f3efe6; --soft:#e9f3ed; --line:#dde6e0; --amber:#8a6d1f;
+    --serif:"Charter","Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Times New Roman",serif;
+    --sans:ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,"Helvetica Neue",Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{font-family:var(--sans);color:var(--ink);background:#0b0b0b;-webkit-font-smoothing:antialiased;overflow:hidden}
+  .deck{position:relative;width:100vw;height:100vh}
+  .slide{position:absolute;inset:0;display:none;flex-direction:column;justify-content:center;
+    padding:10vh 9vw 12vh;background:radial-gradient(120% 80% at 100% 0%, #fffdf7 0%, var(--paper) 42%, var(--paper2) 100%)}
+  .slide.active{display:flex}
+  .slide .inner{width:100%;max-width:68rem}
+  .slide.active .inner{animation:rise .45s cubic-bezier(.2,.75,.25,1) both}
+  @keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+  .eyebrow{display:inline-flex;align-items:center;gap:.7rem;font-size:.8rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--green);margin-bottom:1.1rem}
+  .eyebrow::before{content:"";width:1.7rem;height:2px;background:var(--green);border-radius:2px}
+  h2{font-family:var(--serif);font-weight:600;font-size:clamp(2rem,4vw,3rem);line-height:1.08;letter-spacing:-.015em;max-width:24ch;margin-bottom:1.4rem}
+  h2 em{font-style:italic;color:var(--green)}
+  p,li{font-size:clamp(1.05rem,1.5vw,1.38rem);line-height:1.48;color:#28332d}
+  strong{font-weight:700;color:var(--ink)} .muted{color:var(--muted)} .num{font-variant-numeric:tabular-nums}
+  .lead{font-family:var(--serif);font-size:clamp(1.25rem,2vw,1.6rem);line-height:1.4;color:var(--muted);max-width:46ch;margin-top:1.3rem}
+  .lead strong{color:var(--ink)}
+
+  /* value cards — 2x2 */
+  .vgrid{display:grid;grid-template-columns:1fr 1fr;gap:1.1rem;margin-top:.3rem}
+  .vcard{background:#fff;border:1px solid var(--line);border-radius:15px;padding:1.3rem 1.4rem;box-shadow:0 10px 28px -20px rgba(7,63,45,.4)}
+  .vcard h3{font-family:var(--serif);font-weight:600;font-size:1.28rem;margin-bottom:.4rem;letter-spacing:-.01em}
+  .vcard p{font-size:1.02rem;color:var(--muted);line-height:1.45}
+  .vcard h3 .b{display:inline-block;width:1.6rem;height:1.6rem;border-radius:50%;background:var(--soft);color:var(--green);font-family:var(--sans);font-weight:800;font-size:.85rem;text-align:center;line-height:1.6rem;margin-right:.5rem;vertical-align:.05em}
+
+  /* two columns of observations */
+  .cols{display:flex;gap:2rem;margin-top:.2rem;flex-wrap:wrap}
+  .col{flex:1;min-width:18rem}
+  .col h4{font-size:.82rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--green);margin-bottom:.6rem;border-bottom:2px solid var(--line);padding-bottom:.4rem}
+  .col ul{list-style:none} .col li{position:relative;padding-left:1.3rem;margin:.7rem 0;font-size:clamp(.98rem,1.4vw,1.18rem);line-height:1.4}
+  .col li::before{content:"";position:absolute;left:0;top:.55em;width:.42rem;height:.42rem;background:var(--green);border-radius:50%}
+  .col li b{color:var(--ink)} .col li .v{color:var(--green-d)}
+  .caveat{margin-top:1.1rem;font-size:.9rem;color:var(--muted);border-left:3px solid var(--amber);padding-left:.8rem;max-width:60ch}
+
+  /* stats */
+  .stats{display:flex;gap:.9rem;margin:.4rem 0;flex-wrap:wrap}
+  .stat{flex:1;min-width:8rem;background:#fff;border:1px solid var(--line);border-radius:13px;padding:1.25rem .8rem;text-align:center}
+  .stat .n{display:block;font-family:var(--serif);font-size:clamp(1.7rem,3.1vw,2.6rem);font-weight:600;color:var(--green);letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+  .stat .l{font-size:.86rem;color:var(--muted);margin-top:.25rem;line-height:1.25}
+  .stats.sub .stat{padding:.95rem .7rem} .stats.sub .n{font-size:clamp(1.3rem,2.3vw,1.9rem)}
+
+  .mark{position:absolute;top:4.4vh;left:9vw;display:flex;align-items:center;gap:.55rem;z-index:6;font-size:.9rem;font-weight:700;letter-spacing:-.01em;color:var(--ink);opacity:.9}
+  .mark svg{width:21px;height:21px;border-radius:5px;display:block}
+  .footer{position:absolute;left:9vw;bottom:4.2vh;font-size:.74rem;color:var(--muted)}
+  .pageno{position:absolute;right:9vw;bottom:4.2vh;font-size:.74rem;color:var(--muted);font-variant-numeric:tabular-nums}
+  .progress{position:fixed;top:0;left:0;height:3px;background:var(--green);width:0;transition:width .25s ease;z-index:60}
+  .hint{position:fixed;right:13px;top:11px;font-size:.7rem;color:#888;z-index:60}
+  .notes{display:none}
+  body.notes-on .slide.active .notes{display:block;position:fixed;left:0;right:0;bottom:0;max-height:34vh;overflow:auto;z-index:55;background:rgba(12,18,15,.96);color:#e9f1ec;border-top:2px solid var(--green);padding:1rem 9vw 1.2rem;font-size:.95rem;line-height:1.5}
+  .notes b{color:#bfe6d5;font-weight:700} .notes .cue{color:#f0d68a;font-weight:700}
+  .notes::before{content:"SPEAKER NOTES";display:block;font-size:.66rem;letter-spacing:.18em;color:#7fae9b;margin-bottom:.45rem}
+  @media (prefers-reduced-motion:reduce){.slide.active .inner{animation:none}.progress{transition:none}}
+  @media (max-width:860px){.vgrid{grid-template-columns:1fr}.slide{padding:8vh 6vw 11vh}.mark,.footer{left:6vw}.pageno{right:6vw}}
+  @media print{body{overflow:visible;background:#fff}.deck{height:auto}.slide{position:relative;display:flex!important;height:100vh;page-break-after:always;background:var(--paper)}.progress,.hint{display:none}.notes{display:none}body.notes-on .notes{display:block;position:static;max-height:none;background:#0c120f;margin-top:1.5rem;border-radius:8px;padding:1rem 1.3rem}}
+</style>
+</head>
+<body>
+<div class="progress" id="progress"></div>
+<div class="hint">← →  navigate · N  notes · ⌘P  PDF</div>
+<div class="deck" id="deck">
+
+  <!-- 1 · Value to users -->
+  <section class="slide active"><div class="inner">
+    <div class="eyebrow">How it helps users</div>
+    <h2>A citation-safe research layer practitioners can <em>rely on</em>.</h2>
+    <div class="vgrid">
+      <div class="vcard"><h3><span class="b">1</span>Nothing fabricated</h3>
+        <p>Every citation is a verbatim source string, every quote is verified, and it refuses to guess
+           — answers go into a brief without re-checking.</p></div>
+      <div class="vcard"><h3><span class="b">2</span>Both halves, bridged</h3>
+        <p>5,027 cases and 5,347 laws in one tool: a case → the law it invokes → the verbatim statute
+           text. No single source gives both.</p></div>
+      <div class="vcard"><h3><span class="b">3</span>Structured doctrine</h3>
+        <p>Not just <em>find</em> a case — its disposition, holdings, and the legal test applied.
+           Answers "has this argument worked, where, and why."</p></div>
+      <div class="vcard"><h3><span class="b">4</span>Where users already are</h3>
+        <p>Native in any AI client (Claude, ChatGPT, Gemini). For practitioners without Westlaw, the
+           only citation-safe option for this field.</p></div>
+    </div>
+  </div>
+    <aside class="notes"><b>The value in one line:</b> ask in natural language, get a grounded answer
+      you can cite. <span class="cue">Card 1 is the floor</span> (trust); cards 2–3 are the depth
+      (coverage + analysis); card 4 is reach. Lead with 1 and 3 for this audience.</aside>
+  </section>
+
+  <!-- 2 · What would increase value -->
+  <section class="slide"><div class="inner">
+    <div class="eyebrow">What would increase value · observations to validate</div>
+    <h2>Improvements in the source data that would <em>unlock more</em>.</h2>
+    <div class="cols">
+      <div class="col"><h4>Litigation · Sabin</h4><ul>
+        <li><b>A structured outcome + finality flag</b> <span class="v">→ "who won, finally" becomes filterable</span> (we derived it; a native field would be canonical).</li>
+        <li><b>Merits vs procedural dates</b> <span class="v">→ "latest decision" stops being a docket order</span>.</li>
+        <li><b>A clean claim_type vocabulary + dedup keys</b> <span class="v">→ reliable faceting</span>; collapse Held ×4, Juliana ×5.</li>
+        <li><b>OCR fallback + a citation graph</b> <span class="v">→ recover ~21% of text-less docs; enable precedent links</span>.</li>
+      </ul></div>
+      <div class="col"><h4>Legislation · CPR (CCLW)</h4><ul>
+        <li><b>An instrument-type field</b> <span class="v">→ filter actual statutes</span> from policies, plans, NDCs.</li>
+        <li><b>The general litigated statutes</b> (Clean Air Act, NEPA, ESA, APA) <span class="v">→ the bridge connects US cases</span>.</li>
+        <li><b>The case↔law concept mapping</b> <span class="v">→ comprehensive litigation↔legislation links</span> (today 145, by exact-title match).</li>
+        <li><b>Per-language segmentation</b> <span class="v">→ multilingual statutes read in the right language</span>.</li>
+      </ul></div>
+    </div>
+    <p class="caveat">From our pre-relaunch mirror — candidates to validate, not confirmed defects.
+      Offered as a contribution; we're glad to share the record IDs and ship the fixes.</p>
+  </div>
+    <aside class="notes"><b>Frame: "things we noticed building on your data — offered to help."</b> Not
+      a critique. <span class="cue">Lead with one each verbally</span> (Sabin: structured outcome;
+      CPR: the concept mapping) and leave the rest in the written report. Validate-first caveat matters.</aside>
+  </section>
+
+  <!-- 3 · Summary + stats -->
+  <section class="slide"><div class="inner">
+    <div class="eyebrow">Summary</div>
+    <div class="stats">
+      <div class="stat"><span class="n">5,027</span><span class="l">litigation cases</span></div>
+      <div class="stat"><span class="n">81,345</span><span class="l">court documents</span></div>
+      <div class="stat"><span class="n">5,347</span><span class="l">climate laws</span></div>
+      <div class="stat"><span class="n">4.98M</span><span class="l">pinpoint passages</span></div>
+      <div class="stat"><span class="n">17</span><span class="l">tools</span></div>
+    </div>
+    <div class="stats sub">
+      <div class="stat"><span class="n">108</span><span class="l">cases with structured doctrine (72% verbatim)</span></div>
+      <div class="stat"><span class="n">1,606</span><span class="l">outcomes derived (quote-verified)</span></div>
+      <div class="stat"><span class="n">92%</span><span class="l">cases with structured parties</span></div>
+      <div class="stat"><span class="n">145</span><span class="l">case ↔ law links</span></div>
+      <div class="stat"><span class="n">0</span><span class="l">fabricated citations, by construction</span></div>
+    </div>
+    <p class="lead">A citation-safe MCP layer over the Climate Litigation Database and CCLW —
+      <strong>your data, attributed, open-source, under your control</strong>. Offered as free
+      infrastructure for the field.</p>
+  </div>
+    <aside class="notes"><b>The close.</b> Top row = the corpus (both halves). Bottom row = the
+      structure we add, labelled as ours. <span class="cue">"0 fabricated citations, by construction"</span>
+      is the line to land. End on control + the offer.</aside>
+  </section>
+
+</div>
+<script>
+(function(){
+  var slides=[].slice.call(document.querySelectorAll('.slide')), i=0, N=slides.length, prog=document.getElementById('progress');
+  var LOGO='<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><rect width="32" height="32" rx="6" fill="#0a6b4d"/><path d="M9 22l3-12h2l-2.5 10h6.5l-.5 2H9z" fill="#fff"/></svg>';
+  slides.forEach(function(s,k){
+    var m=document.createElement('div');m.className='mark';m.innerHTML=LOGO+'<span>OpenClimateLaw</span>';s.insertBefore(m,s.firstChild);
+    var f=document.createElement('div');f.className='footer';f.textContent='Confidential preview · Sabin Center + Climate Policy Radar';s.appendChild(f);
+    var p=document.createElement('div');p.className='pageno';p.textContent=(k+1)+' / '+N;s.appendChild(p);
+  });
+  function show(n){i=Math.max(0,Math.min(N-1,n));slides.forEach(function(s,k){s.classList.toggle('active',k===i)});prog.style.width=(i/(N-1)*100)+'%';}
+  document.addEventListener('keydown',function(e){
+    if(e.key==='ArrowRight'||e.key===' '||e.key==='PageDown'){e.preventDefault();show(i+1)}
+    else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();show(i-1)}
+    else if(e.key==='Home'){show(0)} else if(e.key==='End'){show(N-1)}
+    else if(e.key==='n'||e.key==='N'){document.body.classList.toggle('notes-on')}
+  });
+  document.getElementById('deck').addEventListener('click',function(e){
+    if(e.clientY>window.innerHeight*0.66 && document.body.classList.contains('notes-on'))return;
+    (e.clientX<window.innerWidth*0.28)?show(i-1):show(i+1);
+  });
+  show(0);
+})();
+</script>
+</body>
+</html>
