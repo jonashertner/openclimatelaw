@@ -14,18 +14,20 @@ cite climate cases and laws **without fabricating** either.
 
 ## Connect in 30 seconds
 
-Two endpoints, one server, no authentication: **Streamable HTTP** at
-`https://mcp.openclimatelaw.org/mcp` (claude.ai, Gemini, Cursor, the SDKs) and **SSE** at
-`https://mcp.openclimatelaw.org/sse` (ChatGPT, which requires an SSE endpoint).
+Two endpoints, one server, no authentication — both serve the same 19 tools:
+**Streamable HTTP** `https://mcp.openclimatelaw.org/mcp` (claude.ai, ChatGPT developer mode, Gemini
+CLI, Cursor, the SDKs) and **SSE** `https://mcp.openclimatelaw.org/sse` (ChatGPT Deep Research).
 
-**claude.ai** (Pro / Max / Team / Enterprise)
-Settings → **Connectors** → **Add custom connector** → paste `https://mcp.openclimatelaw.org/mcp`.
+**claude.ai** (Free / Pro / Max / Team / Enterprise)
+**Customize → Connectors** → click **+** → enter a name and the URL `https://mcp.openclimatelaw.org/mcp`
+→ **Add**. (Connectors moved from Settings to Customize.)
 
-**ChatGPT** (Plus / Pro / Team / Enterprise)
-Settings → **Connectors** (enable **Developer mode** if asked) → **Create** → paste the SSE URL
-`https://mcp.openclimatelaw.org/sse`, Authentication **None**. Works via the `search` / `fetch` tools.
+**ChatGPT** (developer mode — Plus / Pro / Team / Enterprise)
+Settings → **Apps & Connectors** → **Advanced settings** → enable **Developer mode** → **Create** a
+connector with `https://mcp.openclimatelaw.org/mcp`, Authentication **None**. (Deep Research flows use
+the `/sse` URL instead.)
 
-**Gemini CLI**
+**Gemini** — via the **Gemini CLI** (the consumer app at gemini.google.com can't add custom connectors):
 ```bash
 gemini mcp add --transport http openclimatelaw https://mcp.openclimatelaw.org/mcp
 ```

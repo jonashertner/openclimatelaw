@@ -359,24 +359,25 @@
 <p>No sign-in and no API key. Pick your assistant and follow the steps — then ask it a climate-law question.</p>
 
 <div class="tool-group">
-    <h3>claude.ai <span class="badge">Pro · Max · Team · Enterprise</span></h3>
+    <h3>claude.ai <span class="badge">Free · Pro · Max · Team · Enterprise</span></h3>
     <ol>
-        <li>Open <a href="https://claude.ai">claude.ai</a> → <kbd>Settings</kbd> → <kbd>Connectors</kbd>.</li>
-        <li>Click <kbd>Add custom connector</kbd>.</li>
-        <li>Paste this URL and click <kbd>Add</kbd>:<br><code>https://mcp.openclimatelaw.org/mcp</code></li>
-        <li>Open a new chat, enable <strong>openclimatelaw</strong> from the connector menu, and ask away.</li>
+        <li>Open <a href="https://claude.ai">claude.ai</a> → <kbd>Customize</kbd> → <kbd>Connectors</kbd>. <span class="muted">(Connectors recently moved here from Settings.)</span></li>
+        <li>Click the <kbd>+</kbd> next to <strong>Connectors</strong>.</li>
+        <li>Enter a name (e.g. <em>OpenClimateLaw</em>) and this URL, then click <kbd>Add</kbd>:<br><code>https://mcp.openclimatelaw.org/mcp</code></li>
+        <li>Open a new chat, enable <strong>OpenClimateLaw</strong>, and ask away.</li>
     </ol>
+    <p class="connect-note">Free plans allow one custom connector.</p>
 </div>
 
 <div class="tool-group">
-    <h3>ChatGPT <span class="badge">Plus · Pro · Team · Enterprise</span></h3>
+    <h3>ChatGPT <span class="badge">Developer mode · Plus · Pro · Team · Enterprise</span></h3>
     <ol>
-        <li>Open ChatGPT → <kbd>Settings</kbd> → <kbd>Connectors</kbd> (turn on <kbd>Developer mode</kbd> if it asks).</li>
-        <li>Click <kbd>Create</kbd> (or <kbd>Add custom connector</kbd>).</li>
-        <li>Paste this <strong>SSE</strong> URL, set Authentication to <strong>None</strong>, and save:<br><code>https://mcp.openclimatelaw.org/sse</code></li>
-        <li>Enable the connector in a chat (or in Deep Research) and ask away.</li>
+        <li>Open ChatGPT → <kbd>Settings</kbd> → <kbd>Apps &amp; Connectors</kbd> → <kbd>Advanced settings</kbd> → turn on <kbd>Developer mode</kbd>.</li>
+        <li>Back in <kbd>Apps &amp; Connectors</kbd>, click <kbd>Create</kbd>.</li>
+        <li>Name it <em>OpenClimateLaw</em>, set this URL and Authentication <strong>None</strong>, then <kbd>Create</kbd>:<br><code>https://mcp.openclimatelaw.org/mcp</code></li>
+        <li>In a new chat: <kbd>+</kbd> → <kbd>More</kbd> → enable <strong>OpenClimateLaw</strong>, then ask away.</li>
     </ol>
-    <p class="connect-note">ChatGPT needs the <code>/sse</code> endpoint — every other client uses <code>/mcp</code>.</p>
+    <p class="connect-note">Both endpoints work — if a flow (e.g. Deep&nbsp;Research) asks for an <strong>SSE</strong> URL instead, use <code>https://mcp.openclimatelaw.org/sse</code>.</p>
 </div>
 
 <div class="tool-group">
@@ -386,13 +387,14 @@
         <li>Add the server:<br><code>gemini mcp add --transport http openclimatelaw https://mcp.openclimatelaw.org/mcp</code></li>
         <li>Run <code>gemini</code> and ask a climate-law question — it calls the tools automatically.</li>
     </ol>
-    <p class="connect-note">The consumer Gemini app has no connector UI yet; the CLI (above), Google AI Studio, and Vertex AI are the MCP paths — <a href="#gemini">details below</a>.</p>
+    <p class="connect-note">The consumer Gemini app (<code>gemini.google.com</code>) can't add custom MCP connectors yet — use the CLI above, the Gemini API / Google AI Studio, or Gemini Enterprise. <a href="#gemini">Details below.</a></p>
 </div>
 
 <div class="url-banner">
     <span class="label">Endpoints (no authentication on this preview):</span>
-    <p class="small" style="margin:0.35rem 0 0;"><strong>Streamable HTTP</strong> — claude.ai, Gemini, Cursor, Copilot, the SDKs: <span class="url">https://mcp.openclimatelaw.org/mcp</span></p>
-    <p class="small" style="margin:0.55rem 0 0;"><strong>SSE</strong> — ChatGPT: <span class="url">https://mcp.openclimatelaw.org/sse</span></p>
+    <p class="small" style="margin:0.35rem 0 0;"><strong>Streamable HTTP</strong> — claude.ai, ChatGPT (developer mode), Gemini CLI, Cursor, Copilot, the SDKs: <span class="url">https://mcp.openclimatelaw.org/mcp</span></p>
+    <p class="small" style="margin:0.55rem 0 0;"><strong>SSE</strong> — ChatGPT Deep Research connectors: <span class="url">https://mcp.openclimatelaw.org/sse</span></p>
+    <p class="connect-note" style="margin-top:0.5rem;">Both serve the same 19 tools — use whichever your client asks for.</p>
 </div>
 
 <div class="stats" aria-label="Corpus size">
@@ -511,7 +513,7 @@
 }</code></pre>
 
 <h3>claude.ai (Pro / Team / Enterprise)</h3>
-<p class="small"><kbd>Settings</kbd> → <kbd>Connectors</kbd> / <kbd>Custom integrations</kbd> → paste <code>https://mcp.openclimatelaw.org/mcp</code>.</p>
+<p class="small"><kbd>Customize</kbd> → <kbd>Connectors</kbd> → click <kbd>+</kbd> → enter a name and the URL <code>https://mcp.openclimatelaw.org/mcp</code> → <kbd>Add</kbd>. (Connectors recently moved from Settings to Customize; available on Free — one connector — through Enterprise.)</p>
 
 <h3>Anthropic API (Messages, MCP Connector)<span class="badge">beta</span></h3>
 <pre><code>import anthropic
@@ -532,8 +534,8 @@ resp = client.beta.messages.create(
 
 <h2 id="chatgpt">Add to ChatGPT &amp; OpenAI</h2>
 
-<h3>ChatGPT (Plus / Pro / Team / Enterprise)</h3>
-<p class="small"><kbd>Settings</kbd> → <kbd>Connectors</kbd> → <kbd>Add custom connector</kbd> → paste the <strong>SSE</strong> endpoint <code>https://mcp.openclimatelaw.org/sse</code>, Authentication <strong>None</strong>. ChatGPT requires an SSE endpoint; OpenClimateLaw also exposes the <code>search</code> and <code>fetch</code> tools ChatGPT's connector needs, so it works out of the box. (Custom connectors are unavailable on the Free plan.)</p>
+<h3>ChatGPT (developer mode — Plus / Pro / Team / Enterprise)</h3>
+<p class="small"><kbd>Settings</kbd> → <kbd>Apps &amp; Connectors</kbd> → <kbd>Advanced settings</kbd> → enable <kbd>Developer mode</kbd>, then <kbd>Create</kbd> a connector with the URL <code>https://mcp.openclimatelaw.org/mcp</code> and Authentication <strong>None</strong>. Enable it in a chat via <kbd>+</kbd> → <kbd>More</kbd>. If a flow (e.g. Deep Research) asks for an <strong>SSE</strong> URL instead, use <code>https://mcp.openclimatelaw.org/sse</code> — both serve the same tools, including the <code>search</code> and <code>fetch</code> tools ChatGPT calls. (Custom connectors are unavailable on the Free plan.)</p>
 
 <h3>OpenAI Agents SDK (Python)</h3>
 <pre><code>from agents import Agent, Runner
