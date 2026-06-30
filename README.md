@@ -14,20 +14,25 @@ cite climate cases and laws **without fabricating** either.
 
 ## Connect in 30 seconds
 
-Point any MCP client at `https://mcp.openclimatelaw.org/mcp` (use the path exactly, no trailing slash).
+Two endpoints, one server, no authentication: **Streamable HTTP** at
+`https://mcp.openclimatelaw.org/mcp` (claude.ai, Gemini, Cursor, the SDKs) and **SSE** at
+`https://mcp.openclimatelaw.org/sse` (ChatGPT, which requires an SSE endpoint).
 
-**Claude Code**
-```bash
-claude mcp add openclimatelaw https://mcp.openclimatelaw.org/mcp --transport http
-```
+**claude.ai** (Pro / Max / Team / Enterprise)
+Settings → **Connectors** → **Add custom connector** → paste `https://mcp.openclimatelaw.org/mcp`.
 
 **ChatGPT** (Plus / Pro / Team / Enterprise)
-Settings → **Connectors** → **Add custom connector** → paste `https://mcp.openclimatelaw.org/mcp`.
-(Works via the `search` / `fetch` tools ChatGPT's connector calls.)
+Settings → **Connectors** (enable **Developer mode** if asked) → **Create** → paste the SSE URL
+`https://mcp.openclimatelaw.org/sse`, Authentication **None**. Works via the `search` / `fetch` tools.
 
 **Gemini CLI**
 ```bash
 gemini mcp add --transport http openclimatelaw https://mcp.openclimatelaw.org/mcp
+```
+
+**Claude Code**
+```bash
+claude mcp add openclimatelaw https://mcp.openclimatelaw.org/mcp --transport http
 ```
 
 **Claude Desktop** — add to `claude_desktop_config.json` (via [mcp-remote](https://github.com/geelen/mcp-remote)):
