@@ -512,7 +512,7 @@
   }
 }</code></pre>
 
-<h3>claude.ai (Pro / Team / Enterprise)</h3>
+<h3>claude.ai (Free / Pro / Max / Team / Enterprise)</h3>
 <p class="small"><kbd>Customize</kbd> → <kbd>Connectors</kbd> → click <kbd>+</kbd> → enter a name and the URL <code>https://mcp.openclimatelaw.org/mcp</code> → <kbd>Add</kbd>. (Connectors recently moved from Settings to Customize; available on Free — one connector — through Enterprise.)</p>
 
 <h3>Anthropic API (Messages, MCP Connector)<span class="badge">beta</span></h3>
@@ -582,6 +582,8 @@ resp = client.responses.create(
 
 <h2 id="gemini">Add to Google Gemini</h2>
 
+<p class="small muted">The consumer Gemini app (<code>gemini.google.com</code>) has no custom-connector UI yet — connect via the CLI, the SDK, or Gemini Enterprise below.</p>
+
 <h3>Gemini CLI</h3>
 <pre><code>gemini mcp add --transport http openclimatelaw https://mcp.openclimatelaw.org/mcp</code></pre>
 <p class="small muted">Or edit <code>~/.gemini/settings.json</code> directly with an <code>mcpServers</code> block (same shape as Claude Desktop).</p>
@@ -645,7 +647,7 @@ asyncio.run(run())</code></pre>
 <h2 id="status">Source &amp; status</h2>
 
 <p class="small">
-    Open source: <a href="https://github.com/jonashertner/openclimatelaw">github.com/jonashertner/openclimatelaw</a> · MIT · v0.1 · Streamable HTTP MCP · Hetzner Cloud · Let's Encrypt automatic TLS.
+    Open source: <a href="https://github.com/jonashertner/openclimatelaw">github.com/jonashertner/openclimatelaw</a> · MIT · v0.1 · MCP over Streamable HTTP (<code>/mcp</code>) + SSE (<code>/sse</code>) · Hetzner Cloud · Let's Encrypt automatic TLS.
 </p>
 
 <p class="small">
