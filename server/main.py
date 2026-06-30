@@ -4,7 +4,7 @@ from fastmcp import FastMCP
 from starlette.applications import Starlette
 from starlette.requests import Request
 from starlette.responses import JSONResponse
-from starlette.routing import Mount, Route
+from starlette.routing import Route
 
 CONTRACT = """\
 OpenClimateLaw — climate-litigation research with citation-safe grounding.
@@ -403,23 +403,32 @@ def build_mcp() -> FastMCP:
 
 
 def build_app() -> Starlette:
+    from contextlib import asynccontextmanager
+
+    from fastmcp.server.http import RequestContextMiddleware
+    from starlette.middleware import Middleware
+
     mcp = build_mcp()
-    mcp_app = mcp.http_app()
+    # Two transports on one server: Streamable HTTP at /mcp (Claude, Gemini, Cursor, the
+    # SDKs, …) and SSE at /sse for ChatGPT's connector, which requires an SSE endpoint.
+    mcp_app = mcp.http_app()  # /mcp
+    sse_app = mcp.http_app(transport="sse")  # /sse (stream) + /messages (post-back)
 
     async def health(request: Request) -> JSONResponse:
-        return JSONResponse(
-            {
-                "status": "ok",
-                "version": version("openclimatelaw"),
-            }
-        )
+        return JSONResponse({"status": "ok", "version": version("openclimatelaw")})
 
+    @asynccontextmanager
+    async def lifespan(app: Starlette):
+        # Start both transports' session managers.
+        async with mcp_app.lifespan(app), sse_app.lifespan(app):
+            yield
+
+    # Splat both route sets at the root (paths /mcp, /sse, /messages don't collide) and
+    # re-apply RequestContextMiddleware once at the top, since both sub-apps carry it.
     return Starlette(
-        routes=[
-            Route("/health", health),
-            Mount("/", app=mcp_app),
-        ],
-        lifespan=mcp_app.lifespan,
+        routes=[Route("/health", health), *sse_app.routes, *mcp_app.routes],
+        lifespan=lifespan,
+        middleware=[Middleware(RequestContextMiddleware)],
     )
 
 
