@@ -39,7 +39,15 @@ it passes.
 
 
 def build_mcp() -> FastMCP:
+    import os
+
     mcp = FastMCP(name="openclimatelaw", instructions=CONTRACT)
+
+    # Privacy-conscious usage tracking (one row per tool call); set USAGE_TRACKING=0 to disable.
+    if os.environ.get("USAGE_TRACKING", "1") != "0":
+        from server.usage import UsageMiddleware
+
+        mcp.add_middleware(UsageMiddleware())
 
     from server.tools.statistics import GroupBy, Scope
     from server.tools.statistics import get_statistics as _get_statistics
