@@ -14,3 +14,11 @@ build/
 htmlcov/
 .coverage
 node_modules/
+
+# OS / editor cruft
+.DS_Store
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
