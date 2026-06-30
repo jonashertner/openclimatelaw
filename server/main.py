@@ -375,6 +375,30 @@ def build_mcp() -> FastMCP:
             filed_before=filed_before,
         )
 
+    from server.tools.chatgpt import fetch as _fetch
+    from server.tools.chatgpt import search as _search
+
+    @mcp.tool(
+        name="search",
+        description=(
+            "Search the climate-litigation corpus; returns matches as id / title / url. "
+            "This is the tool ChatGPT's connector calls — pass a returned id to `fetch` to "
+            "read the case. (Native clients should prefer search_cases for richer results.)"
+        ),
+    )
+    async def search_tool(query: str) -> dict[str, object]:  # pyright: ignore[reportUnusedFunction]
+        return await _search(query)
+
+    @mcp.tool(
+        name="fetch",
+        description=(
+            "Fetch one case's record (summary + metadata) by an id returned from `search`. "
+            "This is the tool ChatGPT's connector calls. (Native clients should prefer get_case.)"
+        ),
+    )
+    async def fetch_tool(id: str) -> dict[str, object]:  # pyright: ignore[reportUnusedFunction]
+        return await _fetch(id)
+
     return mcp
 
 
@@ -423,4 +447,8 @@ if __name__ == "__main__":
         host=settings.server_host,
         port=settings.server_port,
         log_level=settings.log_level.lower(),
+        # Trust Caddy's X-Forwarded-Proto so the app knows it is served over HTTPS
+        # (otherwise a trailing-slash /mcp/ request 307-redirects to an http:// URL).
+        proxy_headers=True,
+        forwarded_allow_ips="*",
     )
