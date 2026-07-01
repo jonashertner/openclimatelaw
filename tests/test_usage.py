@@ -31,14 +31,15 @@ async def test_tool_call_writes_usage_event() -> None:
         async with pool.connection() as conn:
             async with conn.cursor() as cur:
                 await cur.execute(
-                    "SELECT tool, ok, client_name, arguments FROM usage_event "
+                    "SELECT tool, ok, client_name, arguments, result FROM usage_event "
                     "WHERE tool = 'usage_probe'"
                 )
                 row = await cur.fetchone()
         assert row is not None
         assert row[0] == "usage_probe" and row[1] is True
-        # full logging (default): the arguments are captured
+        # full logging (default): the arguments AND a response summary are captured
         assert row[3] == {"x": "hello"}
+        assert row[4] is not None and "echo" in str(row[4])
     finally:
         pool = await get_pool()
         async with pool.connection() as conn:

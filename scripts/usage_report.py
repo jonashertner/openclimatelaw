@@ -83,6 +83,25 @@ async def report(days: int, limit: int) -> int:
             for tool, kind, n in errs:
                 print(f"    {tool:<24} {kind or '?':<22} {n}")
 
+        # quality control: how often each retrieval tool returned nothing useful
+        qc = await _rows(
+            cur,
+            f"SELECT tool, count(*), count(*) FILTER (WHERE result->>'no_match'='true' "
+            f"OR result->>'count'='0' OR result->>'total'='0'), "
+            f"round(avg((result->>'top_confidence')::float)::numeric, 2) "
+            f"FROM usage_event WHERE {win} AND result IS NOT NULL AND tool IN "
+            f"('find_relevant_passage','search_cases','search','search_statutes',"
+            f"'find_cases_by_law','find_cited_by','find_citations','find_related_cases',"
+            f"'get_case_doctrine') GROUP BY 1 ORDER BY 2 DESC LIMIT %(limit)s",
+            p,
+        )
+        if qc:
+            print("\n  quality — retrieval results (QC):")
+            for tool, n, empty, conf in qc:
+                pct = round(100 * (empty or 0) / n)
+                extra = f"   avg_confidence={conf}" if conf is not None else ""
+                print(f"    {tool:<22} {n:>4} calls   {pct}% returned nothing{extra}")
+
         # full-logging extras (present only when USAGE_LOG_FULL was on)
         queries = await _rows(
             cur,

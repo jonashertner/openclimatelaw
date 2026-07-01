@@ -30,10 +30,11 @@ log = structlog.get_logger("server.usage")
 
 _SALT: str | None = None
 _ARG_CAP = 4000  # truncate long string argument values
+_PREVIEW_CAP = 1500  # truncate the response preview (full mode)
 _INSERT = (
     "INSERT INTO usage_event (tool, ok, error_kind, duration_ms, client_name, "
-    "client_version, session_id, ip_hash, user_agent, ip, arguments) "
-    "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb)"
+    "client_version, session_id, ip_hash, user_agent, ip, arguments, result) "
+    "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s::jsonb)"
 )
 
 
@@ -47,6 +48,38 @@ def _truncate_args(args: Any) -> dict[str, Any]:
     for k, v in (args or {}).items():
         out[k] = v[:_ARG_CAP] + "…(truncated)" if isinstance(v, str) and len(v) > _ARG_CAP else v
     return out
+
+
+def _result_meta(result: Any, full: bool) -> str | None:
+    """A compact response summary for quality control — count / total / no_match /
+    top_confidence / returned_chars / violations, plus a truncated preview in full mode.
+    This is public case/law text + result metadata, not user data."""
+    try:
+        sc = getattr(result, "structured_content", None)
+        r = sc.get("result", sc) if isinstance(sc, dict) else sc
+        meta: dict[str, Any] = {}
+        if isinstance(r, dict):
+            for k in ("count", "total", "no_match", "available", "passed", "returned_chars"):
+                if r.get(k) is not None:
+                    meta[k] = r[k]
+            res = r.get("results")
+            if isinstance(res, list):
+                meta.setdefault("count", len(res))
+            matches = r.get("matches")
+            if isinstance(matches, list):
+                meta["count"] = len(matches)
+                if matches and isinstance(matches[0], dict):
+                    meta["top_confidence"] = matches[0].get("confidence")
+            viol = r.get("violations")
+            if isinstance(viol, list):
+                meta["violations"] = len(viol)
+        elif isinstance(r, list):
+            meta["count"] = len(r)
+        if full and sc is not None:
+            meta["preview"] = json.dumps(sc, default=str)[:_PREVIEW_CAP]
+        return json.dumps(meta, default=str) if meta else None
+    except Exception:
+        return None
 
 
 def _salt() -> str:
@@ -105,19 +138,20 @@ def _http_meta() -> tuple[str | None, str | None]:
 class UsageMiddleware(Middleware):
     async def on_call_tool(self, context: Any, call_next: Any) -> Any:
         t0 = time.monotonic()
-        ok, err = True, None
+        ok, err, result = True, None, None
         try:
-            return await call_next(context)
+            result = await call_next(context)
+            return result
         except Exception as e:
             ok, err = False, type(e).__name__
             raise
         finally:
             try:
-                await self._record(context, ok, err, int((time.monotonic() - t0) * 1000))
+                await self._record(context, ok, err, int((time.monotonic() - t0) * 1000), result)
             except Exception as e:  # never let tracking break a tool call
                 log.debug("usage_record_failed", error=repr(e)[:120])
 
-    async def _record(self, context: Any, ok: bool, err: str | None, dur: int) -> None:
+    async def _record(self, context: Any, ok: bool, err: str | None, dur: int, result: Any) -> None:
         from server.db import get_pool
 
         msg = getattr(context, "message", None)
@@ -130,6 +164,7 @@ class UsageMiddleware(Middleware):
         full = _log_full()
         ip_val = ip if full else None
         args_json = json.dumps(_truncate_args(args)) if (full and isinstance(args, dict)) else None
+        result_json = _result_meta(result, full)
         pool = await get_pool()
         async with pool.connection() as conn, conn.cursor() as cur:
             await cur.execute(
@@ -146,6 +181,7 @@ class UsageMiddleware(Middleware):
                     (ua[:500] if ua else None),
                     ip_val,
                     args_json,
+                    result_json,
                 ),
             )
             await conn.commit()
