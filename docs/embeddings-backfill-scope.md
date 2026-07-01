@@ -29,13 +29,20 @@ Semantic pinpoint is effectively dead: **3,000 of 4,981,454 passages are embedde
    trivially fast; no giant resident HNSW index needed. Removes the VPS-RAM concern. (A global
    semantic-search tool, if ever added, would build HNSW on the 1.1M dedup set then.)
 
+## Phase 0 result (2026-07-01) — model VALIDATED on the real failure
+A/B on the *Climate Justice Case* (JP), which genuinely cites the ICJ AO (passages 64/65/153/164,
+Japanese), with the user's English claim. Current `all-MiniLM-L6-v2` ranked the gold passages
+**36 / 20 / 114 / 105** at cosine **~0.1–0.2** (→ guaranteed `no_match`). `multilingual-e5-small`
+ranked them **2 / 4 / 5 / 12**, all **≥0.80**, 3 in the top-5. Root cause is the **model**, not data
+absence. **Decision: adopt `intfloat/multilingual-e5-small` (384-dim, drop-in).**
+
 ## Recommended approach
-- **Model — multilingual, same dimension.** `paraphrase-multilingual-MiniLM-L12-v2` (384-dim, 50+
-  languages) fixes cross-lingual matching (English claim ↔ Portuguese/Japanese passage) and keeps
-  the existing `vector(384)` infra. Use a **dedicated passage embedder** (and the same model for the
-  passage-claim query); leave case-search embeddings on the current model to isolate blast radius.
-  *(Alternative: a hosted multilingual embedding API — simpler ops, but adds a per-query external
-  dependency for a citation-safe tool. Lean self-hosted.)*
+- **Model — multilingual, same dimension.** **`multilingual-e5-small`** (384-dim, validated above).
+  Use a **dedicated passage embedder** (same model for the passage-claim query); leave case-search
+  embeddings on the current model to isolate blast radius. Two impl notes: e5 needs `query:` /
+  `passage:` prefixes, and its cosine distribution runs high — **re-calibrate `find_relevant_passage`'s
+  confidence / `no_match` threshold** for it. *(Alternative: a hosted multilingual embedding API —
+  simpler ops, external per-query dependency for a citation-safe tool. Lean self-hosted.)*
 - **Storage — dedup table.** `passage_embedding(content_hash PK, embedding halfvec(384))`, ~1.1M
   rows ≈ **~0.85 GB**; `document_passage` joins by `content_hash`. (Or `halfvec` directly on
   `document_passage.embedding` if we prefer no query change — ~3.8 GB, still fine on disk.)
