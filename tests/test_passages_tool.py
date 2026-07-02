@@ -90,9 +90,10 @@ async def test_find_relevant_passage_refuses_when_no_match(
 async def test_find_relevant_passage_semantic_arm(
     case_with_passages: dict[str, str], monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    # Give passage 0 a known embedding and mock the query embedder to match it; a claim
-    # with NO lexical overlap must still surface passage 0 via the semantic arm.
-    import server.tools.search as search
+    # Seed passage 0's embedding in passage_embedding (keyed by content_hash) and mock the
+    # e5 query embedder to match it; a claim with NO lexical overlap must still surface
+    # passage 0 via the semantic arm, clearing the recalibrated e5 floor.
+    import server.embed as embed_mod
 
     vec = [0.05] * 384
     lit = "[" + ",".join(f"{x:.7f}" for x in vec) + "]"
@@ -100,22 +101,37 @@ async def test_find_relevant_passage_semantic_arm(
     async with pool.connection() as conn:
         async with conn.cursor() as cur:
             await cur.execute(
-                "UPDATE document_passage SET embedding = %s::vector "
+                "SELECT content_hash FROM document_passage "
                 "WHERE case_id = %s::uuid AND para_index = 0",
-                (lit, case_with_passages["case_id"]),
+                (case_with_passages["case_id"],),
+            )
+            row = await cur.fetchone()
+            assert row is not None
+            content_hash = row[0]
+            await cur.execute(
+                "INSERT INTO passage_embedding (content_hash, embedding) VALUES (%s, %s::vector) "
+                "ON CONFLICT (content_hash) DO UPDATE SET embedding = EXCLUDED.embedding",
+                (content_hash, lit),
             )
         await conn.commit()
 
     def _fake_embed(_text: str) -> list[float]:
         return vec
 
-    monkeypatch.setattr(search, "_embed_query", _fake_embed)
+    monkeypatch.setattr(embed_mod, "embed_query", _fake_embed)
 
     r = await find_relevant_passage(
         case_with_passages["case_id"], "wholly unrelated lexical tokens zzz qqq", semantic=True
     )
     assert r["count"] >= 1
-    assert any(m["para_index"] == 0 and m["semantic_similarity"] >= 0.5 for m in r["matches"])
+    assert any(m["para_index"] == 0 and m["semantic_similarity"] >= 0.8 for m in r["matches"])
+
+    async with pool.connection() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                "DELETE FROM passage_embedding WHERE content_hash = %s", (content_hash,)
+            )
+        await conn.commit()
 
 
 @pytest.mark.asyncio

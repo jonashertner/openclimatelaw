@@ -12,7 +12,8 @@ def test_strong_lexical_match_is_high() -> None:
 
 
 def test_semantic_dominates_when_above_floor() -> None:
-    assert _confidence(coverage=0.3, lexical_rank=0.1, vec_sim=0.72) == 0.72
+    # e5-small floor is 0.80; a cosine above it is reported as the confidence
+    assert _confidence(coverage=0.3, lexical_rank=0.1, vec_sim=0.85) == 0.85
 
 
 def test_confidence_is_the_weaker_of_coverage_and_rank() -> None:

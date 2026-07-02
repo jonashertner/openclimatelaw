@@ -42,7 +42,9 @@ _STOP = {
     "from",
 }
 _MIN_COVERAGE = 0.4  # refuse to pinpoint below this claim-token coverage (lexical arm)
-_VEC_FLOOR = 0.5  # cosine similarity to accept a semantic pinpoint (SQL prefilter == gate)
+# multilingual-e5-small cosines run high; 0.80 accepts a semantic pinpoint (recalibrated
+# 2026-07-02 — the relevant Japanese/Portuguese passages scored ~0.80-0.82 in the A/B).
+_VEC_FLOOR = 0.80
 _LEX_FULL = 0.5  # ts_rank at/above which a lexical match counts as full confidence
 
 
@@ -130,15 +132,16 @@ async def find_relevant_passage(
             qvec: str | None = None
             if semantic and claim:
                 await cur.execute(
-                    "SELECT EXISTS (SELECT 1 FROM document_passage "
-                    "WHERE case_id = %s::uuid AND embedding IS NOT NULL)",
+                    "SELECT EXISTS (SELECT 1 FROM document_passage p "
+                    "JOIN passage_embedding pe ON pe.content_hash = p.content_hash "
+                    "WHERE p.case_id = %s::uuid)",
                     (case_id,),
                 )
                 has_emb = await cur.fetchone()
                 if has_emb and has_emb[0]:
-                    from server.tools.search import _embed_query
+                    from server.embed import embed_query
 
-                    vec = await asyncio.to_thread(_embed_query, claim)
+                    vec = await asyncio.to_thread(embed_query, claim)
                     if vec is not None:
                         qvec = "[" + ",".join(f"{x:.7f}" for x in vec) + "]"
 
@@ -152,25 +155,26 @@ async def find_relevant_passage(
                     p.char_end,
                     p.text,
                     ts_rank(to_tsvector('simple', p.text), (SELECT tsq FROM q)) AS lex_rank,
-                    CASE WHEN %(qvec)s::text IS NULL OR p.embedding IS NULL THEN NULL
-                         ELSE 1 - (p.embedding <=> %(qvec)s::vector) END AS vec_sim,
+                    CASE WHEN %(qvec)s::text IS NULL OR pe.embedding IS NULL THEN NULL
+                         ELSE 1 - (pe.embedding <=> %(qvec)s::vector) END AS vec_sim,
                     ts_headline(
                         'simple', p.text, (SELECT tsq FROM q),
                         'StartSel=<mark>, StopSel=</mark>, MaxFragments=2, MaxWords=24'
                     ) AS snippet
-                FROM document_passage p, q
+                FROM document_passage p
+                LEFT JOIN passage_embedding pe ON pe.content_hash = p.content_hash, q
                 WHERE p.case_id = %(case_id)s::uuid
                   AND (
                     to_tsvector('simple', p.text) @@ (SELECT tsq FROM q)
                     OR (
-                        %(qvec)s::text IS NOT NULL AND p.embedding IS NOT NULL
-                        AND 1 - (p.embedding <=> %(qvec)s::vector) >= %(vfloor)s
+                        %(qvec)s::text IS NOT NULL AND pe.embedding IS NOT NULL
+                        AND 1 - (pe.embedding <=> %(qvec)s::vector) >= %(vfloor)s
                     )
                   )
                 ORDER BY GREATEST(
                     ts_rank(to_tsvector('simple', p.text), (SELECT tsq FROM q)) * 10.0,
-                    CASE WHEN %(qvec)s::text IS NULL OR p.embedding IS NULL THEN 0
-                         ELSE 1 - (p.embedding <=> %(qvec)s::vector) END
+                    CASE WHEN %(qvec)s::text IS NULL OR pe.embedding IS NULL THEN 0
+                         ELSE 1 - (pe.embedding <=> %(qvec)s::vector) END
                 ) DESC
                 LIMIT %(cand)s
                 """,
