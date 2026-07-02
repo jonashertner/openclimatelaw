@@ -24,44 +24,45 @@ async def backfill(
     from server.embed import embed_passages
 
     pool = await get_pool()
-    # Distinct content_hashes not yet embedded — one representative text each. Optionally
-    # restrict to specific cases (for fast validation before the full run).
-    where = "pe.content_hash IS NULL"
-    params: list[object] = []
+    # STREAM to stay within the VPS's ~4 GB: fetch only the list of unembedded distinct
+    # content_hashes first (~70 MB for 1.1M hashes — never the 1.1M passage TEXTS), then pull
+    # text per batch via the content_hash index. Resumable: a restart re-derives the todo.
+    case_clause, case_params = "", []
     if case_ids:
-        where += (
+        case_clause = (
             " AND (p.case_id::text = ANY(%s) OR p.case_id IN "
             "(SELECT id FROM case_record WHERE sabin_id = ANY(%s)))"
         )
-        params += [case_ids, case_ids]
-    sql = (
-        "SELECT DISTINCT ON (p.content_hash) p.content_hash, p.text "
-        "FROM document_passage p "
-        "LEFT JOIN passage_embedding pe ON pe.content_hash = p.content_hash "
-        f"WHERE {where} ORDER BY p.content_hash"
-    )
-    if limit:
-        sql += " LIMIT %s"
-        params.append(limit)
-
+        case_params = [case_ids, case_ids]
     async with pool.connection() as conn, conn.cursor() as cur:
-        await cur.execute(sql, tuple(params))
-        todo = await cur.fetchall()
+        await cur.execute(
+            "SELECT DISTINCT p.content_hash FROM document_passage p "
+            "LEFT JOIN passage_embedding pe ON pe.content_hash = p.content_hash "
+            f"WHERE pe.content_hash IS NULL{case_clause}",
+            tuple(case_params),
+        )
+        hashes = [r[0] for r in await cur.fetchall()]
+    if limit:
+        hashes = hashes[:limit]
 
-    total = len(todo)
+    total = len(hashes)
     written = 0
     log.info("embed_start", distinct_todo=total, batch=batch)
     for i in range(0, total, batch):
-        chunk = todo[i : i + batch]
-        hashes = [r[0] for r in chunk]
-        texts = [r[1] or "" for r in chunk]
-        vecs = await asyncio.to_thread(embed_passages, texts)
+        bh = hashes[i : i + batch]
+        async with pool.connection() as conn, conn.cursor() as cur:
+            await cur.execute(
+                "SELECT DISTINCT ON (content_hash) content_hash, text "
+                "FROM document_passage WHERE content_hash = ANY(%s)",
+                (bh,),
+            )
+            got = await cur.fetchall()
+        vecs = await asyncio.to_thread(embed_passages, [r[1] or "" for r in got])
         if vecs is None:
             log.error("embed_unavailable")
             break
         rows = [
-            (h, "[" + ",".join(f"{x:.7f}" for x in v) + "]")
-            for h, v in zip(hashes, vecs, strict=False)
+            (got[j][0], "[" + ",".join(f"{x:.7f}" for x in v) + "]") for j, v in enumerate(vecs)
         ]
         async with pool.connection() as conn, conn.cursor() as cur:
             await cur.executemany(
@@ -71,7 +72,7 @@ async def backfill(
             )
             await conn.commit()
         written += len(rows)
-        if (i // batch) % 25 == 0:
+        if (i // batch) % 200 == 0:
             log.info("embed_progress", done=written, of=total)
     await close_pool()
     log.info("embed_complete", written=written, of=total)
