@@ -20,7 +20,7 @@ log = structlog.get_logger("ingest.embed_passages")
 async def backfill(
     case_ids: list[str] | None = None, limit: int | None = None, batch: int = 16
 ) -> dict[str, int]:
-    from server.db import close_pool, get_pool
+    from server.db import get_pool
     from server.embed import embed_passages
 
     pool = await get_pool()
@@ -74,7 +74,8 @@ async def backfill(
         written += len(rows)
         if (i // batch) % 200 == 0:
             log.info("embed_progress", done=written, of=total)
-    await close_pool()
+    # NB: pool is intentionally NOT closed here so backfill() is safe to compose
+    # (e.g. called from ingest.passages). The CLI main() closes the pool.
     log.info("embed_complete", written=written, of=total)
     return {"distinct": total, "written": written}
 
@@ -91,7 +92,16 @@ def main() -> int:
     args = ap.parse_args()
     configure_logging(level="INFO", json=False)
     ids = [s.strip() for s in args.case_ids.split(",")] if args.case_ids else None
-    print(f"DONE: {asyncio.run(backfill(case_ids=ids, limit=args.limit, batch=args.batch))}")
+
+    async def runner() -> dict[str, int]:
+        from server.db import close_pool
+
+        try:
+            return await backfill(case_ids=ids, limit=args.limit, batch=args.batch)
+        finally:
+            await close_pool()
+
+    print(f"DONE: {asyncio.run(runner())}")
     return 0
 
 

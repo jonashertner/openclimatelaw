@@ -65,15 +65,19 @@ _INSERT_PASSAGE = """
 
 
 async def backfill_passages(
-    *, only_missing: bool = True, limit: int | None = None
+    *, only_missing: bool = True, limit: int | None = None, embed: bool = True
 ) -> dict[str, int]:
     """Split every document's text into `document_passage` rows.
 
     Streams: fetches candidate document IDs first (lightweight), then processes one
     document's text at a time — bounded memory, so the full corpus does not OOM.
-    Text-only (no embeddings — lexical find_relevant_passage works without them;
-    semantic embeddings are a separate enhancement). Idempotent via ON CONFLICT,
-    committing per document so an interrupted run resumes. Returns {documents, passages}.
+    Idempotent via ON CONFLICT, committing per document so an interrupted run resumes.
+
+    embed=True (default) then embeds any newly-created passages (dedup by content_hash,
+    via ingest.embed_passages) so a freshly-ingested case gets semantic pinpoint too —
+    without it, new passages silently regress to lexical-only. The embed step is itself
+    idempotent (skips already-embedded hashes), so it only pays for the new content.
+    Returns {documents, passages, embedded}.
     """
     from server.db import get_pool
 
@@ -103,7 +107,14 @@ async def backfill_passages(
                     total += 1
             await conn.commit()
             docs += 1
-    return {"documents": docs, "passages": total}
+
+    embedded = 0
+    if embed and total:
+        from ingest.embed_passages import backfill as embed_backfill
+
+        res = await embed_backfill()  # dedup + resumable → embeds only the new hashes
+        embedded = res.get("written", 0)
+    return {"documents": docs, "passages": total, "embedded": embedded}
 
 
 def main() -> int:
@@ -118,12 +129,19 @@ def main() -> int:
         "--all", action="store_true", help="Re-process documents that already have passages."
     )
     parser.add_argument("--limit", type=int, default=None)
+    parser.add_argument(
+        "--no-embed",
+        action="store_true",
+        help="Skip embedding newly-created passages (text-only; semantic pinpoint won't work).",
+    )
     args = parser.parse_args()
     configure_logging(level="INFO", json=False)
 
     async def runner() -> dict[str, int]:
         try:
-            return await backfill_passages(only_missing=not args.all, limit=args.limit)
+            return await backfill_passages(
+                only_missing=not args.all, limit=args.limit, embed=not args.no_embed
+            )
         finally:
             await close_pool()
 
